@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@theme {
+  /* Meine Markenfarbe siehe Figma. Anstatt Farbcodes jedes Mal
+   neu zu tippen, definieren ich das Blau in dieser CSS-Datei. 
+   So kann ich im Code einfach bg-primary schreiben.*/
+  --color-primary: #2A6087;
+  --color-secondary: #030213;
+}
