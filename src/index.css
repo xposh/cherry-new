@@ -1,9 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  /* Meine Markenfarbe siehe Figma. Anstatt Farbcodes jedes Mal
-   neu zu tippen, definieren ich das Blau in dieser CSS-Datei. 
-   So kann ich im Code einfach bg-primary schreiben.*/
   --color-primary: #2A6087;
   --color-secondary: #030213;
+  
+  /* Wir definieren die Font-Variable im Theme */
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+@layer base {
+  html, body {
+    /* Hier erzwingen wir die Schrift für das gesamte Projekt */
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }

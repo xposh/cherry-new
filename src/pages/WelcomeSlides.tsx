@@ -1,105 +1,153 @@
-// 1. IMPORT-BEREICH
-// useState: Merkt sich, welches Bild gerade aktiv ist.
-// useEffect: Startet den automatischen Wechsel (Timer).
-import { useState, useEffect } from "react";
+// 1. IMPORT-BEREICH (Die Werkzeugkiste)
+// useState: Ein "Speicherplatz" für Daten, die sich während der Laufzeit ändern (z.B. die aktuelle Slide-Nummer).
+// useEffect: Wird genutzt, um "Nebenwirkungen" zu steuern, wie z.B. einen Timer, der außerhalb des Klick-Flusses läuft.
+import { useState, useEffect } from 'react';
+// Link: Ein spezieller Anker-Tag von React-Router, der die Seite wechselt, ohne den Browser neu zu laden.
+import { Link } from 'react-router';
+// Logo: Deine neue, eigenständige Komponente für das Branding.
+import { Logo } from '../components/Logo';
 
-// 2. DATEN-STRUKTUR (Festgelegt)
-// Wir speichern die Infos in einer Liste (Array), damit wir sie später leicht ändern können.
+// 2. DATEN-STRUKTUR (Das Gehirn)
+// Wir speichern alles in einem "Array" (eine Liste in eckigen Klammern []).
+// Jedes Objekt {} in der Liste repräsentiert eine Seite.
 const SLIDES = [
   {
-    id: 1,
-    img: "/architect/architect-painting.png",
-    title: "Pick your Cherry",
-    sub: "Finde den perfekten Jobpartner",
+    image: '/architect/architect-painting.png', // Pfad zum Bild im public-Ordner.
+    heading: ['Pick', 'your', 'Cherry'],       // Array für die Überschrift, um Wörter einzeln zu stylen.
+    subheading: '"Finde den perfekten Jobpartner"', 
+    overlay: 'bg-black/45',                    // Tailwind-Klasse für die Verdunklung (45% Schwarz).
   },
   {
-    id: 2,
-    img: "/architect/architect-drawing.png",
-    title: "Finde deinen Job",
-    sub: "Pick your Cherry",
+    image: '/architect/architect-drawing.png',
+    heading: ['Finde', 'deinen', 'Traumjob'],
+    subheading: '"Pick your cherry"',
+    overlay: 'bg-black/70',
   },
   {
-    id: 3,
-    img: "/architect/man-in-black.png",
-    title: "Netzwerke",
-    sub: "Verbinde dich mit den Besten",
+    image: '/architect/man-in-black.png',
+    heading: ['Finde', 'deinen', 'Traumjob'],
+    subheading: '"Pick your cherry"',
+    overlay: 'bg-black/40',
   },
 ];
 
 export function WelcomeSlides() {
-  // 3. DER STATE (Zustand)
-  // 'current' ist die Nummer des Bildes (0, 1 oder 2).
-  // 'setCurrent' ist die Funktion, um diese Nummer zu ändern.
-  const [current, setCurrent] = useState(0);
+  // 3. STATE (Der aktuelle Zustand)
+  // currentSlide: Die Variable, die die Zahl der aktuellen Slide hält (startet bei 0).
+  // setCurrentSlide: Die einzige Funktion, die 'currentSlide' verändern darf.
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  // 4. DER TIMER (Logik)
+  // 4. DER AUTOMATISMUS (Timer)
   useEffect(() => {
-    // setInterval führt den Code alle 4000ms (4 Sek) aus.
-    const timer = setInterval(() => {
-      // Modulo (%) sorgt dafür, dass nach Bild 3 wieder Bild 1 kommt.
-      setCurrent((prev) => (prev + 1) % SLIDES.length);
-    }, 4000);
+    // setInterval: Eine Browser-Funktion, die einen Block immer wieder ausführt.
+    const interval = setInterval(() => {
+      // Modulo (%) ist der "Loop-Trick": (0+1)%3=1, (1+1)%3=2, (2+1)%3=0.
+      // So verhindern wir, dass die Zahl ins Unendliche steigt.
+      setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
+    }, 5000); // 5000 Millisekunden = 5 Sekunden.
 
-    // Cleanup: Wenn wir die Seite verlassen, stoppen wir den Timer (Wichtig gegen Abstürze!)
-    return () => clearInterval(timer);
-  }, []);
+    // Cleanup-Funktion: Stoppt den Timer, wenn die Komponente gelöscht wird.
+    // Ohne das würde der Timer im Hintergrund weiterlaufen und die App crashen lassen.
+    return () => clearInterval(interval);
+  }, []); // Das leere [] bedeutet: "Starte diesen Timer nur einmal, wenn die Seite lädt."
+
+  // Helfer-Variable: Wir ziehen uns das aktuelle Daten-Objekt aus der Liste.
+  const slide = SLIDES[currentSlide];
 
   return (
-    // 5. DAS LAYOUT (HTML/CSS)
-    // fixed inset-0: Zwingt den Container auf die volle Monitorgröße.
-    <div className="fixed inset-0 w-full h-full bg-black overflow-hidden font-sans">
-      {/* HINTERGRUND-SCHICHT */}
-      {SLIDES.map((slide, index) => (
-        <div
-          key={slide.id}
-          // transition-opacity duration-1000: Das weiche Überblenden (1 Sekunde).
-          className={`absolute inset-0 transition-opacity duration-1000 ${
-            index === current ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <img
-            src={slide.img}
-            className="w-full h-full object-cover"
-            alt="Background"
+    // 5. DAS GERÜST (CSS Architektur)
+    // relative: Erlaubt es, Elemente (wie Bilder) darin absolut zu positionieren.
+    // min-h-screen: Erzwingt mindestens die volle Höhe des Bildschirms.
+    // items-end: Schiebt den Inhalt auf dem Handy nach unten.
+    <div className="relative min-h-screen w-full flex items-end md:items-center justify-center overflow-hidden bg-white font-sans">
+      
+      {/* 6. LOGO (Z-Index 30 - Ganz oben) */}
+      {/* Wir nutzen hier deine neue Komponente. Die Positionierung top-8 left-8 
+          und der z-Index sind jetzt in der Logo.tsx Datei fest verbaut. */}
+      <Logo />
+
+      {/* 7. BILDER-LAYER (Z-Index 0) */}
+      <div className="absolute inset-0 z-0">
+        {/* .map: Wir gehen die SLIDES-Liste durch und erstellen für jeden Eintrag ein <div> */}
+        {SLIDES.map((s, index) => (
+          <div
+            key={index} // Einzigartiger Schlüssel für React zur Identifizierung.
+            // transition-opacity duration-1000: Das "Faden" dauert genau 1 Sekunde.
+            // Wenn der Index der Liste mit 'currentSlide' übereinstimmt, wird es sichtbar (opacity-100).
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              index === currentSlide ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <img
+              src={s.image}
+              className="w-full h-full object-cover" // object-cover: Bild füllt alles aus ohne Verzerrung.
+              alt="Background"
+            />
+          </div>
+        ))}
+        {/* DYNAMISCHES OVERLAY: Wechselt die Farbe/Dunkelheit passend zum Bild. */}
+        <div className={`absolute inset-0 transition-colors duration-1000 ${slide.overlay}`} />
+      </div>
+
+      {/* 8. CONTENT (Der Textbereich) */}
+      <div className="relative z-10 w-full px-6 py-12 md:py-0 md:max-w-2xl md:ml-12 lg:ml-24 text-left">
+        
+        {/* ÜBERSCHRIFT: Nutzt 'block', damit jedes Wort eine neue Zeile beginnt (Figma Style) */}
+        <h1 className="text-5xl md:text-6xl lg:text-7xl mb-6 tracking-tight leading-[1.1] font-bold" style={{ color: '#2A6087' }}>
+          {slide.heading[0]}
+          {/* Nur wenn ein zweites/drittes Wort existiert, wird das Element gerendert. */}
+          {slide.heading[1] && <span className="block mt-2">{slide.heading[1]}</span>}
+          {slide.heading[2] && <span className="block mt-2">{slide.heading[2]}</span>}
+        </h1>
+
+        <p className="text-base md:text-lg mb-12 max-w-md leading-relaxed italic text-white/70">
+          {slide.subheading}
+        </p>
+
+      {/* 9. BUTTONS */}
+      <div className="flex flex-col w-full max-w-sm gap-4 mb-8">
+        <Link to="/signup" className="w-full">
+          {/* ERKLÄRUNG:
+        bg-black/70: Ein sattes Schwarz mit 70% Sichtbarkeit. Das wirkt massiver als der Blur.
+        hover:bg-[#2A6087]: Beim Drüberfahren wechselt er zu deinem Cherry-Blau aus Figma.
+        text-white: Weißer Text für harten Kontrast.
+        font-bold: Die dicke Schriftstärke für maximale Aufmerksamkeit.
+        rounded-none: Damit der Button eckig bleibt, wie in deinem letzten Code-Schnipsel.
+          */}
+          <button className="w-full bg-black/50 hover:bg-[#708090]/50 text-[#f5f5f5] text-base py-5 transition-all duration-300 border border-white/10 font-medium rounded-none">
+            Registrieren
+          </button>
+        </Link>
+
+        <Link to="/login" className="w-full">
+          {/* ERKLÄRUNG:
+              border-2 border-white: Weißer Rahmen.
+              hover:bg-white hover:text-black: Invertiert die Farben beim Hovern (Weißer Hintergrund, schwarzer Text).
+          */}
+          <button className="w-full border-1 border-white bg-transparent hover:bg-[#708090]/50 hover:text-white text-[#777676] text-base py-5 transition-all duration-300 font-medium">
+            Login
+          </button>
+        </Link>
+      </div>
+
+        {/* 10. KLEINGEDRUCKTES */}
+        <p className="text-[10px] text-white/50 max-w-sm leading-relaxed">
+          Mit der Anmeldung stimmst du unseren <button className="underline">AGB</button> zu.
+        </p>
+      </div>
+
+      {/* 11. INDICATORS (Die Punkte) */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+        {SLIDES.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentSlide(index)} // Erlaubt manuelles Klicken auf die Punkte.
+            // Wenn aktiv: Breit (w-8) und hellweiß. Wenn inaktiv: Kleiner Punkt (w-2) und transparent.
+            className={`h-1.5 rounded-full transition-all duration-500 ${
+              index === currentSlide ? 'bg-white w-8' : 'bg-white/30 w-2'
+            }`}
           />
-          {/* OVERLAY: bg-black/60 macht es dunkler als vorher (/40), damit der Text "poppt". */}
-          <div className="absolute inset-0 bg-black/60" />
-        </div>
-      ))}
-
-      {/* VORDERGRUND-SCHICHT (Text & Buttons) */}
-      {/* p-6 bis p-12 macht es responsive für Mobile/Desktop */}
-      <div className="relative z-10 h-full flex flex-col justify-end p-8 md:p-16 pb-12">
-        {/* TEXT-BLOCK */}
-        <div className="mb-10">
-          <h1 className="text-white text-5xl md:text-7xl font-bold mb-2 tracking-tight">
-            {SLIDES[current].title}
-          </h1>
-          <p className="text-white/80 text-lg md:text-xl italic">
-            "{SLIDES[current].sub}"
-          </p>
-        </div>
-
-        {/* BUTTONS & RECHTLICHES */}
-        <div className="flex flex-col gap-4 max-w-sm w-full">
-          <button className="bg-primary hover:bg-primary/90 text-white py-4 px-8 font-bold rounded-sm transition-all active:scale-95">
-            Konto erstellen
-          </button>
-
-          <button className="border border-white/50 text-white py-4 px-8 font-bold rounded-sm hover:bg-white/10 transition-all">
-            Anmelden
-          </button>
-
-          {/* DATENSCHUTZ TEXT UNTEN */}
-          <p className="text-white/40 text-[10px] leading-tight mt-4">
-            Durch die Registrierung stimmst du unseren{" "}
-            <span className="underline cursor-pointer">AGB</span> und{" "}
-            <span className="underline cursor-pointer">
-              Datenschutzbestimmungen
-            </span>{" "}
-            zu.
-          </p>
-        </div>
+        ))}
       </div>
     </div>
   );
