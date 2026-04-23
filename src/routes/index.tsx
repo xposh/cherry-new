@@ -1,5 +1,8 @@
 import { createBrowserRouter } from 'react-router';
 // Importiere deine Komponenten hier (Pfade ggf. anpassen)
+import { WelcomeSlides } from '../pages/WelcomeSlides';
+import { LoginPage } from '../pages/Authentication/LoginPage';
+import { SignUpPage } from '../pages/Authentication/SignUpPage';
 import { TalentProfileSetup1 } from "../pages//Talent/TalentProfileSetup1";
 import { TalentProfileSetup2 } from "../pages//Talent/TalentProfileSetup2"; 
 import { TalentProfileSetup3 } from "../pages/Talent/TalentProfileSetup3"; 
@@ -8,7 +11,16 @@ import { TalentProfileSummary } from "../pages/Talent/TalentProfileSummary"; // 
 export const routes = createBrowserRouter([
   {
     path: "/",
-    element: <TalentProfileSetup1 />,
+    element: <WelcomeSlides />, // Deine Startseite mit den Slides
+
+  },
+  {
+    path: "login", // Jetzt explizit erreichbar
+    element: <LoginPage />,
+  },
+  {
+    path: "signup", // Jetzt explizit erreichbar
+    element: <SignUpPage />, // Das wird erst funktionieren, wenn die Datei existiert
   },
   {
     path: "/talent-profile-setup-1", // Jetzt explizit erreichbar
@@ -26,4 +38,4 @@ export const routes = createBrowserRouter([
     path: "/talent-profile-summary", 
     element: <TalentProfileSummary />, 
   },
-]);
+]); 
