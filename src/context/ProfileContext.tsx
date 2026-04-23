@@ -1,4 +1,9 @@
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  type ReactNode,
+} from "react";
 
 // Das Interface definiert die Struktur des Objekts im gesamten Projekt
 interface ProfileData {
@@ -26,7 +31,7 @@ interface ProfileData {
   locationPreference?: string;
   profileImage?: string;
 
-  // NEU: Felder für Step 3 (Damit die Unterkringel verschwinden)
+  // NEU: Felder für Step 3 (Damit es keine Unterkringel (den Fehler auswirft)
   specialties?: string;
   communities?: string[];
   socialLinks?: { platform: string; url: string }[];
@@ -47,7 +52,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     projectLinks: [],
     languages: [],
     communities: [], // Initialwert für Step 3
-    socialLinks: [] // Initialwert für Step 3
+    socialLinks: [], // Initialwert für Step 3
   });
 
   const updateProfile = (newData: Partial<ProfileData>) => {
@@ -64,6 +69,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
 export const useProfile = () => {
   const context = useContext(ProfileContext);
-  if (!context) throw new Error("useProfile muss innerhalb eines ProfileProviders genutzt werden");
+  if (!context)
+    throw new Error(
+      "useProfile muss innerhalb eines ProfileProviders genutzt werden",
+    );
   return context;
 };
