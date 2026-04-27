@@ -44,7 +44,7 @@ export function SignUpPage() {
     if (selectedRole === "worker") {
       navigate("/talent-profile-setup-1"); // HIER: Pfad angepasst auf setup-1
     } else {
-      navigate("/company-profile-setup"); // Falls du diese Seite noch nicht hast, leitet der Router (path: "*") dich zur Startseite
+      navigate("/company-profile-setup-1"); // Falls du diese Seite noch nicht hast, leitet der Router (path: "*") dich zur Startseite
     }
   };
 

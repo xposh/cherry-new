@@ -1,7 +1,8 @@
-import { Upload, X, User } from "lucide-react";
+import { Upload, X, Building2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
+import { useCompanyProfile } from "../../context/CompanyProfileContext";
 
 interface UploadedImage {
   id: string;
@@ -11,34 +12,35 @@ interface UploadedImage {
   caption: string;
 }
 
-interface ProfileImage {
+interface CompanyLogo {
   file: File | null;
   preview: string;
 }
 
-export function TalentProfileSetup1() {
+export function CompanyProfileSetup1() {
   const navigate = useNavigate();
-  const [profileImage, setProfileImage] = useState<ProfileImage>({
+  const { updateCompanyProfile } = useCompanyProfile();
+
+  const [companyLogo, setCompanyLogo] = useState<CompanyLogo>({
     file: null,
     preview: "",
   });
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("Portfolio");
-  const [editingCaption, setEditingCaption] = useState<string | null>(null);
-  const [tempCaption, setTempCaption] = useState("");
+  const [selectedCategory, setSelectedCategory] =
+    useState<string>("Räume & Locations");
 
   const categories = [
-    "Portfolio",
-    "Workspace",
-    "Projects",
-    "Certificates",
-    "Others",
+    "Räume & Locations",
+    "Team & Kultur",
+    "Projekte",
+    "Arbeitsplätze",
+    "Extras",
   ];
 
-  const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setProfileImage({
+      setCompanyLogo({
         file,
         preview: URL.createObjectURL(file),
       });
@@ -64,21 +66,16 @@ export function TalentProfileSetup1() {
     setUploadedImages(uploadedImages.filter((img) => img.id !== id));
   };
 
+  const updateCategory = (id: string, category: string) => {
+    setUploadedImages(
+      uploadedImages.map((img) => (img.id === id ? { ...img, category } : img)),
+    );
+  };
+
   const updateCaption = (id: string, caption: string) => {
     setUploadedImages(
       uploadedImages.map((img) => (img.id === id ? { ...img, caption } : img)),
     );
-  };
-
-  const startEditingCaption = (id: string, currentCaption: string) => {
-    setEditingCaption(id);
-    setTempCaption(currentCaption);
-  };
-
-  const saveCaption = (id: string) => {
-    updateCaption(id, tempCaption);
-    setEditingCaption(null);
-    setTempCaption("");
   };
 
   const handleNext = () => {
@@ -89,60 +86,54 @@ export function TalentProfileSetup1() {
       caption: img.caption,
     }));
 
-    localStorage.setItem(
-      "talentSetup1",
-      JSON.stringify({
-        profileImage: profileImage.preview,
-        images: imagesToSave,
-      }),
-    );
+    updateCompanyProfile({
+      companyLogo: companyLogo.preview,
+      companyImages: imagesToSave,
+    });
 
-    navigate("/talent-profile-setup-2");
+    navigate("/company-profile-setup-2");
   };
 
   return (
     <div className="relative min-h-screen w-full bg-black overflow-auto pb-20">
-      {/* Logo */}
       <Link to="/">
         <Logo />
       </Link>
 
-      {/* Progress Indicator */}
       <div className="fixed top-8 right-8 z-50 flex gap-2">
         <div className="w-12 h-1 bg-white rounded-full"></div>
         <div className="w-12 h-1 bg-white/30 rounded-full"></div>
         <div className="w-12 h-1 bg-white/30 rounded-full"></div>
       </div>
 
-      {/* Content */}
       <div className="max-w-4xl mx-auto px-8 pt-32 pb-32">
         <div className="mb-12">
           <h1 className="text-4xl font-light text-white mb-4">
-            Visual Profile
+            Visuelles Profil
           </h1>
           <p className="text-gray-400 text-lg font-light">
-            Upload your profile picture and images that showcase your work.
+            Zeigt eure Räume, euer Team und was euch besonders macht.
           </p>
         </div>
 
-        {/* Profile Picture Upload */}
+        {/* Company Logo Upload */}
         <section className="mb-12">
           <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
-            Profile Picture
+            Company Logo
           </h2>
-          {!profileImage.preview ? (
+          {!companyLogo.preview ? (
             <div className="border-2 border-dashed border-white/30 rounded-xl p-12 text-center hover:border-white/60 transition-colors cursor-pointer max-w-md mx-auto">
               <input
                 type="file"
                 accept="image/*"
-                onChange={handleProfileImageUpload}
+                onChange={handleLogoUpload}
                 className="hidden"
-                id="profile-upload"
+                id="logo-upload"
               />
-              <label htmlFor="profile-upload" className="cursor-pointer">
-                <User className="w-16 h-16 text-white/40 mx-auto mb-4" />
+              <label htmlFor="logo-upload" className="cursor-pointer">
+                <Building2 className="w-16 h-16 text-white/40 mx-auto mb-4" />
                 <p className="text-white font-light mb-2">
-                  Upload your profile picture
+                  Upload your company logo
                 </p>
                 <p className="text-gray-500 text-sm">PNG, JPG up to 10MB</p>
               </label>
@@ -151,12 +142,12 @@ export function TalentProfileSetup1() {
             <div className="max-w-md mx-auto">
               <div className="relative group">
                 <img
-                  src={profileImage.preview}
-                  alt="Profile"
+                  src={companyLogo.preview}
+                  alt="Company Logo"
                   className="w-full h-80 object-cover rounded-xl"
                 />
                 <button
-                  onClick={() => setProfileImage({ file: null, preview: "" })}
+                  onClick={() => setCompanyLogo({ file: null, preview: "" })}
                   className="absolute top-4 right-4 p-2 bg-black/80 rounded-full hover:bg-red-600 transition-colors"
                 >
                   <X className="w-5 h-5 text-white" />
@@ -238,42 +229,25 @@ export function TalentProfileSetup1() {
                     </button>
                   </div>
 
-                  <div className="p-4 bg-black/60 backdrop-blur-sm space-y-2">
-                    {/* Category + Caption */}
-                    <div>
-                      <p className="text-white text-sm font-light italic mb-1">
-                        {img.category}
-                      </p>
-                      {editingCaption === img.id ? (
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={tempCaption}
-                            onChange={(e) => setTempCaption(e.target.value)}
-                            placeholder="Add a caption..."
-                            className="flex-1 px-3 py-2 bg-white/10 border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light text-sm rounded-lg"
-                            autoFocus
-                          />
-                          <button
-                            onClick={() => saveCaption(img.id)}
-                            className="px-4 py-2 bg-white text-black hover:bg-gray-200 transition-all text-sm font-light rounded-lg"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      ) : (
-                        <p
-                          onClick={() =>
-                            startEditingCaption(img.id, img.caption)
-                          }
-                          className="text-white text-sm font-light cursor-pointer hover:text-gray-300 transition-colors"
-                        >
-                          {img.caption
-                            ? `"${img.caption}"`
-                            : "Click to add caption..."}
-                        </p>
-                      )}
-                    </div>
+                  <div className="p-4 bg-black/60 backdrop-blur-sm space-y-3">
+                    <select
+                      value={img.category}
+                      onChange={(e) => updateCategory(img.id, e.target.value)}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/30 text-white focus:border-white focus:outline-none transition-colors font-light text-sm rounded-lg appearance-none"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat} className="bg-black">
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={img.caption}
+                      onChange={(e) => updateCaption(img.id, e.target.value)}
+                      placeholder="Bildunterschrift (optional)"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light text-sm rounded-lg"
+                    />
                   </div>
                 </div>
               ))}
@@ -284,7 +258,7 @@ export function TalentProfileSetup1() {
         {/* Navigation */}
         <div className="flex justify-between items-center pt-8 border-t border-white/20">
           <Link
-            to="/"
+            to="/signup"
             className="px-8 py-3 border border-white/30 text-white hover:border-white transition-all uppercase tracking-[0.2em] text-sm font-light rounded-lg"
           >
             Back

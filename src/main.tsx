@@ -7,11 +7,14 @@ import { routes } from "./routes/index.tsx";
 import { RouterProvider } from "react-router";
 // Context Provider für die Datenhaltung
 import { ProfileProvider } from "./context/ProfileContext.tsx";
+import { CompanyProfileProvider } from "./context/CompanyProfileContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ProfileProvider>
-      <RouterProvider router={routes} />
+      <CompanyProfileProvider>
+        <RouterProvider router={routes} />
+      </CompanyProfileProvider>
     </ProfileProvider>
   </StrictMode>,
 );
