@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router";
 // Importiere deine Komponenten hier (Pfade ggf. anpassen)
-import { WelcomeSlides } from "../pages/WelcomeSlides";
+import { WelcomeSlides } from "../pages/Start/WelcomeSlides";
 import { LoginPage } from "../pages/Authentication/LoginPage";
 import { SignUpPage } from "../pages/Authentication/SignUpPage";
 import { TalentProfileSetup1 } from "../pages/Talent/TalentProfileSetup1";
