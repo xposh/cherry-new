@@ -1,299 +1,948 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { ChevronLeft, ChevronDown, ChevronRight, Plus, X, Calendar } from 'lucide-react';
-import { useProfile } from "../../context/ProfileContext";
+import { Plus, X } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { Logo } from "../../components/Logo";
+
+interface Language {
+  language: string;
+  level: string;
+}
+
+interface Experience {
+  id: string;
+  title: string;
+  company: string;
+  period: string;
+  years: string;
+  level: string;
+  description: string;
+}
+
+interface Recognition {
+  id: string;
+  award: string;
+  year: string;
+}
 
 export function TalentProfileSetup2() {
   const navigate = useNavigate();
-  const { updateProfile, profile } = useProfile();
 
-  // --- 1. BILDUNG ---
-  const [educationLevel, setEducationLevel] = useState(profile.educationLevel || 'Master');
-  const [degree, setDegree] = useState(profile.degree || 'Master of Architecture');
-  const [university, setUniversity] = useState(profile.university || 'Technische Universität Hamburg');
+  // Basic Info
+  const [formData, setFormData] = useState({
+    name: "",
+    age: "",
+    location: "",
+    position: "",
+    specialty: "",
+    about: "",
+  });
 
-  // --- 2. BERUFSERFAHRUNG ---
-  const [experienceYears, setExperienceYears] = useState(profile.experienceYears || '8+ Jahre');
-  const [seniority, setSeniority] = useState(profile.seniority || 'Senior');
-  const [otherExperience, setOtherExperience] = useState(profile.otherExperience || 'Interior Design, Urban Planning');
-  const [formerWorkplace, setFormerWorkplace] = useState(profile.formerWorkplace || 'Architekturbüro Schmidt, BauPlan GmbH');
+  // Education
+  const [education, setEducation] = useState({
+    degree: "",
+    customDegree: "",
+    institution: "",
+  });
 
-  // --- 3. SKILLS ---
-  const [skills, setSkills] = useState<string[]>(profile.skills || ['AutoCAD', 'Revit', '3D Modeling', 'Photoshop', 'SketchUp']);
-  const [newSkill, setNewSkill] = useState('');
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [otherExperiences, setOtherExperiences] = useState<Experience[]>([]);
 
-  // --- 4. LINKS ZU PROJEKTEN ---
-  const [projectLinks, setProjectLinks] = useState<string[]>(profile.projectLinks || ['https://archdaily.com/project1', 'https://behance.net/marcus-architecture']);
-  const [newLink, setNewLink] = useState('');
+  // Skills
+  const [skills, setSkills] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState("");
 
-  // --- 5. SPRACHEN ---
-  const [languages, setLanguages] = useState<{name: string, level: string}[]>(profile.languages || [
-    { name: 'Deutsch', level: 'Muttersprache' },
-    { name: 'Englisch', level: 'Fließend' }
-  ]);
+  // Languages
+  const [languages, setLanguages] = useState<Language[]>([]);
+  const [newLanguage, setNewLanguage] = useState({
+    language: "",
+    level: "Basic",
+  });
 
-  // --- 6. JOB-PRÄFERENZEN ---
-  const [idealPosition, setIdealPosition] = useState(profile.idealPosition || 'Senior Architekt');
-  const [openPositions, setOpenPositions] = useState(profile.openPositions || 'Project Manager, Design Lead');
-  const [workModel, setWorkModel] = useState(profile.workModel || 'Flexibel');
-  const [availableFrom, setAvailableFrom] = useState(profile.availableFrom || '2026-05-01');
-  const [employmentType, setEmploymentType] = useState(profile.employmentType || 'Vollzeit');
-  const [employmentDuration, setEmploymentDuration] = useState(profile.employmentDuration || 'Unbefristet');
-  const [locationPreference, setLocationPreference] = useState(profile.locationPreference || 'Hamburg, Berlin, Remote');
+  // Recognition
+  const [recognitions, setRecognitions] = useState<Recognition[]>([]);
 
-  // --- LOGIC HELPER ---
-  const addSkill = () => { if(newSkill.trim()) { setSkills([...skills, newSkill]); setNewSkill(''); } };
-  const addLink = () => { if(newLink.trim()) { setProjectLinks([...projectLinks, newLink]); setNewLink(''); } };
-  
-  const updateLanguage = (index: number, field: 'name' | 'level', value: string) => {
-    const newLangs = [...languages];
-    newLangs[index] = { ...newLangs[index], [field]: value };
-    setLanguages(newLangs);
+  // Job Preferences
+  const [jobPreferences, setJobPreferences] = useState({
+    otherPositions: [] as string[],
+    workModel: [] as string[],
+    availableFrom: "",
+    employmentType: [] as string[],
+    employmentDuration: "",
+    preferredLocation: "",
+  });
+
+  const [newPosition, setNewPosition] = useState("");
+
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleEducationChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    setEducation({
+      ...education,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  // Skills
+  const addSkill = () => {
+    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
+      setSkills([...skills, newSkill.trim()]);
+      setNewSkill("");
+    }
+  };
+
+  const removeSkill = (skillToRemove: string) => {
+    setSkills(skills.filter((skill) => skill !== skillToRemove));
+  };
+
+  // Languages
+  const addLanguage = () => {
+    if (newLanguage.language.trim()) {
+      setLanguages([...languages, { ...newLanguage }]);
+      setNewLanguage({ language: "", level: "Basic" });
+    }
+  };
+
+  const removeLanguage = (index: number) => {
+    setLanguages(languages.filter((_, i) => i !== index));
+  };
+
+  // Experience
+  const addExperience = () => {
+    setExperiences([
+      ...experiences,
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        title: "",
+        company: "",
+        period: "",
+        years: "",
+        level: "",
+        description: "",
+      },
+    ]);
+  };
+
+  const removeExperience = (id: string) => {
+    setExperiences(experiences.filter((exp) => exp.id !== id));
+  };
+
+  const updateExperience = (id: string, field: string, value: string) => {
+    setExperiences(
+      experiences.map((exp) =>
+        exp.id === id ? { ...exp, [field]: value } : exp,
+      ),
+    );
+  };
+
+  // Other Experience
+  const addOtherExperience = () => {
+    setOtherExperiences([
+      ...otherExperiences,
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        title: "",
+        company: "",
+        period: "",
+        years: "",
+        level: "",
+        description: "",
+      },
+    ]);
+  };
+
+  const removeOtherExperience = (id: string) => {
+    setOtherExperiences(otherExperiences.filter((exp) => exp.id !== id));
+  };
+
+  const updateOtherExperience = (id: string, field: string, value: string) => {
+    setOtherExperiences(
+      otherExperiences.map((exp) =>
+        exp.id === id ? { ...exp, [field]: value } : exp,
+      ),
+    );
+  };
+
+  // Recognition
+  const addRecognition = () => {
+    setRecognitions([
+      ...recognitions,
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        award: "",
+        year: "",
+      },
+    ]);
+  };
+
+  const removeRecognition = (id: string) => {
+    setRecognitions(recognitions.filter((rec) => rec.id !== id));
+  };
+
+  const updateRecognition = (id: string, field: string, value: string) => {
+    setRecognitions(
+      recognitions.map((rec) =>
+        rec.id === id ? { ...rec, [field]: value } : rec,
+      ),
+    );
+  };
+
+  // Other Positions
+  const addPosition = () => {
+    if (
+      newPosition.trim() &&
+      !jobPreferences.otherPositions.includes(newPosition.trim())
+    ) {
+      setJobPreferences({
+        ...jobPreferences,
+        otherPositions: [...jobPreferences.otherPositions, newPosition.trim()],
+      });
+      setNewPosition("");
+    }
+  };
+
+  const removePosition = (position: string) => {
+    setJobPreferences({
+      ...jobPreferences,
+      otherPositions: jobPreferences.otherPositions.filter(
+        (p) => p !== position,
+      ),
+    });
+  };
+
+  // Work Model
+  const toggleWorkModel = (model: string) => {
+    if (jobPreferences.workModel.includes(model)) {
+      setJobPreferences({
+        ...jobPreferences,
+        workModel: jobPreferences.workModel.filter((m) => m !== model),
+      });
+    } else {
+      setJobPreferences({
+        ...jobPreferences,
+        workModel: [...jobPreferences.workModel, model],
+      });
+    }
+  };
+
+  // Employment Type
+  const toggleEmploymentType = (type: string) => {
+    if (jobPreferences.employmentType.includes(type)) {
+      setJobPreferences({
+        ...jobPreferences,
+        employmentType: jobPreferences.employmentType.filter((t) => t !== type),
+      });
+    } else {
+      setJobPreferences({
+        ...jobPreferences,
+        employmentType: [...jobPreferences.employmentType, type],
+      });
+    }
   };
 
   const handleNext = () => {
-    updateProfile({ 
-      educationLevel, degree, university, experienceYears, seniority, 
-      otherExperience, formerWorkplace, skills, projectLinks, languages,
-      idealPosition, openPositions, workModel, availableFrom, employmentType,
-      employmentDuration, locationPreference
-    });
-    navigate('/talent-profile-setup-3');
+    const setupData = {
+      formData,
+      education,
+      skills,
+      experiences,
+      otherExperiences,
+      languages,
+      recognitions,
+      jobPreferences,
+    };
+
+    localStorage.setItem("talentSetup2", JSON.stringify(setupData));
+    navigate("/talent-profile-setup-3");
   };
 
   return (
-    <div className="min-h-screen bg-white text-black pb-24 font-sans antialiased">
-      
-      {/* HEADER */}
-      <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-5 flex items-center z-50">
-        <div 
-          className="p-1 -ml-1 cursor-pointer bg-gray-50 rounded-full transition-colors flex items-center justify-center mr-4" 
-          onClick={() => navigate('/talent-profile-setup-1')}
-        >
-            <ChevronLeft className="w-6 h-6 text-gray-800" />
-        </div>
-        <h1 className="text-[17px] font-medium text-gray-900 tracking-tight">Über dich</h1>
+    <div className="relative min-h-screen w-full bg-black overflow-auto pb-20">
+      {/* Logo */}
+      <Link to="/">
+        <Logo />
+      </Link>
+
+      {/* Progress Indicator */}
+      <div className="fixed top-8 right-8 z-50 flex gap-2">
+        <div className="w-12 h-1 bg-white rounded-full"></div>
+        <div className="w-12 h-1 bg-white rounded-full"></div>
+        <div className="w-12 h-1 bg-white/30 rounded-full"></div>
       </div>
 
-      <div className="max-w-[480px] mx-auto px-6 py-10 space-y-10">
-        
-        {/* BILDUNG */}
-        <section className="space-y-5">
-          <h2 className="text-[18px] font-medium tracking-tight text-gray-900">Bildung</h2>
-          <div className="space-y-4">
-            <div className="relative">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Bildungsstand</label>
-              <select value={educationLevel} onChange={(e) => setEducationLevel(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 mt-1 text-[14px] appearance-none bg-white outline-none focus:border-black transition-colors">
-                <option>Bachelor</option><option>Master</option><option>Diplom</option><option>Promotion</option><option>Ausbildung</option><option>Abitur</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-[65%] -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Abschluss</label>
-              <input type="text" value={degree} onChange={(e) => setDegree(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] outline-none focus:border-black" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Ausbildung / Universität</label>
-              <input type="text" value={university} onChange={(e) => setUniversity(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] outline-none focus:border-black" />
-            </div>
-          </div>
-        </section>
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-8 pt-32 pb-32">
+        <div className="mb-12">
+          <h1 className="text-4xl font-light text-white mb-4">
+            Professional Information
+          </h1>
+          <p className="text-gray-400 text-lg font-light">
+            Tell us about your experience and expertise.
+          </p>
+        </div>
 
-        {/* BERUFSERFAHRUNG */}
-        <section className="space-y-5 pt-4 border-t border-gray-50">
-          <h2 className="text-[18px] font-medium tracking-tight text-gray-900">Berufserfahrung</h2>
-          <div className="space-y-4">
-            <div className="relative">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Jahre der Berufserfahrung</label>
-              <select value={experienceYears} onChange={(e) => setExperienceYears(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 mt-1 text-[14px] appearance-none bg-white outline-none focus:border-black">
-                <option>0-1 Jahre</option><option>1-3 Jahre</option><option>3-5 Jahre</option><option>5-8 Jahre</option><option>8+ Jahre</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-[65%] -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
+        <div className="space-y-12">
+          {/* Basic Info */}
+          <section>
+            <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
+              Basic Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+              />
+              <input
+                type="text"
+                name="age"
+                placeholder="Age"
+                value={formData.age}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+              />
+              <input
+                type="text"
+                name="location"
+                placeholder="Location (e.g., Berlin, Germany)"
+                value={formData.location}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+              />
+              <input
+                type="text"
+                name="position"
+                placeholder="Position (e.g., Bar Manager)"
+                value={formData.position}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+              />
+              <input
+                type="text"
+                name="specialty"
+                placeholder="Specialty (e.g., Signature Cocktails & Fine Spirits)"
+                value={formData.specialty}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg md:col-span-2"
+              />
             </div>
-            <div className="relative">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Erfahrungslevel</label>
-              <select value={seniority} onChange={(e) => setSeniority(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 mt-1 text-[14px] appearance-none bg-white outline-none focus:border-black">
-                <option>Junior</option><option>Mid-Level</option><option>Senior</option><option>Lead</option><option>Expert</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-[65%] -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Andere Berufserfahrungen</label>
-              <input type="text" value={otherExperience} onChange={(e) => setOtherExperience(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] outline-none" />
-              <p className="text-[10px] text-gray-400 ml-1">Kommagetrennt</p>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Ehemalige Arbeitsorte</label>
-              <input type="text" value={formerWorkplace} onChange={(e) => setFormerWorkplace(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] outline-none" />
-              <p className="text-[10px] text-gray-400 ml-1">Kommagetrennt</p>
-            </div>
-          </div>
-        </section>
+          </section>
 
-        {/* SKILLS */}
-        <section className="space-y-4 pt-4 border-t border-gray-50">
-          <h2 className="text-[18px] font-medium text-gray-900">Skills</h2>
-          <div className="flex flex-wrap gap-2">
-            {skills.map(skill => (
-              <div key={skill} className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                <span className="text-[13px] font-medium text-gray-700">{skill}</span>
-                <X className="w-3.5 h-3.5 text-gray-400 cursor-pointer hover:text-black transition-colors" onClick={() => setSkills(skills.filter(s => s !== skill))} />
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <input placeholder="Skill hinzufügen" value={newSkill} onChange={(e) => setNewSkill(e.target.value)} className="flex-1 border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] outline-none focus:border-black transition-all" />
-            <button onClick={addSkill} className="bg-gray-50 px-4 rounded-xl hover:bg-gray-100 border border-gray-100 transition-colors"><Plus className="w-5 h-5 text-gray-600" /></button>
-          </div>
-        </section>
+          {/* About */}
+          <section>
+            <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
+              About You
+            </h2>
+            <textarea
+              name="about"
+              placeholder="Award-winning Bar Manager with over 15 years of experience in luxury hospitality. Specialized in crafting signature cocktails and curating premium spirits collections..."
+              value={formData.about}
+              onChange={handleInputChange}
+              rows={5}
+              className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light resize-none rounded-lg"
+            />
+          </section>
 
-        {/* LINKS ZU PROJEKTEN */}
-        <section className="space-y-4 pt-4 border-t border-gray-50">
-          <h2 className="text-[18px] font-medium text-gray-900">Links zu Projekten</h2>
-          <div className="space-y-3">
-            {projectLinks.map((link, idx) => (
-              <div key={idx} className="flex items-center justify-between border border-gray-100 p-4 rounded-xl bg-gray-50/50">
-                <span className="text-[14px] text-gray-600 truncate mr-4">{link}</span>
-                <X className="w-4 h-4 text-gray-300 cursor-pointer" onClick={() => setProjectLinks(projectLinks.filter((_, i) => i !== idx))} />
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <input placeholder="https://beispiel.de/projekt" value={newLink} onChange={(e) => setNewLink(e.target.value)} className="flex-1 border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] outline-none focus:border-black" />
-            <button onClick={addLink} className="bg-gray-50 px-4 rounded-xl border border-gray-100"><Plus className="w-5 h-5 text-gray-600" /></button>
-          </div>
-        </section>
-
-        {/* SPRACHEN (KORRIGIERT) */}
-        <section className="space-y-4 pt-4 border-t border-gray-50">
-          <h2 className="text-[18px] font-medium text-gray-900">Sprachen</h2>
-          <div className="space-y-3">
-            {languages.map((lang, idx) => (
-              <div key={idx} className="flex items-center gap-3">
-                <input 
-                  type="text"
-                  value={lang.name}
-                  placeholder="z.B. Deutsch"
-                  onChange={(e) => updateLanguage(idx, 'name', e.target.value)}
-                  className="flex-[1.5] border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] outline-none focus:border-black transition-colors"
-                />
-                
-                <div className="flex-1 relative">
-                  <select 
-                    value={lang.level}
-                    onChange={(e) => updateLanguage(idx, 'level', e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] appearance-none bg-white outline-none focus:border-black transition-colors"
+          {/* Work Experience */}
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-white font-light uppercase tracking-[0.2em] text-sm">
+                Experience
+              </h2>
+              <button
+                onClick={addExperience}
+                className="px-4 py-2 border border-white text-white hover:bg-white hover:text-black transition-all text-sm uppercase tracking-[0.2em] font-light rounded-lg"
+              >
+                + Add Experience
+              </button>
+            </div>
+            <div className="space-y-6">
+              {experiences.map((exp) => (
+                <div
+                  key={exp.id}
+                  className="p-6 border border-white/30 rounded-xl relative"
+                >
+                  <button
+                    onClick={() => removeExperience(exp.id)}
+                    className="absolute top-4 right-4 text-white/60 hover:text-red-500 transition-colors"
                   >
-                    <option>Muttersprache</option>
-                    <option>Fließend</option>
-                    <option>Sehr gut</option>
-                    <option>Gut</option>
-                    <option>Grundkenntnisse</option>
-                  </select>
-                  <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
+                    <X className="w-5 h-5" />
+                  </button>
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      placeholder="Job Title (e.g., Head Bar Manager)"
+                      value={exp.title}
+                      onChange={(e) =>
+                        updateExperience(exp.id, "title", e.target.value)
+                      }
+                      className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Company Name (e.g., Skybar Singapore)"
+                      value={exp.company}
+                      onChange={(e) =>
+                        updateExperience(exp.id, "company", e.target.value)
+                      }
+                      className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Period (e.g., 2020 - Present)"
+                      value={exp.period}
+                      onChange={(e) =>
+                        updateExperience(exp.id, "period", e.target.value)
+                      }
+                      className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                    />
+
+                    {/* Years + Level */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        placeholder="Years (e.g., 13 years)"
+                        value={exp.years}
+                        onChange={(e) =>
+                          updateExperience(exp.id, "years", e.target.value)
+                        }
+                        className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                      />
+                      <select
+                        value={exp.level}
+                        onChange={(e) =>
+                          updateExperience(exp.id, "level", e.target.value)
+                        }
+                        className="w-full px-4 py-3 bg-transparent border border-white/30 text-white focus:border-white focus:outline-none transition-colors font-light appearance-none rounded-lg"
+                      >
+                        <option value="" className="bg-black">
+                          Level
+                        </option>
+                        <option value="Junior" className="bg-black">
+                          Junior (0-2 years)
+                        </option>
+                        <option value="Mid-Level" className="bg-black">
+                          Mid-Level (3-5 years)
+                        </option>
+                        <option value="Senior" className="bg-black">
+                          Senior (5-8 years)
+                        </option>
+                        <option value="Expert" className="bg-black">
+                          Expert (8+ years)
+                        </option>
+                      </select>
+                    </div>
+
+                    <textarea
+                      placeholder="Description (e.g., Leading a team of 12 bartenders at Asia's premier rooftop bar...)"
+                      value={exp.description}
+                      onChange={(e) =>
+                        updateExperience(exp.id, "description", e.target.value)
+                      }
+                      rows={3}
+                      className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light resize-none rounded-lg"
+                    />
+                  </div>
                 </div>
+              ))}
+            </div>
+          </section>
 
-                <X 
-                  className="w-5 h-5 text-gray-300 cursor-pointer hover:text-black flex-shrink-0" 
-                  onClick={() => setLanguages(languages.filter((_, i) => i !== idx))} 
+          {/* Skills */}
+          <section>
+            <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
+              Expertise
+            </h2>
+            <div className="flex gap-3 mb-4">
+              <input
+                type="text"
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && addSkill()}
+                placeholder="e.g., Signature Cocktails, Spirit Pairing, Menu Development, Team Leadership..."
+                className="flex-1 px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+              />
+              <button
+                onClick={addSkill}
+                className="px-6 py-3 border border-white text-white hover:bg-white hover:text-black transition-all rounded-lg"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {skills.map((skill) => (
+                <div
+                  key={skill}
+                  className="flex items-center gap-2 px-4 py-2 border border-white text-white group hover:border-red-500 hover:text-red-500 transition-colors rounded-lg"
+                >
+                  <span className="font-light text-sm">{skill}</span>
+                  <button onClick={() => removeSkill(skill)}>
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Other Work Experience */}
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-white font-light uppercase tracking-[0.2em] text-sm">
+                Other Work Experience
+              </h2>
+              <button
+                onClick={addOtherExperience}
+                className="px-4 py-2 border border-white text-white hover:bg-white hover:text-black transition-all text-sm uppercase tracking-[0.2em] font-light rounded-lg"
+              >
+                + Add Other Experience
+              </button>
+            </div>
+            <div className="space-y-6">
+              {otherExperiences.map((exp) => (
+                <div
+                  key={exp.id}
+                  className="p-6 border border-white/30 rounded-xl relative"
+                >
+                  <button
+                    onClick={() => removeOtherExperience(exp.id)}
+                    className="absolute top-4 right-4 text-white/60 hover:text-red-500 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      placeholder="Job Title"
+                      value={exp.title}
+                      onChange={(e) =>
+                        updateOtherExperience(exp.id, "title", e.target.value)
+                      }
+                      className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Company Name"
+                      value={exp.company}
+                      onChange={(e) =>
+                        updateOtherExperience(exp.id, "company", e.target.value)
+                      }
+                      className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Period (e.g., 2016 - 2020)"
+                      value={exp.period}
+                      onChange={(e) =>
+                        updateOtherExperience(exp.id, "period", e.target.value)
+                      }
+                      className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                    />
+
+                    {/* Years + Level */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        placeholder="Years (e.g., 4 years)"
+                        value={exp.years}
+                        onChange={(e) =>
+                          updateOtherExperience(exp.id, "years", e.target.value)
+                        }
+                        className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                      />
+                      <select
+                        value={exp.level}
+                        onChange={(e) =>
+                          updateOtherExperience(exp.id, "level", e.target.value)
+                        }
+                        className="w-full px-4 py-3 bg-transparent border border-white/30 text-white focus:border-white focus:outline-none transition-colors font-light appearance-none rounded-lg"
+                      >
+                        <option value="" className="bg-black">
+                          Level
+                        </option>
+                        <option value="Junior" className="bg-black">
+                          Junior (0-2 years)
+                        </option>
+                        <option value="Mid-Level" className="bg-black">
+                          Mid-Level (3-5 years)
+                        </option>
+                        <option value="Senior" className="bg-black">
+                          Senior (5-8 years)
+                        </option>
+                        <option value="Expert" className="bg-black">
+                          Expert (8+ years)
+                        </option>
+                      </select>
+                    </div>
+
+                    <textarea
+                      placeholder="Description..."
+                      value={exp.description}
+                      onChange={(e) =>
+                        updateOtherExperience(
+                          exp.id,
+                          "description",
+                          e.target.value,
+                        )
+                      }
+                      rows={3}
+                      className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light resize-none rounded-lg"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Recognition */}
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-white font-light uppercase tracking-[0.2em] text-sm">
+                Recognition
+              </h2>
+              <button
+                onClick={addRecognition}
+                className="px-4 py-2 border border-white text-white hover:bg-white hover:text-black transition-all text-sm uppercase tracking-[0.2em] font-light rounded-lg"
+              >
+                + Add Award
+              </button>
+            </div>
+            <div className="space-y-4">
+              {recognitions.map((rec) => (
+                <div key={rec.id} className="flex gap-4 items-start">
+                  <input
+                    type="text"
+                    placeholder="Award / Recognition (e.g., Best Cocktail Bar Asia 2023)"
+                    value={rec.award}
+                    onChange={(e) =>
+                      updateRecognition(rec.id, "award", e.target.value)
+                    }
+                    className="flex-1 px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Year"
+                    value={rec.year}
+                    onChange={(e) =>
+                      updateRecognition(rec.id, "year", e.target.value)
+                    }
+                    className="w-32 px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                  />
+                  <button
+                    onClick={() => removeRecognition(rec.id)}
+                    className="p-3 text-white/60 hover:text-red-500 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Education */}
+          <section>
+            <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
+              Education
+            </h2>
+            <div className="space-y-6">
+              <select
+                name="degree"
+                value={education.degree}
+                onChange={handleEducationChange}
+                className="w-full px-4 py-3 bg-transparent border border-white/30 text-white focus:border-white focus:outline-none transition-colors font-light appearance-none rounded-lg"
+              >
+                <option value="" className="bg-black">
+                  Select Degree / Qualification
+                </option>
+                <option value="Bachelor" className="bg-black">
+                  Bachelor
+                </option>
+                <option value="Master" className="bg-black">
+                  Master
+                </option>
+                <option value="Diplom" className="bg-black">
+                  Diplom
+                </option>
+                <option value="Promotion" className="bg-black">
+                  Promotion
+                </option>
+                <option value="Ausbildung" className="bg-black">
+                  Ausbildung
+                </option>
+                <option value="Abitur" className="bg-black">
+                  Abitur
+                </option>
+                <option value="Other" className="bg-black">
+                  Other
+                </option>
+              </select>
+
+              {education.degree === "Other" && (
+                <input
+                  type="text"
+                  name="customDegree"
+                  placeholder="Enter your degree"
+                  value={education.customDegree}
+                  onChange={handleEducationChange}
+                  className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
                 />
-              </div>
-            ))}
-          </div>
-          <button 
-            type="button"
-            className="text-[13px] font-medium text-gray-600 flex items-center gap-2 px-1 pt-1"
-            onClick={() => setLanguages([...languages, { name: '', level: 'Gut' }])}
-          >
-            <Plus className="w-4 h-4" /> Sprache hinzufügen
-          </button>
-        </section>
+              )}
 
-        {/* JOB-PRÄFERENZEN (KORRIGIERT) */}
-        <section className="space-y-6 pt-4 border-t border-gray-50">
-          <h2 className="text-[18px] font-medium tracking-tight text-gray-900">Job-Präferenzen</h2>
-          <div className="space-y-5">
-            <div className="space-y-1">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Ideale Jobposition</label>
-              <input type="text" value={idealPosition} onChange={(e) => setIdealPosition(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] outline-none focus:border-black" />
+              <input
+                type="text"
+                name="institution"
+                placeholder="University / Training Institution"
+                value={education.institution}
+                onChange={handleEducationChange}
+                className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+              />
             </div>
+          </section>
 
-            <div className="space-y-1">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Andere Positionen für die du offen bist</label>
-              <input type="text" value={openPositions} onChange={(e) => setOpenPositions(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] outline-none focus:border-black" />
-              <p className="text-[10px] text-gray-400 ml-1">Kommagetrennt</p>
+          {/* Languages */}
+          <section>
+            <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
+              Languages
+            </h2>
+            <div className="flex gap-3 mb-4">
+              <input
+                type="text"
+                value={newLanguage.language}
+                onChange={(e) =>
+                  setNewLanguage({ ...newLanguage, language: e.target.value })
+                }
+                placeholder="Language (e.g., English)"
+                className="flex-1 px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+              />
+              <select
+                value={newLanguage.level}
+                onChange={(e) =>
+                  setNewLanguage({ ...newLanguage, level: e.target.value })
+                }
+                className="px-4 py-3 bg-transparent border border-white/30 text-white focus:border-white focus:outline-none transition-colors font-light appearance-none rounded-lg"
+              >
+                <option value="Basic" className="bg-black">
+                  Basic
+                </option>
+                <option value="Conversational" className="bg-black">
+                  Conversational
+                </option>
+                <option value="Fluent" className="bg-black">
+                  Fluent
+                </option>
+                <option value="Native" className="bg-black">
+                  Native
+                </option>
+              </select>
+              <button
+                onClick={addLanguage}
+                className="px-6 py-3 border border-white text-white hover:bg-white hover:text-black transition-all rounded-lg"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
             </div>
-            
             <div className="space-y-2">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Arbeitsmodell</label>
-              <div className="grid grid-cols-3 gap-3">
-                {['Remote', 'Office', 'Flexibel'].map(mode => (
-                  <button key={mode} onClick={() => setWorkModel(mode)}
-                    className={`py-3.5 rounded-xl text-[13px] font-medium border transition-all ${workModel === mode ? 'bg-black text-white border-black' : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>
-                    {mode}
+              {languages.map((lang, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-4 border border-white/30 rounded-lg group hover:border-red-500 transition-colors"
+                >
+                  <span className="text-white font-light">
+                    {lang.language} •{" "}
+                    <span className="text-gray-400">{lang.level}</span>
+                  </span>
+                  <button
+                    onClick={() => removeLanguage(index)}
+                    className="text-white/60 group-hover:text-red-500 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Job Preferences */}
+          <section>
+            <h2 className="text-white font-light mb-8 uppercase tracking-[0.2em] text-sm">
+              Job Preferences
+            </h2>
+
+            {/* Other Positions */}
+            <div className="mb-8">
+              <label className="block text-white/80 font-light mb-4 text-sm">
+                Other Positions You're Open To
+              </label>
+              <div className="flex gap-3 mb-4">
+                <input
+                  type="text"
+                  value={newPosition}
+                  onChange={(e) => setNewPosition(e.target.value)}
+                  placeholder="Add position"
+                  className="flex-1 px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                />
+                <button
+                  onClick={addPosition}
+                  className="px-6 py-3 border border-white text-white hover:bg-white hover:text-black transition-all rounded-lg"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {jobPreferences.otherPositions.map((position) => (
+                  <div
+                    key={position}
+                    className="flex items-center gap-2 px-4 py-2 border border-white text-white group hover:border-red-500 hover:text-red-500 transition-colors rounded-lg"
+                  >
+                    <span className="font-light text-sm">{position}</span>
+                    <button onClick={() => removePosition(position)}>
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Work Model */}
+            <div className="mb-8">
+              <label className="block text-white/80 font-light mb-4 text-sm">
+                Work Model
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {["Remote", "Office", "Hybrid"].map((model) => (
+                  <button
+                    key={model}
+                    onClick={() => toggleWorkModel(model)}
+                    className={`px-6 py-3 border transition-all uppercase tracking-[0.2em] text-sm font-light rounded-lg ${
+                      jobPreferences.workModel.includes(model)
+                        ? "bg-white text-black border-white"
+                        : "bg-transparent text-white border-white/30 hover:border-white"
+                    }`}
+                  >
+                    {model}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Verfügbar ab</label>
-              <div className="relative">
-                <input 
-                  type="date" 
-                  value={availableFrom}
-                  onChange={(e) => setAvailableFrom(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] outline-none bg-white focus:border-black" 
-                />
-                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            {/* Employment Type */}
+            <div className="mb-8">
+              <label className="block text-white/80 font-light mb-4 text-sm">
+                Employment Type
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {["Full-time", "Part-time", "Freelance", "Contract"].map(
+                  (type) => (
+                    <button
+                      key={type}
+                      onClick={() => toggleEmploymentType(type)}
+                      className={`px-6 py-3 border transition-all uppercase tracking-[0.2em] text-sm font-light rounded-lg ${
+                        jobPreferences.employmentType.includes(type)
+                          ? "bg-white text-black border-white"
+                          : "bg-transparent text-white border-white/30 hover:border-white"
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ),
+                )}
               </div>
             </div>
 
-            <div className="space-y-1 relative">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Gewünschte Beschäftigungsart</label>
-              <select 
-                value={employmentType}
-                onChange={(e) => setEmploymentType(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] appearance-none bg-white outline-none focus:border-black transition-colors"
-              >
-                <option>Vollzeit</option>
-                <option>Teilzeit</option>
-                <option>Freelance</option>
-                <option>Werkstudent</option>
-              </select>
-              <ChevronRight className="absolute right-4 top-[70%] -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
+            {/* Other Preferences */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-white/80 font-light mb-3 text-sm">
+                  Available From
+                </label>
+                <input
+                  type="date"
+                  value={jobPreferences.availableFrom}
+                  onChange={(e) =>
+                    setJobPreferences({
+                      ...jobPreferences,
+                      availableFrom: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 bg-transparent border border-white/30 text-white focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-white/80 font-light mb-3 text-sm">
+                  Employment Duration
+                </label>
+                <select
+                  value={jobPreferences.employmentDuration}
+                  onChange={(e) =>
+                    setJobPreferences({
+                      ...jobPreferences,
+                      employmentDuration: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 bg-transparent border border-white/30 text-white focus:border-white focus:outline-none transition-colors font-light appearance-none rounded-lg"
+                >
+                  <option value="" className="bg-black">
+                    Select duration
+                  </option>
+                  <option value="Permanent" className="bg-black">
+                    Permanent
+                  </option>
+                  <option value="Temporary" className="bg-black">
+                    Temporary
+                  </option>
+                  <option value="Project-based" className="bg-black">
+                    Project-based
+                  </option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-white/80 font-light mb-3 text-sm">
+                  Preferred Location
+                </label>
+                <input
+                  type="text"
+                  value={jobPreferences.preferredLocation}
+                  onChange={(e) =>
+                    setJobPreferences({
+                      ...jobPreferences,
+                      preferredLocation: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., Berlin, Munich, or Remote"
+                  className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+                />
+              </div>
             </div>
+          </section>
+        </div>
 
-            <div className="space-y-1 relative">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Gewünschte Beschäftigungsdauer</label>
-              <select 
-                value={employmentDuration}
-                onChange={(e) => setEmploymentDuration(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] appearance-none bg-white outline-none focus:border-black transition-colors"
-              >
-                <option>Unbefristet</option>
-                <option>Befristet</option>
-                <option>Projektbasiert</option>
-              </select>
-              <ChevronRight className="absolute right-4 top-[70%] -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[13px] font-medium text-gray-400 ml-1">Beschäftigungsort</label>
-              <input type="text" value={locationPreference} onChange={(e) => setLocationPreference(e.target.value)} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-[14px] outline-none focus:border-black" />
-              <p className="text-[10px] text-gray-400 ml-1">Kommagetrennt</p>
-            </div>
-          </div>
-        </section>
-
-        <button onClick={handleNext}
-          className="w-full bg-[#000000] text-white py-5 rounded-2xl font-medium text-[15px] active:scale-[0.98] transition-all tracking-[0.1em]">
-          Step 2/3
-        </button>
-
+        {/* Navigation */}
+        <div className="flex justify-between items-center pt-8 border-t border-white/20 mt-12">
+          <Link
+            to="/talent-profile-setup-1"
+            className="px-8 py-3 border border-white/30 text-white hover:border-white transition-all uppercase tracking-[0.2em] text-sm font-light rounded-lg"
+          >
+            Back
+          </Link>
+          <button
+            onClick={handleNext}
+            className="px-8 py-3 bg-white text-black hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-lg"
+          >
+            Next Step
+          </button>
+        </div>
       </div>
     </div>
   );

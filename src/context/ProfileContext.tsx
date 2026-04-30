@@ -71,7 +71,7 @@ export const useProfile = () => {
   const context = useContext(ProfileContext);
   if (!context)
     throw new Error(
-      "useProfile muss innerhalb eines ProfileProviders genutzt werden",
+      "useProfile muss innerhalb eines ProfileProviders genutzt werden!",
     );
   return context;
 };
