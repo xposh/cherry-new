@@ -7,6 +7,8 @@ Funktionen:
 - login(user)
 - logout() */
 
+// Needs to be changed when backend is available
+
 import { createContext, useContext, useState, ReactNode } from "react";
 
 export type UserRole = "worker" | "employer" | null;
