@@ -11,10 +11,15 @@ import { CompanyProfileSetup2 } from "../pages/Company/CompanyProfileSetup2";
 import { CompanyProfileSetup3 } from "../pages/Company/CompanyProfileSetup3";
 import { CompanyProfileSummary } from "../pages/Company/CompanyProfileSummary";
 import { MainLayout } from "../layouts/MainLayout";
+import { HomePage } from "../pages/Home/HomePage.tsx";
 import { DiscoverPage } from "../pages/Discover/DiscoverPage";
 import { CherryPicksPage } from "../pages/Matches/CherryPicksPage";
 import { MessagesPage } from "../pages/Messages/MessagesPage";
 import { AccountPage } from "../pages/Account/AccountPage";
+import { TalentProfileView } from "../pages/Profile/TalentProfileView";
+import { CompanyProfileView } from "../pages/Profile/CompanyProfileView";
+import { TalentMatchDetailsPage } from "../pages/Matches/TalentMatchDetailsPage.tsx";
+import { CompanyMatchDetailsPage } from "../pages/Matches/CompanyMatchDetailsPage";
 
 export const routes = createBrowserRouter([
   // PUBLIC ROUTES (No Navigation)
@@ -34,6 +39,14 @@ export const routes = createBrowserRouter([
 
   // MAIN APP ROUTES (With Bottom Navigation)
   {
+    path: "/home",
+    element: (
+      <MainLayout>
+        <HomePage />
+      </MainLayout>
+    ),
+  },
+  {
     path: "/discover",
     element: (
       <MainLayout>
@@ -42,10 +55,42 @@ export const routes = createBrowserRouter([
     ),
   },
   {
+    path: "/talent/:id",
+    element: (
+      <MainLayout>
+        <TalentProfileView />
+      </MainLayout>
+    ),
+  },
+  {
+    path: "/company/:id",
+    element: (
+      <MainLayout>
+        <CompanyProfileView />
+      </MainLayout>
+    ),
+  },
+  {
     path: "/cherry-picks",
     element: (
       <MainLayout>
         <CherryPicksPage />
+      </MainLayout>
+    ),
+  },
+  {
+    path: "/match/talent/:id",
+    element: (
+      <MainLayout>
+        <TalentMatchDetailsPage />
+      </MainLayout>
+    ),
+  },
+  {
+    path: "/match/company/:id",
+    element: (
+      <MainLayout>
+        <CompanyMatchDetailsPage />
       </MainLayout>
     ),
   },

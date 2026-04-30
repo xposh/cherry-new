@@ -1,38 +1,56 @@
-import { Link, useLocation } from "react-router";
-import { Compass, Heart, MessageCircle, User } from "lucide-react";
+import { Search, Home, Cherry, Mail, User } from "lucide-react";
+import { useNavigate, useLocation } from "react-router";
 
 export function BottomNavigation() {
+  const navigate = useNavigate();
   const location = useLocation();
 
-  const isActive = (path: string) => location.pathname === path;
-
   const navItems = [
-    { path: "/discover", icon: Compass, label: "Discover" },
-    { path: "/cherry-picks", icon: Heart, label: "Cherry Picks" },
-    { path: "/messages", icon: MessageCircle, label: "Messages" },
-    { path: "/account", icon: User, label: "Account" },
+    { id: "home", label: "Home", icon: Home, path: "/home" },
+    { id: "discover", label: "Discover", icon: Search, path: "/discover" },
+    {
+      id: "cherry-picks",
+      label: "Cherry Picks",
+      icon: Cherry,
+      path: "/cherry-picks",
+    },
+    { id: "messages", label: "Messages", icon: Mail, path: "/messages" },
+    { id: "account", label: "Account", icon: User, path: "/account" },
   ];
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-white/20 z-50">
-      <div className="flex justify-around items-center h-20 max-w-2xl mx-auto px-4">
+    <nav className="fixed bottom-0 left-0 right-0 bg-black/70 border-t border-white/10 z-50 backdrop-blur-sm">
+      <div className="flex items-center justify-around h-20 px-4">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
 
           return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-                active ? "text-white" : "text-white/40 hover:text-white/70"
-              }`}
+            <button
+              key={item.id}
+              onClick={() => navigate(item.path)}
+              className="flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors"
             >
-              <Icon className="w-6 h-6" />
-              <span className="text-[10px] uppercase tracking-wider font-light">
+              <Icon
+                className="w-6 h-6"
+                style={{
+                  color: active ? "#ffffff" : "#6f6f6f",
+                  strokeWidth: 1,
+                }}
+              />
+              <span
+                className="text-[10px] tracking-wider"
+                style={{
+                  color: "#6f6f6f",
+                }}
+              >
                 {item.label}
               </span>
-            </Link>
+            </button>
           );
         })}
       </div>
