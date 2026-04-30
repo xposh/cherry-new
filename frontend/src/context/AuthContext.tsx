@@ -9,7 +9,7 @@ Funktionen:
 
 // Needs to be changed when backend is available
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 export type UserRole = "worker" | "employer" | null;
 
