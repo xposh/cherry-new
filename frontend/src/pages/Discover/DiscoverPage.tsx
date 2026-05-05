@@ -1,9 +1,10 @@
-import { Search, SlidersHorizontal, MapPin, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router";
-import { useState } from "react"; // NEU: Import für den Zustand
+import { Search, SlidersHorizontal, MapPin, Sparkles, X } from "lucide-react";
+import { useNavigate, Link } from "react-router";
+import { useState, useMemo } from "react";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { Logo } from "../../components/Logo";
 
+// Datensatz erweitert um die Felder für die Filter-Logik
 const cards = [
   {
     id: 1,
@@ -11,6 +12,8 @@ const cards = [
     name: "Marcus Klein",
     role: "Photographer",
     city: "Hamburg",
+    experience: "Senior (5-8 years)",
+    model: "Office",
     match: true,
   },
   {
@@ -19,6 +22,8 @@ const cards = [
     name: "Jason Brick",
     role: "Sommelier",
     city: "Berlin",
+    experience: "Mid (3-5 years)",
+    model: "Hybrid",
   },
   {
     id: 3,
@@ -26,6 +31,8 @@ const cards = [
     name: "Steven Cole",
     role: "Bar Manager",
     city: "Frankfurt",
+    experience: "Expert (8+ years)",
+    model: "Office",
   },
   {
     id: 4,
@@ -33,6 +40,8 @@ const cards = [
     name: "Danni Chang",
     role: "Head Chef",
     city: "Berlin",
+    experience: "Senior (5-8 years)",
+    model: "Office",
     match: true,
   },
   {
@@ -41,6 +50,8 @@ const cards = [
     name: "Emma Ford",
     role: "Barista",
     city: "Köln",
+    experience: "Junior (0-2 years)",
+    model: "Remote",
   },
   {
     id: 6,
@@ -48,59 +59,100 @@ const cards = [
     name: "Zara Makovic",
     role: "Pilates Instructor",
     city: "Hamburg",
+    experience: "Mid (3-5 years)",
+    model: "Hybrid",
   },
 ];
 
 export function DiscoverPage() {
   const navigate = useNavigate();
 
-  // --- LOGIK-BLOCK START ---
-
-  // 1. Wir speichern den aktuellen Suchbegriff im State
+  // --- LOGIK-BLOCK ---
   const [searchQuery, setSearchQuery] = useState("");
-
-  // 2. Wir steuern, ob die Filter-Sidebar offen ist
   const [showFilter, setShowFilter] = useState(false);
-
-  // 3. WICHTIG: Die Filter-Funktion
-  // Wir erstellen eine neue Liste basierend auf der Suche.
-  // Wir wandeln alles in .toLowerCase() um, damit "Chef" auch "chef" findet.
-  const filteredCards = cards.filter((card) => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      card.name.toLowerCase().includes(searchLower) ||
-      card.role.toLowerCase().includes(searchLower) ||
-      card.city.toLowerCase().includes(searchLower)
-    );
-  });
-
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
 
-  const handleProfileClick = (e: React.MouseEvent, profileId: string) => {
-    e.preventDefault(); // Verhindert das Standardverhalten (z.B. Link-Navigation)
+  // Zentraler Filter-State für einfache Backend-Anbindung
+  const [filters, setFilters] = useState({
+    role: "",
+    city: "",
+    experience: "All levels",
+    models: [] as string[],
+  });
 
+  // Kombinierte Filter-Funktion (Searchbar + Sidebar)
+  const filteredCards = useMemo(() => {
+    return cards.filter((card) => {
+      const s = searchQuery.toLowerCase();
+      // Suche über Name, Rolle oder Stadt
+      const matchesSearch =
+        card.name.toLowerCase().includes(s) ||
+        card.role.toLowerCase().includes(s) ||
+        card.city.toLowerCase().includes(s);
+
+      // Abgleich mit den Sidebar-Filtern
+      const matchesRole =
+        filters.role === "" ||
+        card.role.toLowerCase().includes(filters.role.toLowerCase());
+      const matchesCity =
+        filters.city === "" ||
+        card.city.toLowerCase().includes(filters.city.toLowerCase());
+      const matchesExp =
+        filters.experience === "All levels" ||
+        card.experience === filters.experience;
+      const matchesModel =
+        filters.models.length === 0 || filters.models.includes(card.model);
+
+      return (
+        matchesSearch &&
+        matchesRole &&
+        matchesCity &&
+        matchesExp &&
+        matchesModel
+      );
+    });
+  }, [searchQuery, filters]);
+
+  // DEINE ONCLICK LOGIK (Wiederhergestellt)
+  const handleProfileClick = (e: React.MouseEvent, profileId: string) => {
+    e.preventDefault();
     if (activeProfileId === profileId) {
-      // Second tap - navigate to profile
-      navigate(`/talent/${profileId}`); // Hier musst du die tatsächliche ID einsetzen
+      // Zweiter Klick -> Navigation zur dynamischen ID
+      navigate(`/talent/${profileId}`);
     } else {
-      // First tap - show details
+      // Erster Klick -> Zeigt Details (Hover-Zustand fixieren)
       setActiveProfileId(profileId);
     }
   };
 
-  // --- LOGIK-BLOCK ENDE ---
+  const toggleModel = (model: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      models: prev.models.includes(model)
+        ? prev.models.filter((m) => m !== model)
+        : [...prev.models, model],
+    }));
+  };
+
+  // Funktion zum Zurücksetzen aller Filter- und Suchzustände
+  const resetFilters = () => {
+    setSearchQuery(""); // Leert das Suchfeld
+    setFilters({
+      // Setzt das Filter-Objekt auf Initialwerte
+      role: "",
+      city: "",
+      experience: "All levels",
+      models: [],
+    });
+  };
 
   return (
     <main className="relative min-h-screen bg-black text-white overflow-hidden font-['Helvetica_Neue',sans-serif]">
       {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-30 px-4 pt-5">
+      <header className="fixed top-0 left-0 right-0 z-30 px-4 pt-20">
         <div className="mx-auto max-w-[520px]">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
-
-            {/* INPUT ERKLÄRUNG:
-                value={searchQuery} verknüpft das Feld mit unserem State.
-                onChange aktualisiert den State bei jedem Tastendruck. */}
             <input
               type="text"
               value={searchQuery}
@@ -108,8 +160,6 @@ export function DiscoverPage() {
               placeholder="Search for talents..."
               className="w-full h-14 border border-white/30 bg-transparent pl-12 pr-14 outline-none placeholder:text-white/50 backdrop-blur-[2px]"
             />
-
-            {/* FILTER BUTTON: Öffnet bei Klick die Sidebar */}
             <button
               onClick={() => setShowFilter(true)}
               className="absolute right-4 top-1/2 -translate-y-1/2"
@@ -117,19 +167,20 @@ export function DiscoverPage() {
               <SlidersHorizontal className="w-5 h-5 text-white" />
             </button>
           </div>
+          {/* Logo */}
 
-          <div className="mt-5">
-            <Logo className="!relative !top-0 !left-0" />
-          </div>
+          <Link to="/">
+            <Logo className="fixed" />
+          </Link>
         </div>
       </header>
 
-      {/* GRID: Wir rendern jetzt 'filteredCards' statt 'cards' */}
+      {/* GRID */}
       <section className="columns-2 md:columns-3 lg:columns-4 gap-0 pt-0">
         {filteredCards.map((card) => (
           <div
             key={card.id}
-            onClick={(e) => handleProfileClick(e, card.id.toString())} // Hier übergeben wir die ID als String")}
+            onClick={(e) => handleProfileClick(e, card.id.toString())}
             className="relative break-inside-avoid mb-0 cursor-pointer group overflow-hidden"
           >
             <img
@@ -146,7 +197,10 @@ export function DiscoverPage() {
               </div>
             )}
 
-            <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition duration-300">
+            {/* Sichtbarkeit gesteuert durch Hover ODER aktiven State (erster Tap) */}
+            <div
+              className={`absolute bottom-0 left-0 right-0 p-4 transition duration-300 ${activeProfileId === card.id.toString() ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"}`}
+            >
               <h3 className="text-white text-[18px] font-medium">
                 {card.name}
               </h3>
@@ -160,10 +214,9 @@ export function DiscoverPage() {
         ))}
       </section>
 
-      {/* SIDEBAR LOGIK (Deine Vermutung war absolut richtig!) */}
+      {/* SIDEBAR */}
       {showFilter && (
         <>
-          {/* Overlay schließt bei Klick die Sidebar */}
           <div
             className="fixed inset-0 bg-black/80 z-40 backdrop-blur-sm"
             onClick={() => setShowFilter(false)}
@@ -176,22 +229,24 @@ export function DiscoverPage() {
                 </h2>
                 <button
                   onClick={() => setShowFilter(false)}
-                  className="text-white/60"
+                  className="text-white/60 hover:text-white"
                 >
-                  ✕
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
-              {/* Hier kommen deine Filter-Optionen rein (Role, Location, etc.) */}
               <div className="space-y-6">
-                {/* Beispiel: Role Filter */}
                 <div>
                   <label className="text-sm font-light text-white/80 block mb-2">
                     Role
                   </label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 bg-white/5 border border-white/20 text-white outline-none"
+                    value={filters.role}
+                    onChange={(e) =>
+                      setFilters({ ...filters, role: e.target.value })
+                    }
+                    className="w-full px-3 py-2 bg-white/5 border border-white/20 text-white outline-none focus:border-white/40 transition-colors"
                     placeholder="e.g. Chef"
                   />
                 </div>
@@ -202,8 +257,12 @@ export function DiscoverPage() {
                   </label>
                   <input
                     type="text"
+                    value={filters.city}
+                    onChange={(e) =>
+                      setFilters({ ...filters, city: e.target.value })
+                    }
+                    className="w-full px-3 py-2 bg-white/5 border border-white/20 text-white outline-none focus:border-white/40 transition-colors"
                     placeholder="City or Remote"
-                    className="w-full px-3 py-2 bg-white/5 border border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -211,7 +270,13 @@ export function DiscoverPage() {
                   <label className="text-sm font-light text-white/80 block mb-2">
                     Experience
                   </label>
-                  <select className="w-full px-3 py-2 bg-white/5 border border-white/20 text-white focus:border-white/40 focus:outline-none transition-colors appearance-none">
+                  <select
+                    value={filters.experience}
+                    onChange={(e) =>
+                      setFilters({ ...filters, experience: e.target.value })
+                    }
+                    className="w-full px-3 py-2 bg-white/5 border border-white/20 text-white focus:border-white/40 focus:outline-none transition-colors appearance-none"
+                  >
                     <option className="bg-black">All levels</option>
                     <option className="bg-black">Junior (0-2 years)</option>
                     <option className="bg-black">Mid (3-5 years)</option>
@@ -226,9 +291,14 @@ export function DiscoverPage() {
                   </label>
                   <div className="space-y-2">
                     {["Remote", "Office", "Hybrid"].map((model) => (
-                      <label key={model} className="flex items-center gap-2">
+                      <label
+                        key={model}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
                         <input
                           type="checkbox"
+                          checked={filters.models.includes(model)}
+                          onChange={() => toggleModel(model)}
                           className="bg-white/5 border-white/20"
                         />
                         <span className="text-sm font-light text-white/70">
@@ -239,9 +309,22 @@ export function DiscoverPage() {
                   </div>
                 </div>
 
-                <button className="w-full py-3 bg-white/10 border border-white/20 text-white uppercase tracking-wider">
-                  Apply Filters
-                </button>
+                <div className="flex flex-col gap-3 pt-4">
+                  <button
+                    onClick={() => setShowFilter(false)}
+                    className="w-full py-3 bg-white/10 border border-white/20 text-white uppercase tracking-wider hover:bg-white/20 transition-all"
+                  >
+                    Apply Filters
+                  </button>
+
+                  {/* Reset Button */}
+                  <button
+                    onClick={resetFilters}
+                    className="w-full py-2 text-xs text-white/50 uppercase tracking-widest hover:text-white transition-colors"
+                  >
+                    Reset all filters
+                  </button>
+                </div>
               </div>
             </div>
           </div>
