@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router";
+import { OpenerPage } from "../pages/Start/OpenerPage";
 import { WelcomeSlides } from "../pages/Start/WelcomeSlides";
 import { LoginPage } from "../pages/Authentication/LoginPage";
 import { SignUpPage } from "../pages/Authentication/SignUpPage";
@@ -23,7 +24,8 @@ import { CompanyMatchDetailsPage } from "../pages/Matches/CompanyMatchDetailsPag
 
 export const routes = createBrowserRouter([
   // PUBLIC ROUTES (No Navigation)
-  { path: "/", element: <WelcomeSlides /> },
+  { path: "/", element: <OpenerPage /> },
+  { path: "/welcome", element: <WelcomeSlides /> },
   { path: "login", element: <LoginPage /> },
   { path: "signup", element: <SignUpPage /> },
 
