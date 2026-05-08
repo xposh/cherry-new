@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 
@@ -10,7 +11,15 @@ app.get("/", (req, res) => {
 });
 
 app.post("/signup", (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
+  // => existiert User schon?
+  // wenn ja => Fehler
+  // Wenn nein => Passwort hashen
+  // Daten in Usertabelle schreiben
+  // VORLÄUFIG:
+  // Token für User erzeugen
+  // Token sowie Userdatensatz zurückschicken
+
   return res.json({ message: "Not implemented" });
 });
 
