@@ -1,9 +1,7 @@
 import {
   MapPin,
   Edit,
-  Building2,
   Users,
-  Briefcase,
   DollarSign,
   Mail,
   Phone,
@@ -154,7 +152,7 @@ export function CompanyProfileSummary() {
               alt="Company Logo"
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent" />
 
             <div className="relative z-10 p-8 pb-32">
               <h1 className="text-5xl font-light text-white mb-2">

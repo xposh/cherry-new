@@ -24,11 +24,7 @@ declare global {
   }
 }
 
-export function authMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
   console.log("Middleware has been called");
   const { authorization } = req.headers;
   if (!authorization) {

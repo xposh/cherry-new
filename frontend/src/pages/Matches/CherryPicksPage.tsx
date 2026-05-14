@@ -2,16 +2,20 @@ import { Cherry, MapPin } from "lucide-react";
 import { Link } from "react-router";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { useMatch } from "../../context/MatchContext";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import { mockTalents } from "../../data/mockTalents";
 import { mockCompanies } from "../../data/mockCompanies";
 
 export function CherryPicksPage() {
   const { getMatches } = useMatch();
-  const { userRole } = useAuth();
+  const { user } = useAuth();
   const matches = getMatches();
 
-  const isViewingTalents = userRole === "employer";
+  if (!user) {
+    console.log("user not logged in!");
+    return null;
+  }
+  const isViewingTalents = user.role === "employer";
 
   return (
     <div className="relative min-h-screen w-full bg-black pb-24">
@@ -58,23 +62,15 @@ export function CherryPicksPage() {
                   <div className="relative h-80 overflow-hidden">
                     <img
                       src={
-                        isTalent
-                          ? (profile as any).profileImage
-                          : (profile as any).companyLogo
+                        isTalent ? profile.profileImage : profile.companyLogo
                       }
-                      alt={
-                        isTalent
-                          ? (profile as any).name
-                          : (profile as any).companyName
-                      }
+                      alt={isTalent ? profile.name : profile.companyName}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4">
                       <h3 className="text-xl font-light text-white mb-2">
-                        {isTalent
-                          ? (profile as any).name
-                          : (profile as any).companyName}
+                        {isTalent ? profile.name : profile.companyName}
                       </h3>
                       <div className="flex items-center gap-2 text-white/80 text-sm">
                         <MapPin className="w-4 h-4" />

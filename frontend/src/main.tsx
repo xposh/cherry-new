@@ -8,7 +8,7 @@ import { RouterProvider } from "react-router";
 // Context Provider für die Datenhaltung
 import { ProfileProvider } from "./context/ProfileContext.tsx";
 import { CompanyProfileProvider } from "./context/CompanyProfileContext.tsx";
-import { AuthProvider } from "./context/AuthContext.tsx";
+import { AuthProvider } from "./context/AuthProvider";
 import { DiscoverProvider } from "./context/DiscoverContext.tsx";
 import { MatchProvider } from "./context/MatchContext.tsx";
 

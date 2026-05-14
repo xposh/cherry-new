@@ -1,4 +1,4 @@
-import { Cherry, X, Check, MapPin, Calendar, Globe } from "lucide-react";
+import { Cherry, X, Check, MapPin, Globe } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { mockTalents } from "../../data/mockTalents";

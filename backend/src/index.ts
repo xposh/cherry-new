@@ -4,7 +4,7 @@ import cors from "cors";
 import sql from "./util/db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { authMiddleware } from "./authMiddleware";
+import { requireAuth } from "./authMiddleware";
 
 if (!process.env.JWT_SECRET) {
   console.error("Denk dran! JWT_SECRET must be configured in .env");
@@ -104,7 +104,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", authMiddleware, async (req, res) => {
+app.get("/profile", requireAuth, async (req, res) => {
   try {
     return res.json({ userId: req.auth!.userId });
   } catch (err) {

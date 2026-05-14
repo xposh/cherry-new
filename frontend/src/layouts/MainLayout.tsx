@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { BottomNavigation } from "../components/navigation/BottomNavigation";
 
 interface MainLayoutProps {

@@ -400,7 +400,9 @@ export function HomePage() {
           ].map((talent, i) => (
             <div
               key={i}
-              ref={(el) => (handpickedRefs.current[i] = el)}
+              ref={(el) => {
+                handpickedRefs.current[i] = el;
+              }}
               className="h-screen w-full relative snap-start group cursor-pointer"
             >
               <div className="absolute inset-0 w-full h-full overflow-hidden">

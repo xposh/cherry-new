@@ -12,7 +12,7 @@ import {
   createContext,
   useContext,
   useState,
-  ReactNode,
+  type ReactNode,
   useEffect,
 } from "react";
 
@@ -93,10 +93,7 @@ export function MatchProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const skipProfile = (
-    profileId: string,
-    profileType: "talent" | "company",
-  ) => {
+  const skipProfile = (profileId: string) => {
     setSkippedProfiles((prev) => [...prev, profileId]);
   };
 
@@ -140,7 +137,7 @@ export function useMatch() {
 }
 
 // Match Popup Component
-function MatchPopup({ match, onClose }: { match: Match; onClose: () => void }) {
+function MatchPopup({ onClose }: { match: Match; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
       <div className="bg-white/10 border border-white/20 rounded-2xl p-8 max-w-md mx-4 text-center">

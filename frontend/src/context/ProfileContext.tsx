@@ -1,9 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 // Das Interface definiert die Struktur des Objekts im gesamten Projekt
 interface ProfileData {
