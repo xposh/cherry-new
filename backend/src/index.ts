@@ -21,6 +21,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/signup", async (req, res) => {
+  console.log("/signup");
   try {
     const { email, password, role } = req.body;
     const users = await sql`

@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState, type ReactNode } from "react";
+import useLocalStorageState from "use-local-storage-state";
 import { AuthContext, type User, type UserRole } from "./AuthContext";
 
 /*Speichert:
@@ -13,12 +14,15 @@ Funktionen:
 // Needs to be changed when backend is available
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useLocalStorageState<User | null>("auth", {
+    defaultValue: null,
+  });
   const accessTokenRef = useRef<string | null>(null);
 
   const signup = async (email: string, password: string, role: UserRole) => {
+    console.log(email, password, role);
     try {
-      const response = await fetch("/signup", {
+      const response = await fetch("/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, role }),
@@ -39,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch("/login", {
+      const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

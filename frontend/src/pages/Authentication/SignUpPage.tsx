@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { useState, useEffect, type SubmitEventHandler } from "react";
+import { Link, Navigate, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
+import { useAuth } from "../../context/useAuth";
+import { type UserRole } from "../../context/AuthContext";
 
 // 1. TYPEN-DEFINITION
-type UserRole = "worker" | "employer" | null;
 
 const BACKGROUND_IMAGES = [
   "/pilates/Pilates Black 1.png",
@@ -12,6 +13,7 @@ const BACKGROUND_IMAGES = [
 ];
 
 export function SignUpPage() {
+  const { signup, user } = useAuth();
   // 2. STATE
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
   const [email, setEmail] = useState("");
@@ -30,7 +32,7 @@ export function SignUpPage() {
   }, []);
 
   // 4. FORM-LOGIK
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit: SubmitEventHandler = async (e) => {
     e.preventDefault();
 
     if (!selectedRole) return alert("Bitte wähle eine Rolle aus");
@@ -39,14 +41,29 @@ export function SignUpPage() {
 
     console.log("Registrierung:", { selectedRole, email });
 
+    try {
+      await signup(email, password, selectedRole);
+    } catch (err) {
+      console.log(err);
+      alert("Registration failed");
+    }
+
     // HARDWAY-ROUTING FIX:
     // Hier muss exakt der Pfad stehen, den du in deiner routes/index.tsx definiert hast!
-    if (selectedRole === "worker") {
+    if (selectedRole === "talent") {
       navigate("/talent-profile-setup-1"); // HIER: Pfad angepasst auf setup-1
     } else {
       navigate("/company-profile-setup-1"); // Falls du diese Seite noch nicht hast, leitet der Router (path: "*") dich zur Startseite
     }
   };
+
+  if (user) {
+    if (user.role === "talent") {
+      return <Navigate to="/talent-profile-setup-1" />;
+    } else {
+      return <Navigate to="/company-profile-setup-1" />;
+    }
+  }
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-black overflow-hidden font-sans">
@@ -83,15 +100,15 @@ export function SignUpPage() {
           <div className="space-y-3">
             <button
               type="button"
-              onClick={() => setSelectedRole("worker")}
-              className={`w-full p-5 bg-transparent border-2 transition-all duration-300 flex items-center justify-between text-left ${selectedRole === "worker" ? "border-white" : "border-white/20"}`}
+              onClick={() => setSelectedRole("talent")}
+              className={`w-full p-5 bg-transparent border-2 transition-all duration-300 flex items-center justify-between text-left ${selectedRole === "talent" ? "border-white" : "border-white/20"}`}
             >
               <div>
                 <h3 className="text-base text-white">Ich suche einen Job</h3>
                 <p className="text-xs text-[#6f6f6f]">Arbeitnehmer</p>
               </div>
               <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
-                {selectedRole === "worker" && (
+                {selectedRole === "talent" && (
                   <div className="w-3 h-3 rounded-full bg-white" />
                 )}
               </div>
@@ -99,15 +116,15 @@ export function SignUpPage() {
 
             <button
               type="button"
-              onClick={() => setSelectedRole("employer")}
-              className={`w-full p-5 bg-transparent border-2 transition-all duration-300 flex items-center justify-between text-left ${selectedRole === "employer" ? "border-white" : "border-white/20"}`}
+              onClick={() => setSelectedRole("company")}
+              className={`w-full p-5 bg-transparent border-2 transition-all duration-300 flex items-center justify-between text-left ${selectedRole === "company" ? "border-white" : "border-white/20"}`}
             >
               <div>
                 <h3 className="text-base text-white">Ich möchte einstellen</h3>
                 <p className="text-xs text-[#6f6f6f]">Arbeitgeber</p>
               </div>
               <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
-                {selectedRole === "employer" && (
+                {selectedRole === "company" && (
                   <div className="w-3 h-3 rounded-full bg-white" />
                 )}
               </div>
