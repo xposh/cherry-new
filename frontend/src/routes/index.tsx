@@ -41,75 +41,49 @@ export const routes = createBrowserRouter([
 
   // MAIN APP ROUTES (With Bottom Navigation)
   {
-    path: "/home",
-    element: (
-      <MainLayout>
-        <HomePage />
-      </MainLayout>
-    ),
-  },
-  {
-    path: "/discover",
-    element: (
-      <MainLayout>
-        <DiscoverPage />
-      </MainLayout>
-    ),
-  },
-  {
-    path: "/talent/:id",
-    element: (
-      <MainLayout>
-        <TalentProfileView />
-      </MainLayout>
-    ),
-  },
-  {
-    path: "/company/:id",
-    element: (
-      <MainLayout>
-        <CompanyProfileView />
-      </MainLayout>
-    ),
-  },
-  {
-    path: "/cherry-picks",
-    element: (
-      <MainLayout>
-        <CherryPicksPage />
-      </MainLayout>
-    ),
-  },
-  {
-    path: "/match/talent/:id",
-    element: (
-      <MainLayout>
-        <TalentMatchDetailsPage />
-      </MainLayout>
-    ),
-  },
-  {
-    path: "/match/company/:id",
-    element: (
-      <MainLayout>
-        <CompanyMatchDetailsPage />
-      </MainLayout>
-    ),
-  },
-  {
-    path: "/messages",
-    element: (
-      <MainLayout>
-        <MessagesPage />
-      </MainLayout>
-    ),
-  },
-  {
-    path: "/account",
-    element: (
-      <MainLayout>
-        <AccountPage />
-      </MainLayout>
-    ),
+    path: "/",
+    element: <MainLayout />,
+    children: [
+      {
+        index: true,
+        element: <HomePage />,
+      },
+      {
+        path: "home",
+        element: <HomePage />,
+      },
+      {
+        path: "discover",
+        element: <DiscoverPage />,
+      },
+      {
+        path: "talent/:id",
+        element: <TalentProfileView />,
+      },
+      {
+        path: "company/:id",
+        element: <CompanyProfileView />,
+      },
+      {
+        path: "cherry-picks",
+        element: <CherryPicksPage />,
+      },
+      {
+        path: "match/talent/:id",
+        element: <TalentMatchDetailsPage />,
+      },
+      {
+        path: "match/company/:id",
+        element: <CompanyMatchDetailsPage />,
+      },
+      {
+        path: "messages",
+        element: <MessagesPage />,
+      },
+      {
+        path: "account",
+        element: <AccountPage />,
+      },
+    ],
   },
 ]);

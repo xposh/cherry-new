@@ -1,14 +1,12 @@
-import { type ReactNode } from "react";
 import { BottomNavigation } from "../components/navigation/BottomNavigation";
+import { Outlet } from "react-router";
 
-interface MainLayoutProps {
-  children: ReactNode;
-}
-
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout() {
   return (
     <div className="min-h-screen bg-black pb-20">
-      <main>{children}</main>
+      <main>
+        <Outlet />
+      </main>
       <BottomNavigation />
     </div>
   );
