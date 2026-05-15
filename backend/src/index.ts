@@ -105,8 +105,24 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.post("/cherry-picks", requireAuth, async (req, res) => {
+  const { pickId } = req.body;
+  try {
+    await sql`INSERT INTO cherry_picks (user_id, pick_id) VALUES(${req.auth!.userId!}, ${pickId})`;
+    return res.json({ msg: "Success" });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ msg: "server error" });
+  }
+});
+
 app.get("/profile", requireAuth, async (req, res) => {
   try {
+    console.log("logged in user:");
+    console.log(req.auth?.userId);
+    console.log(req.auth?.email);
+    console.log(req.auth?.role);
+
     return res.json({ userId: req.auth!.userId });
   } catch (err) {
     console.log(err);

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, type ReactNode } from "react";
 import useLocalStorageState from "use-local-storage-state";
 import { AuthContext, type User, type UserRole } from "./AuthContext";
 
@@ -14,10 +14,12 @@ Funktionen:
 // Needs to be changed when backend is available
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useLocalStorageState<User | null>("auth", {
+  const [user, setUser] = useLocalStorageState<User | null>("user", {
     defaultValue: null,
   });
-  const accessTokenRef = useRef<string | null>(null);
+  const [token, setToken] = useLocalStorageState<string | null>("token", {
+    defaultValue: null,
+  });
 
   const signup = async (email: string, password: string, role: UserRole) => {
     console.log(email, password, role);
@@ -33,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
       }
       const { user, accessToken } = await response.json();
-      accessTokenRef.current = accessToken;
+      setToken(accessToken);
       setUser(user);
     } catch (err) {
       console.log(err);
@@ -52,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error((await response.json()).message ?? "Login failed");
       }
       const { user, accessToken } = await response.json();
-      accessTokenRef.current = accessToken;
+      setToken(accessToken);
       setUser(user);
     } catch (err) {
       console.log(err);
@@ -60,15 +62,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const authFetch: typeof fetch = useCallback((input, init) => {
-    const headers = new Headers(init?.headers);
-    if (accessTokenRef.current)
-      headers.set("Authorization", `Bearer ${accessTokenRef.current}`);
-    return fetch(input, { ...init, headers });
-  }, []);
+  const authFetch: typeof fetch = useCallback(
+    (input, init) => {
+      const headers = new Headers(init?.headers);
+      if (token) headers.set("Authorization", `Bearer ${token}`);
+      return fetch(input, { ...init, headers });
+    },
+    [token],
+  );
 
   const logout = () => {
-    accessTokenRef.current = null;
+    setToken(null);
     setUser(null);
   };
 

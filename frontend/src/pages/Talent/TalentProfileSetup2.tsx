@@ -2,6 +2,7 @@ import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
+import { useAuth } from "../../context/useAuth";
 
 interface Language {
   language: string;
@@ -25,6 +26,7 @@ interface Recognition {
 }
 
 export function TalentProfileSetup2() {
+  const { authFetch } = useAuth();
   const navigate = useNavigate();
 
   // Basic Info
@@ -251,18 +253,27 @@ export function TalentProfileSetup2() {
   };
 
   const handleNext = () => {
-    const setupData = {
-      formData,
-      education,
-      skills,
-      experiences,
-      otherExperiences,
-      languages,
-      recognitions,
-      jobPreferences,
-    };
+    // const setupData = {
+    //   formData,
+    //   education,
+    //   skills,
+    //   experiences,
+    //   otherExperiences,
+    //   languages,
+    //   recognitions,
+    //   jobPreferences,
+    // };
 
-    localStorage.setItem("talentSetup2", JSON.stringify(setupData));
+    // localStorage.setItem("talentSetup2", JSON.stringify(setupData));
+
+    // An die Datenbank schicken:
+
+    console.log({
+      name: formData.name,
+      bio: formData.about,
+      age: formData.age,
+    });
+
     navigate("/talent-profile-setup-3");
   };
 
