@@ -156,7 +156,7 @@ app.post("/profile", async (req, res) => {
       INSERT INTO talent_profiles (user_id, profile_data) 
       VALUES (${user_id}, ${JSON.stringify(formData)})
       ON CONFLICT (user_id) 
-      DO UPDATE SET profile_data = EXCLUDED.profile_data;
+      DO UPDATE SET profile_data = talent_profiles.profile_data || EXCLUDED.profile_data;
     `;
 
     return res.json({ message: "Profil-Setup erfolgreich gespeichert!" });
