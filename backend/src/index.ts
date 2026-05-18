@@ -123,40 +123,48 @@ app.get("/profile", requireAuth, async (req, res) => {
 });
 
 // =======================================================================================================================
-// ERGÄNZUNG: POST /profile MIT EINGEBETTETEN ZEILEN-ERKLÄRUNGEN
+// 2. Die sauberste Lösung: Das flexible JSONB-Konzept
+
+// Wenn du jede einzelne UI-Komponente (wie Awards, Recognition, Work Model, etc.) als eigene Spalte in pgAdmin anlegen willst, musst du deine SQL-Tabelle ständig ändern. Das ist hochkompliziert, fehleranfällig und treibt jeden Anfänger in den Wahnsinn.
+// Der "Industry Standard" für flexible Formulare:
+// Wir speichern die Kerndaten (wie die ID) in einer festen Spalte. Den gesamten Rest des Formulars (egal wie viele Schritte oder Felder du noch hinzufügst oder umbenennst) speichern wir in einer einzigen, extrem mächtigen Spalte vom Typ JSONB. Das ist eine native PostgreSQL-Spalte, die komplette JavaScript-Objekte eins zu eins schluckt.
+
+// Dein Vorteil:
+
+// Du musst in pgAdmin nie wieder eine Spalte anfügen, wenn du im Frontend ein Feld änderst.
+//Wenn du später entscheidest, name in first_name und last_name aufzuteilen, machst du das nur im Frontend. Das Backend und pgAdmin bleiben davon komplett unberührt! Das ist maximale architektonische Freiheit.
 // =======================================================================================================================
 
-// app.post: Ein fixer Express-Befehl. Er registriert eine Route für HTTP-POST-Anfragen.
-// "/profile": Der Pfad der Route. Ein frei gewählter String, der hier durch das Skript fix vorgegeben ist.
-// async: Ein fixer JavaScript-Modifikator, der die Funktion asynchron macht, damit die Datenbankabfrage darin mit await blockierungsfrei warten kann.
-// req, res: Frei gewählte Namen für die Parameter Request (eingehende Daten) und Response (ausgehende Antwort).
+// app.post: Registriert die Route für das Absenden des Profil-Formulars.
+// async (req, res): Erlaubt asynchrone Datenbankzugriffe ohne den Hauptthread zu blockieren.
 app.post("/profile", async (req, res) => {
-  // try: Fixer JavaScript-Block zur Fehlerbehandlung. Verhindert, dass der Server abstürzt, falls beim Datenbankzugriff etwas schiefgeht.
   try {
-    // const: Fixes Schlüsselwort für Konstanten.
-    // { user_id, name, bio }: Destructuring-Syntax. Die Namen sind fix, da sie exakt mit den Schlüsseln übereinstimmen müssen, die im Postman-Beispiel definiert sind ("user_id", "name", "bio").
-    // req.body: Fixes Express-Objekt, das die per JSON gesendeten Daten des Clients enthält.
-    const { user_id, name, bio } = req.body;
+    // Wir extrahieren NUR die user_id. Der gesamte Rest des Formulars (egal welche Felder)
+    // wandert automatisch als kompaktes Objekt in die Variable "formData".
+    const { user_id, ...formData } = req.body;
 
-    // await: Ein fixer Befehl, der die Ausführung pausiert, bis die Datenbank die Antwort liefert.
-    // sql: Die frei gewählte Variable deiner Datenbankinstanz aus der Datei db.ts.
-    // INSERT INTO talent_profiles (user_id, name, bio) VALUES (${user_id}, ${name}, ${bio});: Der SQL-Befehl. Die SQL-Schlüsselwörter sind fix. Die Tabellennamen und Variablenstrukturen sind an deine Datenbankstruktur gebunden.
+    if (!user_id) {
+      return res
+        .status(400)
+        .json({ message: "Fehler: user_id wird zwingend benötigt." });
+    }
+
+    // Wir senden die Daten an die Tabelle talent_profiles.
+    // JSON.stringify(formData) packt alle Felder aus deinem Video automatisch in ein JSON-Paket.
+    // ON CONFLICT (user_id) DO UPDATE erlaubt unbegrenztes Überschreiben und Testen.
     await sql`
-      INSERT INTO talent_profiles (user_id, name, bio) 
-      VALUES (${user_id}, ${name}, ${bio});
+      INSERT INTO talent_profiles (user_id, profile_data) 
+      VALUES (${user_id}, ${JSON.stringify(formData)})
+      ON CONFLICT (user_id) 
+      DO UPDATE SET profile_data = EXCLUDED.profile_data;
     `;
 
-    // return: Fixer JavaScript-Befehl zum Beenden der Funktion.
-    // res.json: Eine fixe Express-Methode, die die Antwort als JSON formatiert zurückschickt. Der Text "Profile saved successfully" ist ein frei gewählter Bestätigungstext.
-    return res.json({ message: "Profile saved successfully" });
-
-    // catch: Fixer Catch-Block. err ist der frei gewählte Name für das abgefangene Fehlerobjekt.
+    return res.json({ message: "Profil-Setup erfolgreich gespeichert!" });
   } catch (err) {
-    // console.log(err): Ein fixer Konsolenbefehl, um den Fehler im VS-Code Terminal sichtbar zu machen.
     console.log(err);
-
-    // return res.status(500).json({ msg: "server error" }): Fixe Express-Fehlerantwort mit dem HTTP-Statuscode 500 (Internal Server Error), exakt im Design der anderen Routen
-    return res.status(500).json({ msg: "server error" });
+    return res
+      .status(500)
+      .json({ msg: "Serverfehler beim Speichern des Profils." });
   }
 });
 
