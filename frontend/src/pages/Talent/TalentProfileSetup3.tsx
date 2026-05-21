@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
 import { supabase } from "../../util/supabase";
+import { useAuth } from "../../context/useAuth";
 
 interface SocialLink {
   id: string;
@@ -11,6 +12,7 @@ interface SocialLink {
 }
 
 export function TalentProfileSetup3() {
+  const { user, finishProfile } = useAuth();
   const navigate = useNavigate();
 
   // Helper-Funktion zur sicheren Extraktion von verschachtelten localStorage-Daten (Re-Hydration)
@@ -184,8 +186,6 @@ export function TalentProfileSetup3() {
     };
     localStorage.setItem("talentSetup3", JSON.stringify(localPage3Data));
 
-    const testUserId = "00000000-0000-0000-0000-000000000001";
-
     // Transformation der Links für das Backend (wird beibehalten, falls Spalten geflickt werden)
     const structuredSocialLinks = socialLinks.reduce(
       (acc, curr) => {
@@ -196,7 +196,7 @@ export function TalentProfileSetup3() {
     );
 
     const page3Data = {
-      user_id: testUserId,
+      user_id: user?.id,
       availability: availability,
       socialLinks: socialLinks, // Übergabe des Original-Arrays als Fallback
       social_links: structuredSocialLinks,
@@ -218,6 +218,8 @@ export function TalentProfileSetup3() {
       }
 
       const result = await response.json();
+      finishProfile();
+      navigate("/talent-profile-summary");
       console.log("Server-Antwort Page 3 erfolgreich:", result.message);
     } catch (error) {
       // FEHLER ABGEFANGEN: Wir loggen den API-Fehler (wie Spaltenfehler im Screenshot),
@@ -226,10 +228,10 @@ export function TalentProfileSetup3() {
         "API Error temporär ignoriert, fahre mit LocalStorage-Daten fort:",
         error,
       );
+      alert("Profile could not be saved");
     }
 
     // Navigiert jetzt immer sicher weiter, da Daten im LocalStorage bereitstehen
-    navigate("/talent-profile-summary");
   };
 
   return (

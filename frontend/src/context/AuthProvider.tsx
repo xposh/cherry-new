@@ -1,4 +1,4 @@
-import { useCallback, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import useLocalStorageState from "use-local-storage-state";
 import { AuthContext, type User, type UserRole } from "./AuthContext";
 
@@ -20,6 +20,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useLocalStorageState<string | null>("token", {
     defaultValue: null,
   });
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
+
+  useEffect(() => {
+    const loadIsProfileComplete = async () => {
+      try {
+        setIsInitialized(false);
+        const response = await fetch("/api/is-profile-complete", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setIsProfileComplete(data.hasProfile);
+        }
+      } catch (err) {
+        setIsProfileComplete(false);
+        console.log(err);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+    if (token) {
+      loadIsProfileComplete();
+    } else {
+      setUser(null);
+      setIsProfileComplete(false);
+      setIsInitialized(true);
+    }
+  }, [token, setUser]);
 
   const signup = async (email: string, password: string, role: UserRole) => {
     console.log(email, password, role);
@@ -71,9 +102,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [token],
   );
 
+  const finishProfile = () => {
+    setIsProfileComplete(true);
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
+    setIsProfileComplete(false);
   };
 
   return (
@@ -81,13 +117,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         isAuthenticated: !!user,
         user,
+        isProfileComplete,
+        finishProfile,
         authFetch,
         login,
         signup,
         logout,
       }}
     >
-      {children}
+      {isInitialized ? children : null}
     </AuthContext.Provider>
   );
 }

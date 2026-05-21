@@ -29,7 +29,7 @@ export function LoginPage() {
   };
 
   if (isAuthenticated) {
-    return <Navigate to="/discover" />;
+    return <Navigate to="/home" />;
   }
 
   return (

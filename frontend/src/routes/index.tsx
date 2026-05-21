@@ -22,6 +22,7 @@ import { CompanyProfileView } from "../pages/Profile/CompanyProfileView";
 import { TalentMatchDetailsPage } from "../pages/Matches/TalentMatchDetailsPage.tsx";
 import { CompanyMatchDetailsPage } from "../pages/Matches/CompanyMatchDetailsPage";
 import { ProtectedRoute } from "../components/ProtectedRoute.tsx";
+import { RequireProfile } from "../components/RequireProfile.tsx";
 
 export const routes = createBrowserRouter([
   // PUBLIC ROUTES (No Navigation)
@@ -30,40 +31,50 @@ export const routes = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
   { path: "/signup", element: <SignUpPage /> },
 
-  // PROTECTED PROFILE SETUP ROUTES (No Navigation)
+  // AUTHENTICATED ROUTES — login required
   {
     element: <ProtectedRoute />,
     children: [
+      // PROFILE SETUP (No Navigation)
+      // Open to any logged-in user: new users fill these step by step,
+      // existing users revisit them to edit their profile.
       { path: "/talent-profile-setup-1", element: <TalentProfileSetup1 /> },
       { path: "/talent-profile-setup-2", element: <TalentProfileSetup2 /> },
       { path: "/talent-profile-setup-3", element: <TalentProfileSetup3 /> },
-      { path: "/talent-profile-summary", element: <TalentProfileSummary /> },
       { path: "/company-profile-setup-1", element: <CompanyProfileSetup1 /> },
       { path: "/company-profile-setup-2", element: <CompanyProfileSetup2 /> },
       { path: "/company-profile-setup-3", element: <CompanyProfileSetup3 /> },
-      { path: "/company-profile-summary", element: <CompanyProfileSummary /> },
-    ],
-  },
 
-  // MAIN APP ROUTES (With Bottom Navigation)
-  {
-    element: <MainLayout />,
-    children: [
-      // Public within the app shell
-      { path: "home", element: <HomePage /> },
-
-      // Protected
+      // PROFILE-COMPLETE ROUTES — a completed, server-stored profile required
       {
-        element: <ProtectedRoute />,
+        element: <RequireProfile />,
         children: [
-          { path: "discover", element: <DiscoverPage /> },
-          { path: "talent/:id", element: <TalentProfileView /> },
-          { path: "company/:id", element: <CompanyProfileView /> },
-          { path: "cherry-picks", element: <CherryPicksPage /> },
-          { path: "match/talent/:id", element: <TalentMatchDetailsPage /> },
-          { path: "match/company/:id", element: <CompanyMatchDetailsPage /> },
-          { path: "messages", element: <MessagesPage /> },
-          { path: "account", element: <AccountPage /> },
+          // MAIN APP ROUTES (With Bottom Navigation)
+          {
+            element: <MainLayout />,
+            children: [
+              {
+                path: "/talent-profile-summary",
+                element: <TalentProfileSummary />,
+              },
+              {
+                path: "/company-profile-summary",
+                element: <CompanyProfileSummary />,
+              },
+              { path: "home", element: <HomePage /> },
+              { path: "discover", element: <DiscoverPage /> },
+              { path: "talent/:id", element: <TalentProfileView /> },
+              { path: "company/:id", element: <CompanyProfileView /> },
+              { path: "cherry-picks", element: <CherryPicksPage /> },
+              { path: "match/talent/:id", element: <TalentMatchDetailsPage /> },
+              {
+                path: "match/company/:id",
+                element: <CompanyMatchDetailsPage />,
+              },
+              { path: "messages", element: <MessagesPage /> },
+              { path: "account", element: <AccountPage /> },
+            ],
+          },
         ],
       },
     ],

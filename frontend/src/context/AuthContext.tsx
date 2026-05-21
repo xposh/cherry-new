@@ -10,10 +10,12 @@ export type User = {
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isProfileComplete: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => void;
+  finishProfile: () => void;
   authFetch: typeof fetch;
 }
 

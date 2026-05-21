@@ -17,7 +17,6 @@ CREATE TABLE cherry_picks (
 );
 
 CREATE TABLE talent_profiles (
-    user_id uuid NOT NULL REFERENCES users(id),
-    bio TEXT,
-    name TEXT
+    user_id uuid PRIMARY KEY REFERENCES users(id),
+    profile_data JSONB NOT NULL
 );

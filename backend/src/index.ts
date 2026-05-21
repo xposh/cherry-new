@@ -58,6 +58,30 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+app.get("/is-profile-complete", requireAuth, async (req, res) => {
+  const { role } = req.auth!;
+  try {
+    const result =
+      role === "talent"
+        ? await sql`
+    SELECT * FROM talent_profiles 
+    WHERE user_id = ${req.auth?.userId!}
+  `
+        : await sql`
+    SELECT * FROM company_profiles 
+    WHERE user_id = ${req.auth?.userId!}
+  `;
+    const userProfile = result[0];
+    return res.json({
+      id: req.auth?.userId!,
+      hasProfile: !!userProfile,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ msg: "Server error" });
+  }
+});
+
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;

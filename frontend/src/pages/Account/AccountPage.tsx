@@ -9,8 +9,13 @@ import {
   LogOut,
 } from "lucide-react";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
+import { useAuth } from "../../context/useAuth";
+import { useNavigate } from "react-router";
 
 export function AccountPage() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <div className="relative min-h-screen w-full bg-black pb-24">
       {/* Logo */}
@@ -89,7 +94,12 @@ export function AccountPage() {
             Settings
           </h2>
           <div className="space-y-3">
-            <button className="w-full flex items-center justify-between p-4 border border-white/30 hover:border-white transition-all">
+            <button
+              onClick={() => {
+                navigate("/talent-profile-summary");
+              }}
+              className="w-full flex items-center justify-between p-4 border border-white/30 hover:border-white transition-all"
+            >
               <div className="flex items-center gap-4">
                 <Settings className="w-5 h-5 text-white" />
                 <span className="text-white">Edit Profile</span>
@@ -112,7 +122,10 @@ export function AccountPage() {
 
         {/* Logout */}
         <section>
-          <button className="w-full flex items-center justify-center gap-3 p-4 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+          <button
+            onClick={logout}
+            className="w-full flex items-center justify-center gap-3 p-4 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+          >
             <LogOut className="w-5 h-5" />
             <span>Log Out</span>
           </button>
