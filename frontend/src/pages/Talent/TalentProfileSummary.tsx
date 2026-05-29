@@ -799,7 +799,7 @@ export function TalentProfileSummary() {
       <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50">
         <button
           onClick={handleEditProfile}
-          className="flex items-center gap-3 px-8 py-4 bg-white text-black hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-xl shadow-2xl"
+          className="flex items-center gap-3 px-8 py-4 bg-gray-500/20 text-white/50 hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-xl shadow-2xl"
         >
           <Edit className="w-5 h-5" />
           Edit Profile

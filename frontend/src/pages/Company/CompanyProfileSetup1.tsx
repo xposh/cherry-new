@@ -2,32 +2,42 @@ import { Upload, X, Building2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
+import { supabase } from "../../util/supabase";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
 
 interface UploadedImage {
   id: string;
-  file: File;
-  preview: string;
+  preview: string; // Supabase Public URL
   category: string;
   caption: string;
-}
-
-interface CompanyLogo {
-  file: File | null;
-  preview: string;
 }
 
 export function CompanyProfileSetup1() {
   const navigate = useNavigate();
   const { updateCompanyProfile } = useCompanyProfile();
 
-  const [companyLogo, setCompanyLogo] = useState<CompanyLogo>({
-    file: null,
-    preview: "",
-  });
-  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  // LocalStorage laden beim Start
+  const getSavedData = () => {
+    try {
+      const saved = localStorage.getItem("companySetup1");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.error("Fehler beim Parsen von companySetup1:", e);
+      return null;
+    }
+  };
+
+  const savedData = getSavedData();
+
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string>(
+    savedData?.companyLogoUrl || "",
+  );
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>(
+    savedData?.uploadedImages || [],
+  );
   const [selectedCategory, setSelectedCategory] =
     useState<string>("Räume & Locations");
+  const [isUploading, setIsUploading] = useState(false);
 
   const categories = [
     "Räume & Locations",
@@ -37,29 +47,86 @@ export function CompanyProfileSetup1() {
     "Extras",
   ];
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // ✅ Logo Upload zu Supabase
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setCompanyLogo({
-        file,
-        preview: URL.createObjectURL(file),
-      });
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+
+      const fileExtension = file.name.split(".").pop();
+      const uniqueFileName = `logo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
+
+      const uploadResponse = await supabase.storage
+        .from("companies")
+        .upload(uniqueFileName, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadResponse.error) {
+        throw uploadResponse.error;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("companies")
+        .getPublicUrl(uniqueFileName);
+
+      setCompanyLogoUrl(publicUrlData.publicUrl);
+      console.log("Logo hochgeladen:", publicUrlData.publicUrl);
+    } catch (err) {
+      console.error("Logo-Upload fehlgeschlagen:", err);
+      alert("Upload fehlgeschlagen. Bitte versuche es erneut.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // ✅ Gallery Images Upload zu Supabase
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    const newImages: UploadedImage[] = Array.from(files).map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      file,
-      preview: URL.createObjectURL(file),
-      category: selectedCategory,
-      caption: "",
-    }));
+    try {
+      setIsUploading(true);
 
-    setUploadedImages([...uploadedImages, ...newImages]);
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExtension = file.name.split(".").pop();
+        const uniqueFileName = `gallery_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
+
+        const uploadResponse = await supabase.storage
+          .from("companies")
+          .upload(uniqueFileName, file, {
+            cacheControl: "3600",
+            upsert: false,
+          });
+
+        if (uploadResponse.error) {
+          throw uploadResponse.error;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from("companies")
+          .getPublicUrl(uniqueFileName);
+
+        return {
+          id: Math.random().toString(36).substr(2, 9),
+          preview: publicUrlData.publicUrl,
+          category: selectedCategory,
+          caption: "",
+        };
+      });
+
+      const newImages = await Promise.all(uploadPromises);
+      setUploadedImages([...uploadedImages, ...newImages]);
+      console.log("Bilder hochgeladen:", newImages);
+    } catch (err) {
+      console.error("Bild-Upload fehlgeschlagen:", err);
+      alert("Upload fehlgeschlagen. Bitte versuche es erneut.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const removeImage = (id: string) => {
@@ -78,19 +145,17 @@ export function CompanyProfileSetup1() {
     );
   };
 
+  // ✅ Speichere im LocalStorage beim Next
   const handleNext = () => {
-    const imagesToSave = uploadedImages.map((img) => ({
-      id: img.id,
-      preview: img.preview,
-      category: img.category,
-      caption: img.caption,
-    }));
-
+    const setup1Data = {
+      companyLogoUrl,
+      uploadedImages,
+    };
+    localStorage.setItem("companySetup1", JSON.stringify(setup1Data));
     updateCompanyProfile({
-      companyLogo: companyLogo.preview,
-      companyImages: imagesToSave,
+      companyLogo: companyLogoUrl,
+      companyImages: uploadedImages,
     });
-
     navigate("/company-profile-setup-2");
   };
 
@@ -121,7 +186,7 @@ export function CompanyProfileSetup1() {
           <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
             Company Logo
           </h2>
-          {!companyLogo.preview ? (
+          {!companyLogoUrl ? (
             <div className="border-2 border-dashed border-white/30 rounded-xl p-12 text-center hover:border-white/60 transition-colors cursor-pointer max-w-md mx-auto">
               <input
                 type="file"
@@ -129,11 +194,12 @@ export function CompanyProfileSetup1() {
                 onChange={handleLogoUpload}
                 className="hidden"
                 id="logo-upload"
+                disabled={isUploading}
               />
               <label htmlFor="logo-upload" className="cursor-pointer">
                 <Building2 className="w-16 h-16 text-white/40 mx-auto mb-4" />
                 <p className="text-white font-light mb-2">
-                  Upload your company logo
+                  {isUploading ? "Uploading..." : "Upload your company logo"}
                 </p>
                 <p className="text-gray-500 text-sm">PNG, JPG up to 10MB</p>
               </label>
@@ -142,12 +208,12 @@ export function CompanyProfileSetup1() {
             <div className="max-w-md mx-auto">
               <div className="relative group">
                 <img
-                  src={companyLogo.preview}
+                  src={companyLogoUrl}
                   alt="Company Logo"
                   className="w-full h-80 object-cover rounded-xl"
                 />
                 <button
-                  onClick={() => setCompanyLogo({ file: null, preview: "" })}
+                  onClick={() => setCompanyLogoUrl("")}
                   className="absolute top-4 right-4 p-2 bg-black/80 rounded-full hover:bg-red-600 transition-colors"
                 >
                   <X className="w-5 h-5 text-white" />
@@ -192,11 +258,14 @@ export function CompanyProfileSetup1() {
               onChange={handleImageUpload}
               className="hidden"
               id="image-upload"
+              disabled={isUploading}
             />
             <label htmlFor="image-upload" className="cursor-pointer">
               <Upload className="w-12 h-12 text-white/40 mx-auto mb-4" />
               <p className="text-white font-light mb-2">
-                Click to upload or drag and drop
+                {isUploading
+                  ? "Uploading..."
+                  : "Click to upload or drag and drop"}
               </p>
               <p className="text-gray-500 text-sm">PNG, JPG, GIF up to 10MB</p>
             </label>
@@ -265,7 +334,8 @@ export function CompanyProfileSetup1() {
           </Link>
           <button
             onClick={handleNext}
-            className="px-8 py-3 bg-white text-black hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-lg"
+            disabled={isUploading}
+            className="px-8 py-3 bg-white text-black hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-lg disabled:bg-gray-600 disabled:cursor-not-allowed"
           >
             Next Step
           </button>

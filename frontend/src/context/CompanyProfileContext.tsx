@@ -8,6 +8,7 @@ interface CompanyProfileData {
     id: string;
     preview: string;
     category: string;
+    caption?: string;
   }>;
 
   // Setup 2 - Company Information

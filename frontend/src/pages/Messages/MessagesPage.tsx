@@ -1,19 +1,12 @@
 import { Cherry, Mail } from "lucide-react";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
+import { Logo } from "../../components/Logo";
 
 export function MessagesPage() {
   return (
     <div className="relative min-h-screen w-full bg-black pb-24">
       {/* Logo */}
-      <div className="fixed top-8 left-8 z-50">
-        <h2
-          className="text-2xl tracking-[0.3em] uppercase flex items-center gap-1"
-          style={{ color: "#2A6087" }}
-        >
-          CHE
-          <Cherry className="w-6 h-6" style={{ color: "#2A6087" }} />Y
-        </h2>
-      </div>
+      <Logo />
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-8 pt-24 pb-8">

@@ -1,5 +1,6 @@
 import { Cherry, MapPin } from "lucide-react";
 import { Link } from "react-router";
+import { Logo } from "../../components/Logo";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { useMatch } from "../../context/MatchContext";
 import { useAuth } from "../../context/useAuth";
@@ -20,15 +21,7 @@ export function CherryPicksPage() {
   return (
     <div className="relative min-h-screen w-full bg-black pb-24">
       {/* Logo */}
-      <div className="fixed top-8 left-8 z-50">
-        <h2
-          className="text-2xl tracking-[0.3em] uppercase flex items-center gap-1"
-          style={{ color: "#2A6087" }}
-        >
-          CHE
-          <Cherry className="w-6 h-6" style={{ color: "#2A6087" }} />Y
-        </h2>
-      </div>
+      <Logo />
 
       {/* Content */}
       <div className="max-w-6xl mx-auto px-8 pt-24 pb-8">

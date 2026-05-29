@@ -12,10 +12,12 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
 import { Logo } from "../../components/Logo";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
+import { useAuth } from "../../context/useAuth";
 
 export function CompanyProfileSummary() {
   const navigate = useNavigate();
-  const { companyProfile } = useCompanyProfile();
+  const { companyProfile, updateCompanyProfile } = useCompanyProfile();
+  const { authFetch } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +38,71 @@ export function CompanyProfileSummary() {
       return () => scrollElement.removeEventListener("scroll", handleScroll);
     }
   }, [companyProfile.companyImages?.length]);
+
+  useEffect(() => {
+    const loadCompanyProfile = async () => {
+      if (companyProfile.companyName || companyProfile.companyLogo) {
+        return;
+      }
+      const savedStep1 = JSON.parse(
+        localStorage.getItem("companySetup1") ?? "null",
+      );
+      const savedStep2 = JSON.parse(
+        localStorage.getItem("companySetup2") ?? "null",
+      );
+      const savedStep3 = JSON.parse(
+        localStorage.getItem("companySetup3") ?? "null",
+      );
+
+      if (savedStep1 || savedStep2 || savedStep3) {
+        updateCompanyProfile({
+          companyLogo: savedStep1?.companyLogoUrl || undefined,
+          companyImages: savedStep1?.uploadedImages || [],
+          ...savedStep2?.companyInfo,
+          cultureValues: savedStep2?.selectedValues || [],
+          benefits: savedStep2?.benefits || {
+            arbeitsmodell: [],
+            finanziell: [],
+            lifestyle: [],
+            mobilitat: [],
+            entwicklung: [],
+          },
+          ...savedStep3?.jobInfo,
+          jobTitle: savedStep3?.jobInfo?.jobTitle,
+          jobLocation: savedStep3?.jobInfo?.jobLocation,
+          jobDescription: savedStep3?.jobInfo?.jobDescription,
+          salary: savedStep3?.jobInfo?.salary,
+          startDate: savedStep3?.jobInfo?.startDate,
+          contactPersonPhoto: savedStep3?.contactPersonPhoto?.preview,
+          contactPerson: savedStep3?.contactInfo?.contactPerson,
+          contactRole: savedStep3?.contactInfo?.contactRole,
+          contactMessage: savedStep3?.contactInfo?.contactMessage,
+          contactEmail: savedStep3?.contactInfo?.contactEmail,
+          contactPhone: savedStep3?.contactInfo?.contactPhone,
+          contactWebsite: savedStep3?.contactInfo?.contactWebsite,
+          requirements: savedStep3?.requirements || [],
+          socialLinks: savedStep3?.socialLinks || [],
+        });
+      }
+      try {
+        const response = await authFetch("http://localhost:3000/profile");
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data?.profile) {
+          updateCompanyProfile(data.profile);
+        }
+      } catch (err) {
+        console.error("Failed to load company profile for summary:", err);
+      }
+    };
+
+    loadCompanyProfile();
+  }, [
+    authFetch,
+    companyProfile.companyLogo,
+    companyProfile.companyName,
+    updateCompanyProfile,
+  ]);
 
   const handleEditProfile = () => {
     navigate("/company-profile-setup-1");
@@ -131,7 +198,7 @@ export function CompanyProfileSummary() {
               alt={item.category}
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
 
             <div className="relative z-10 p-8 pb-32">
               <p className="text-white/60 text-xs font-light italic mb-1">
@@ -556,7 +623,7 @@ export function CompanyProfileSummary() {
       <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50">
         <button
           onClick={handleEditProfile}
-          className="flex items-center gap-3 px-8 py-4 bg-white text-black hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-xl shadow-2xl"
+          className="flex items-center gap-3 px-8 py-4 bg-gray-500/20 text-white/50 hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-xl shadow-2xl"
         >
           <Edit className="w-5 h-5" />
           Edit Profile

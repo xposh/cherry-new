@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
 import { supabase } from "../../util/supabase";
-import { useAuth } from "../../context/useAuth";
+import { useAuth } from "../../context/useAuth"; // ✅ useAuth importieren
 
 interface SocialLink {
   id: string;
@@ -12,7 +12,8 @@ interface SocialLink {
 }
 
 export function TalentProfileSetup3() {
-  const { user, finishProfile } = useAuth();
+  // ✅ FIX: authFetch aus useAuth holen!
+  const { user, finishProfile, authFetch } = useAuth();
   const navigate = useNavigate();
 
   // Helper-Funktion zur sicheren Extraktion von verschachtelten localStorage-Daten (Re-Hydration)
@@ -80,7 +81,6 @@ export function TalentProfileSetup3() {
           .getPublicUrl(uniqueFileName);
 
         setCvUrl(publicUrlData.publicUrl);
-        // Wir speichern nur die serialisierbaren Metadaten der Datei im State
         setCvFile({ name: file.name, size: file.size });
 
         console.log(
@@ -93,7 +93,6 @@ export function TalentProfileSetup3() {
         setCvFile(null);
         setCvUrl(null);
       } finally {
-        // REPARIERT: "finally" jetzt korrekt geschrieben mit Doppel-L
         setIsUploading(false);
       }
     } else {
@@ -172,12 +171,16 @@ export function TalentProfileSetup3() {
   };
 
   const handleFinish = async () => {
+    if (!user) {
+      alert("Please sign in before finishing your profile.");
+      return;
+    }
     if (isUploading) {
       alert("Bitte warte, bis der CV-Upload vollständig abgeschlossen ist.");
       return;
     }
 
-    // 2. LOKALE PERSISTIERUNG FÜR DIE SUMMARY (Falls API-Aufruf wegen Spaltenfehler crasht)
+    // 2. LOKALE PERSISTIERUNG FÜR DIE SUMMARY
     const localPage3Data = {
       cvUrl,
       cvFile,
@@ -186,7 +189,7 @@ export function TalentProfileSetup3() {
     };
     localStorage.setItem("talentSetup3", JSON.stringify(localPage3Data));
 
-    // Transformation der Links für das Backend (wird beibehalten, falls Spalten geflickt werden)
+    // Transformation der Links für das Backend
     const structuredSocialLinks = socialLinks.reduce(
       (acc, curr) => {
         acc[curr.platform.toLowerCase().replace(/[^a-z0-9]/g, "")] = curr.url;
@@ -195,17 +198,18 @@ export function TalentProfileSetup3() {
       {} as Record<string, string>,
     );
 
+    // ✅ FIX: user_id wurde entfernt - kommt aus Token!
     const page3Data = {
-      user_id: user?.id,
       availability: availability,
-      socialLinks: socialLinks, // Übergabe des Original-Arrays als Fallback
+      socialLinks: socialLinks,
       social_links: structuredSocialLinks,
       cvUrl: cvUrl,
       cvMetadata: cvFile,
     };
 
     try {
-      const response = await fetch("http://localhost:3000/profile", {
+      // ✅ FIX: authFetch schickt automatisch Token mit!
+      const response = await authFetch("http://localhost:3000/profile", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -222,16 +226,12 @@ export function TalentProfileSetup3() {
       navigate("/talent-profile-summary");
       console.log("Server-Antwort Page 3 erfolgreich:", result.message);
     } catch (error) {
-      // FEHLER ABGEFANGEN: Wir loggen den API-Fehler (wie Spaltenfehler im Screenshot),
-      // lassen die App aber über die Summary weiterlaufen, da wir oben im localStorage gesichert haben!
       console.warn(
         "API Error temporär ignoriert, fahre mit LocalStorage-Daten fort:",
         error,
       );
       alert("Profile could not be saved");
     }
-
-    // Navigiert jetzt immer sicher weiter, da Daten im LocalStorage bereitstehen
   };
 
   return (

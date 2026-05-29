@@ -40,7 +40,7 @@ app.post("/signup", async (req, res) => {
       { sub: newUser.id, email: newUser.email, role: newUser.role },
       JWT_SECRET,
       {
-        expiresIn: "2h",
+        expiresIn: "7d", // was set to 2h for testing, but 7d is more user-friendly for development
       },
     );
 
@@ -64,11 +64,11 @@ app.get("/is-profile-complete", requireAuth, async (req, res) => {
     const result =
       role === "talent"
         ? await sql`
-    SELECT * FROM talent_profiles 
+    SELECT * FROM talent_profiles
     WHERE user_id = ${req.auth?.userId!}
   `
         : await sql`
-    SELECT * FROM company_profiles 
+    SELECT * FROM company_profiles
     WHERE user_id = ${req.auth?.userId!}
   `;
     const userProfile = result[0];
@@ -103,7 +103,7 @@ app.post("/login", async (req, res) => {
       { sub: user.id, email: user.email, role: user.role },
       JWT_SECRET,
       {
-        expiresIn: "2h",
+        expiresIn: "7d", // was set to 2h for testing, but 7d is more user-friendly for development
       },
     );
 
@@ -132,60 +132,49 @@ app.post("/cherry-picks", requireAuth, async (req, res) => {
   }
 });
 
-app.get("/profile", requireAuth, async (req, res) => {
-  try {
-    console.log("logged in user:");
-    console.log(req.auth?.userId);
-    console.log(req.auth?.email);
-    console.log(req.auth?.role);
-
-    return res.json({ userId: req.auth!.userId });
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json({ msg: "server error" });
-  }
-});
-
 // =======================================================================================================================
-// 2. Die sauberste Lösung: Das flexible JSONB-Konzept
-
-// Wenn du jede einzelne UI-Komponente (wie Awards, Recognition, Work Model, etc.) als eigene Spalte in pgAdmin anlegen willst, musst du deine SQL-Tabelle ständig ändern. Das ist hochkompliziert, fehleranfällig und treibt jeden Anfänger in den Wahnsinn.
-// Der "Industry Standard" für flexible Formulare:
-// Wir speichern die Kerndaten (wie die ID) in einer festen Spalte. Den gesamten Rest des Formulars (egal wie viele Schritte oder Felder du noch hinzufügst oder umbenennst) speichern wir in einer einzigen, extrem mächtigen Spalte vom Typ JSONB. Das ist eine native PostgreSQL-Spalte, die komplette JavaScript-Objekte eins zu eins schluckt.
-
-// Dein Vorteil:
-
-// Du musst in pgAdmin nie wieder eine Spalte anfügen, wenn du im Frontend ein Feld änderst.
-//Wenn du später entscheidest, name in first_name und last_name aufzuteilen, machst du das nur im Frontend. Das Backend und pgAdmin bleiben davon komplett unberührt! Das ist maximale architektonische Freiheit.
+// ✅ SICHERER PROFIL-ENDPOINT MIT AUTHENTICATION UND ROLE-BASED ROUTING
 // =======================================================================================================================
 
-// app.post: Registriert die Route für das Absenden des Profil-Formulars.
-// async (req, res): Erlaubt asynchrone Datenbankzugriffe ohne den Hauptthread zu blockieren.
-app.post("/profile", async (req, res) => {
-  try {
-    // Wir extrahieren NUR die user_id. Der gesamte Rest des Formulars (egal welche Felder)
-    // wandert automatisch als kompaktes Objekt in die Variable "formData".
-    const { user_id, ...formData } = req.body;
+// ✅ FIX 1: requireAuth Middleware hinzugefügt
+// ✅ FIX 2: userId kommt aus req.auth (vom Token), NICHT aus dem Body
+// ✅ FIX 3: Role-Check: talent → talent_profiles, company → company_profiles
 
-    if (!user_id) {
-      return res
-        .status(400)
-        .json({ message: "Fehler: user_id wird zwingend benötigt." });
+app.post("/profile", requireAuth, async (req, res) => {
+  try {
+    // userId kommt jetzt sicher aus dem Token (von requireAuth Middleware)
+    const userId = req.auth!.userId!;
+    const userRole = req.auth!.role!;
+
+    // Alle Formular-Daten kommen aus dem Body (OHNE user_id!)
+    const formData = req.body;
+
+    console.log(`Speichere Profil für User ${userId} mit Role ${userRole}`);
+
+    // Role-Check: Speichere in der richtigen Tabelle
+    if (userRole === "talent") {
+      await sql`
+        INSERT INTO talent_profiles (user_id, profile_data)
+        VALUES (${userId}, ${JSON.stringify(formData)})
+        ON CONFLICT (user_id)
+        DO UPDATE SET profile_data = talent_profiles.profile_data || EXCLUDED.profile_data;
+      `;
+      return res.json({ message: "Talent-Profil erfolgreich gespeichert!" });
+    } else if (userRole === "company") {
+      await sql`
+        INSERT INTO company_profiles (user_id, profile_data)
+        VALUES (${userId}, ${JSON.stringify(formData)})
+        ON CONFLICT (user_id)
+        DO UPDATE SET profile_data = company_profiles.profile_data || EXCLUDED.profile_data;
+      `;
+      return res.json({ message: "Company-Profil erfolgreich gespeichert!" });
+    } else {
+      return res.status(403).json({
+        message: "Ungültige Rolle. Nur 'talent' oder 'company' erlaubt.",
+      });
     }
-
-    // Wir senden die Daten an die Tabelle talent_profiles.
-    // JSON.stringify(formData) packt alle Felder aus deinem Video automatisch in ein JSON-Paket.
-    // ON CONFLICT (user_id) DO UPDATE erlaubt unbegrenztes Überschreiben und Testen.
-    await sql`
-      INSERT INTO talent_profiles (user_id, profile_data) 
-      VALUES (${user_id}, ${JSON.stringify(formData)})
-      ON CONFLICT (user_id) 
-      DO UPDATE SET profile_data = talent_profiles.profile_data || EXCLUDED.profile_data;
-    `;
-
-    return res.json({ message: "Profil-Setup erfolgreich gespeichert!" });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return res
       .status(500)
       .json({ msg: "Serverfehler beim Speichern des Profils." });
@@ -195,6 +184,49 @@ app.post("/profile", async (req, res) => {
 // =======================================================================================================================
 // ENDE DER ERGÄNZUNG
 // =======================================================================================================================
+
+// ✅ GET /profile - Hole User-Profil-Daten
+app.get("/profile", requireAuth, async (req, res) => {
+  try {
+    const userId = req.auth!.userId!;
+    const userRole = req.auth!.role!;
+
+    // Hole User Basis-Daten
+    const [user] = await sql`
+      SELECT id, email, role FROM users WHERE id = ${userId}
+    `;
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Hole Profil-Daten basierend auf Role
+    let profileData = null;
+    if (userRole === "talent") {
+      const [talentProfile] = await sql`
+        SELECT profile_data FROM talent_profiles WHERE user_id = ${userId}
+      `;
+      profileData = talentProfile?.profile_data || null;
+    } else if (userRole === "company") {
+      const [companyProfile] = await sql`
+        SELECT profile_data FROM company_profiles WHERE user_id = ${userId}
+      `;
+      profileData = companyProfile?.profile_data || null;
+    }
+
+    return res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      profile: profileData,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ msg: "Server error" });
+  }
+});
 
 app.listen(3000, () => {
   console.log("backend started on port 3000");

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Cherry, ArrowRight, Eye, Sparkles, Clock } from "lucide-react";
+import { Logo } from "../../components/Logo";
 
 export function HomePage() {
   const userName = "Markus";
@@ -86,6 +87,7 @@ export function HomePage() {
 
   return (
     <div className="relative min-h-screen w-full bg-black overflow-auto pb-24">
+      <Logo />
       {/* HERO VIDEO SECTION - Full Screen */}
       <section className="relative h-screen w-full overflow-hidden">
         <video

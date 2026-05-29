@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Cherry, X, Check, MapPin, Globe, FileText, Award } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";

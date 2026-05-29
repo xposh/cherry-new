@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
+import { useAuth } from "../../context/useAuth"; //  NEU HINZUGEFÜGT
 
 interface SocialLink {
   id: string;
@@ -12,37 +13,62 @@ interface SocialLink {
 
 export function CompanyProfileSetup3() {
   const navigate = useNavigate();
-  const { updateCompanyProfile } = useCompanyProfile();
+  const { updateCompanyProfile, companyProfile } = useCompanyProfile();
+  const { authFetch, finishProfile } = useAuth(); // NEU HINZUGEFÜGT
+
+  const getSavedData = () => {
+    try {
+      const saved = localStorage.getItem("companySetup3");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.error("Fehler beim Parsen von companySetup3:", e);
+      return null;
+    }
+  };
+
+  const savedData = getSavedData();
 
   const [jobInfo, setJobInfo] = useState({
-    jobTitle: "",
-    jobLocation: "",
-    jobDescription: "",
-    salary: "",
-    startDate: "",
+    jobTitle: savedData?.jobInfo?.jobTitle || "",
+    jobLocation: savedData?.jobInfo?.jobLocation || "",
+    jobDescription: savedData?.jobInfo?.jobDescription || "",
+    salary: savedData?.jobInfo?.salary || "",
+    startDate: savedData?.jobInfo?.startDate || "",
   });
 
-  const [workModel, setWorkModel] = useState<string[]>([]);
-  const [requirements, setRequirements] = useState<string[]>([]);
-  const [newRequirement, setNewRequirement] = useState("");
+  const [workModel, setWorkModel] = useState<string[]>(
+    savedData?.workModel || [],
+  );
+  const [requirements, setRequirements] = useState<string[]>(
+    savedData?.requirements || [],
+  );
+  const [newRequirement, setNewRequirement] = useState(
+    savedData?.newRequirement || "",
+  );
 
   const [contactPersonPhoto, setContactPersonPhoto] = useState({
     file: null as File | null,
-    preview: "",
+    preview: savedData?.contactPersonPhoto?.preview || "",
   });
 
   const [contactInfo, setContactInfo] = useState({
-    contactPerson: "",
-    contactRole: "",
-    contactMessage: "",
-    contactEmail: "",
-    contactPhone: "",
-    contactWebsite: "",
+    contactPerson: savedData?.contactInfo?.contactPerson || "",
+    contactRole: savedData?.contactInfo?.contactRole || "",
+    contactMessage: savedData?.contactInfo?.contactMessage || "",
+    contactEmail: savedData?.contactInfo?.contactEmail || "",
+    contactPhone: savedData?.contactInfo?.contactPhone || "",
+    contactWebsite: savedData?.contactInfo?.contactWebsite || "",
   });
 
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
-  const [newSocialPlatform, setNewSocialPlatform] = useState("Instagram");
-  const [newSocialUrl, setNewSocialUrl] = useState("");
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(
+    savedData?.socialLinks || [],
+  );
+  const [newSocialPlatform, setNewSocialPlatform] = useState(
+    savedData?.newSocialPlatform || "Instagram",
+  );
+  const [newSocialUrl, setNewSocialUrl] = useState(
+    savedData?.newSocialUrl || "",
+  );
 
   const socialPlatforms = [
     "Instagram",
@@ -166,17 +192,79 @@ export function CompanyProfileSetup3() {
     }
   };
 
-  const handleFinish = () => {
-    updateCompanyProfile({
+  const handleFinish = async () => {
+    const localPage3Data = {
+      jobInfo,
+      workModel,
+      requirements,
+      newRequirement,
+      contactPersonPhoto: { preview: contactPersonPhoto.preview },
+      contactInfo,
+      socialLinks,
+      newSocialPlatform,
+      newSocialUrl,
+    };
+    localStorage.setItem("companySetup3", JSON.stringify(localPage3Data));
+    // 2. ✅ BACKEND-INTEGRATION: Sende alle Daten zum Backend
+    const savedStep1 = JSON.parse(
+      localStorage.getItem("companySetup1") ?? "null",
+    );
+    const savedStep2 = JSON.parse(
+      localStorage.getItem("companySetup2") ?? "null",
+    );
+    const contextProfile = companyProfile || {};
+    const fullPayload = {
+      companyLogo:
+        savedStep1?.companyLogoUrl || contextProfile.companyLogo || undefined,
+      companyImages:
+        savedStep1?.uploadedImages || contextProfile.companyImages || [],
+      ...savedStep2?.companyInfo,
+      cultureValues: savedStep2?.selectedValues || [],
+      benefits: savedStep2?.benefits || {
+        arbeitsmodell: [],
+        finanziell: [],
+        lifestyle: [],
+        mobilitat: [],
+        entwicklung: [],
+      },
       ...jobInfo,
       workModel,
       requirements,
+      salary: jobInfo.salary,
+      startDate: jobInfo.startDate,
       contactPersonPhoto: contactPersonPhoto.preview,
       ...contactInfo,
-      socialLinks: socialLinks.map(({ id, ...rest }) => rest),
-    });
+      socialLinks: socialLinks.map(({ platform, url }) => ({ platform, url })),
+    };
+    const profileData = fullPayload;
 
-    navigate("/company-profile-summary");
+    // 1. Update Context (für Summary)
+    updateCompanyProfile(fullPayload);
+
+    try {
+      // ✅ authFetch sendet automatisch JWT Token mit!
+      // ✅ KEIN user_id im Body - kommt aus Token!
+      const response = await authFetch("http://localhost:3000/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Fehler beim Speichern");
+      }
+
+      const result = await response.json();
+      console.log("✅ Company-Profil erfolgreich gespeichert:", result.message);
+
+      // ✅ Profile als complete markieren
+      finishProfile();
+
+      navigate("/company-profile-summary");
+    } catch (error) {
+      console.error("❌ Fehler beim Speichern:", error);
+      alert("Profile could not be saved. Please try again.");
+    }
   };
 
   return (

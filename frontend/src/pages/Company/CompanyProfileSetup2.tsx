@@ -8,28 +8,44 @@ export function CompanyProfileSetup2() {
   const navigate = useNavigate();
   const { updateCompanyProfile } = useCompanyProfile();
 
+  const getSavedData = () => {
+    try {
+      const saved = localStorage.getItem("companySetup2");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.error("Fehler beim Parsen von companySetup2:", e);
+      return null;
+    }
+  };
+
+  const savedData = getSavedData();
+
   const [companyInfo, setCompanyInfo] = useState({
-    companyName: "",
-    industry: "",
-    customIndustry: "",
-    location: "",
-    foundedYear: "",
-    companySize: "",
-    website: "",
-    claim: "",
-    description: "",
+    companyName: savedData?.companyInfo?.companyName || "",
+    industry: savedData?.companyInfo?.industry || "",
+    customIndustry: savedData?.companyInfo?.customIndustry || "",
+    location: savedData?.companyInfo?.location || "",
+    foundedYear: savedData?.companyInfo?.foundedYear || "",
+    companySize: savedData?.companyInfo?.companySize || "",
+    website: savedData?.companyInfo?.website || "",
+    claim: savedData?.companyInfo?.claim || "",
+    description: savedData?.companyInfo?.description || "",
   });
 
-  const [selectedValues, setSelectedValues] = useState<string[]>([]);
-  const [customValue, setCustomValue] = useState("");
+  const [selectedValues, setSelectedValues] = useState<string[]>(
+    savedData?.selectedValues || [],
+  );
+  const [customValue, setCustomValue] = useState(savedData?.customValue || "");
 
-  const [benefits, setBenefits] = useState({
-    arbeitsmodell: [] as string[],
-    finanziell: [] as string[],
-    lifestyle: [] as string[],
-    mobilitat: [] as string[],
-    entwicklung: [] as string[],
-  });
+  const [benefits, setBenefits] = useState(
+    savedData?.benefits || {
+      arbeitsmodell: [] as string[],
+      finanziell: [] as string[],
+      lifestyle: [] as string[],
+      mobilitat: [] as string[],
+      entwicklung: [] as string[],
+    },
+  );
 
   const predefinedValues = [
     "Präzision",
@@ -146,10 +162,18 @@ export function CompanyProfileSetup2() {
   };
 
   const handleNext = () => {
+    const setup2Data = {
+      companyInfo,
+      selectedValues,
+      benefits,
+      customValue,
+    };
+    localStorage.setItem("companySetup2", JSON.stringify(setup2Data));
+
     updateCompanyProfile({
       ...companyInfo,
       cultureValues: selectedValues,
-      benefits: benefits,
+      benefits,
     });
     navigate("/company-profile-setup-3");
   };
