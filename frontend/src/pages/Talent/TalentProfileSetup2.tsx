@@ -226,19 +226,19 @@ export function TalentProfileSetup2() {
   };
 
   const removePosition = (position: string) => {
-    setJobPreferences({
-      ...jobPreferences,
-      otherPositions: jobPreferences.otherPositions.filter(
-        (p) => p !== position,
-      ),
-    });
+      setJobPreferences({
+        ...jobPreferences,
+        otherPositions: jobPreferences.otherPositions.filter(
+          (p: string) => p !== position,
+        ),
+      });
   };
 
   const toggleWorkModel = (model: string) => {
     if (jobPreferences.workModel.includes(model)) {
       setJobPreferences({
         ...jobPreferences,
-        workModel: jobPreferences.workModel.filter((m) => m !== model),
+        workModel: jobPreferences.workModel.filter((m: string) => m !== model),
       });
     } else {
       setJobPreferences({
@@ -252,7 +252,9 @@ export function TalentProfileSetup2() {
     if (jobPreferences.employmentType.includes(type)) {
       setJobPreferences({
         ...jobPreferences,
-        employmentType: jobPreferences.employmentType.filter((t) => t !== type),
+        employmentType: jobPreferences.employmentType.filter(
+          (t: string) => t !== type,
+        ),
       });
     } else {
       setJobPreferences({
@@ -813,7 +815,7 @@ export function TalentProfileSetup2() {
                 </button>
               </div>
               <div className="flex flex-wrap gap-3">
-                {jobPreferences.otherPositions.map((position) => (
+                {jobPreferences.otherPositions.map((position: string) => (
                   <div
                     key={position}
                     className="flex items-center gap-2 px-4 py-2 border border-white text-white group hover:border-red-500 hover:text-red-500 transition-colors rounded-lg"

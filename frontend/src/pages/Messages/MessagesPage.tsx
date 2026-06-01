@@ -1,4 +1,4 @@
-import { Cherry, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { Logo } from "../../components/Logo";
 

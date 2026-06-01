@@ -16,7 +16,7 @@ export function CherryPicksPage() {
     console.log("user not logged in!");
     return null;
   }
-  const isViewingTalents = user.role === "employer";
+  const isViewingTalents = user.role === "talent";
 
   return (
     <div className="relative min-h-screen w-full bg-black pb-24">

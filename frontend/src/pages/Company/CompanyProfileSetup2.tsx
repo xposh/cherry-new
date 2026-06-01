@@ -151,7 +151,7 @@ export function CompanyProfileSetup2() {
     if (current.includes(benefit)) {
       setBenefits({
         ...benefits,
-        [category]: current.filter((b) => b !== benefit),
+        [category]: current.filter((b: string) => b !== benefit),
       });
     } else {
       setBenefits({

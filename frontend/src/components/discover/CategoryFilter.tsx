@@ -33,7 +33,7 @@ export function CategoryFilter() {
   }
 
   const categories =
-    user.role === "employer" ? talentCategories : companyCategories;
+    user.role === "talent" ? talentCategories : companyCategories;
 
   return (
     <div className="space-y-3">

@@ -5,6 +5,8 @@ import sql from "./util/db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { requireAuth } from "./authMiddleware";
+import analyticsRoutes from "./routes/analytics";
+import { startCronJobs } from "./services/cronJobs";
 
 if (!process.env.JWT_SECRET) {
   console.error("Denk dran! JWT_SECRET must be configured in .env");
@@ -228,6 +230,9 @@ app.get("/profile", requireAuth, async (req, res) => {
   }
 });
 
+app.use("/analytics", analyticsRoutes);
+
 app.listen(3000, () => {
   console.log("backend started on port 3000");
+  startCronJobs();
 });
