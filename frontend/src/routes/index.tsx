@@ -18,6 +18,7 @@ import { CherryPicksPage } from "../pages/Matches/CherryPicksPage";
 import { MessagesPage } from "../pages/Messages/MessagesPage";
 import { AccountPage } from "../pages/Account/AccountPage";
 import { PreferencesPage } from "../pages/Account/PreferencesPage";
+import { PrivacySecurityPage } from "../pages/Account/PrivacySecurityPage";
 import { TalentProfileView } from "../pages/Profile/TalentProfileView";
 import { CompanyProfileView } from "../pages/Profile/CompanyProfileView";
 import { TalentMatchDetailsPage } from "../pages/Matches/TalentMatchDetailsPage.tsx";
@@ -75,6 +76,10 @@ export const routes = createBrowserRouter([
               { path: "messages", element: <MessagesPage /> },
               { path: "account", element: <AccountPage /> },
               { path: "preferences/:role", element: <PreferencesPage /> },
+              {
+                path: "account/privacy-security",
+                element: <PrivacySecurityPage />,
+              }, // ARCHITEKTUR-FIX: Sauberer, statischer und manipulationssicherer Unterpfad
             ],
           },
         ],

@@ -6,6 +6,7 @@ import {
   Briefcase,
   Settings,
   LogOut,
+  Shield, // IMPORTIERT
 } from "lucide-react";
 import { Logo } from "../../components/Logo";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
@@ -108,7 +109,6 @@ export function AccountPage() {
     localStorage.getItem("companySetup3") ?? "null",
   );
 
-  // FIX: Talent-Daten werden jetzt sauber aus beiden Setup-Schritten rehydriert
   const localTalentSetup1 = safeParse(
     localStorage.getItem("talentSetup1") ?? "null",
   );
@@ -131,7 +131,7 @@ export function AccountPage() {
         profileImage: localCompanySetup1?.companyLogoUrl,
       }
     : {
-        profileImage: localTalentSetup1?.profileImage, // FIX: Holt den Supabase-Avatar-Link aus Setup 1
+        profileImage: localTalentSetup1?.profileImage,
         firstName: localTalentSetup2?.formData?.firstName,
         lastName: localTalentSetup2?.formData?.lastName,
         location: localTalentSetup2?.formData?.location,
@@ -142,7 +142,6 @@ export function AccountPage() {
 
   const profile = { ...localFallbackProfile, ...backendProfile };
 
-  // Bestimmung des Bildes nach Priorisierungskette
   const profileImage =
     profile.profileImage ||
     profile.companyLogo ||
@@ -299,9 +298,13 @@ export function AccountPage() {
                 <span className="text-white">Preferences</span>
               </div>
             </button>
-            <button className="w-full flex items-center justify-between p-4 border border-white/30 hover:border-white transition-all">
+            {/* FIX: Absoluter Navigationspfad passend zu der Kapselung des MainLayouts */}
+            <button
+              onClick={() => navigate("/account/privacy-security")}
+              className="w-full flex items-center justify-between p-4 border border-white/30 hover:border-white transition-all"
+            >
               <div className="flex items-center gap-4">
-                <Settings className="w-5 h-5 text-white" />
+                <Shield className="w-5 h-5 text-white" />
                 <span className="text-white">Privacy & Security</span>
               </div>
             </button>
