@@ -286,7 +286,14 @@ export function AccountPage() {
                 <span className="text-white">Edit Profile</span>
               </div>
             </button>
-            <button className="w-full flex items-center justify-between p-4 border border-white/30 hover:border-white transition-all">
+            <button
+              onClick={() => {
+                navigate(
+                  isTalent ? "/preferences/talent" : "/preferences/company",
+                );
+              }}
+              className="w-full flex items-center justify-between p-4 border border-white/30 hover:border-white transition-all"
+            >
               <div className="flex items-center gap-4">
                 <Settings className="w-5 h-5 text-white" />
                 <span className="text-white">Preferences</span>
