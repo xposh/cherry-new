@@ -9,10 +9,10 @@ export function MessagesPage() {
       <Logo />
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-8 pt-24 pb-8">
+      <div className="max-w-4xl mx-auto px-8 pt-40 pb-8">
         <div className="flex items-center gap-4 mb-8">
           <Mail className="w-8 h-8 text-white" />
-          <h1 className="text-4xl font-light text-white uppercase tracking-wider">
+          <h1 className="text-3xl font-light text-white uppercase tracking-widest">
             Messages
           </h1>
         </div>

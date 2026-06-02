@@ -171,9 +171,28 @@ export function CompanyHomePage() {
         const profileRes = await authFetch("http://localhost:3000/profile");
         if (profileRes.ok) {
           const data = await profileRes.json();
-          // Company: Extract first name from company name
-          const fullName = data.profile?.companyName || "Company";
-          setUserName(fullName.split(" ")[0]);
+          // Try to get company name from backend profile first
+          let companyName = data.profile?.companyName || data.profile?.name;
+
+          // If not found, check localStorage for setup2 data
+          if (!companyName) {
+            const companySetup2 = localStorage.getItem("companySetup2");
+            if (companySetup2) {
+              try {
+                const setupData = JSON.parse(companySetup2);
+                companyName = setupData.companyInfo?.companyName;
+              } catch (e) {
+                console.error("Error parsing companySetup2:", e);
+              }
+            }
+          }
+
+          // Final fallback to email
+          if (!companyName) {
+            companyName = data.user?.email?.split("@")[0] || "Company";
+          }
+
+          setUserName(companyName.split(" ")[0]); // Get first word only
         }
 
         // 1. Match Readiness

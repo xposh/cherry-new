@@ -142,7 +142,28 @@ export function TalentHomePage() {
         const profileRes = await authFetch("http://localhost:3000/profile");
         if (profileRes.ok) {
           const data = await profileRes.json();
-          setUserName(data.profile?.firstName || "User");
+          // Try to get name from backend profile first
+          let firstName = data.profile?.name || data.profile?.firstName;
+
+          // If not found, check localStorage for setup2 data
+          if (!firstName) {
+            const talentSetup2 = localStorage.getItem("talentSetup2");
+            if (talentSetup2) {
+              try {
+                const setupData = JSON.parse(talentSetup2);
+                firstName = setupData.formData?.firstName;
+              } catch (e) {
+                console.error("Error parsing talentSetup2:", e);
+              }
+            }
+          }
+
+          // Final fallback to email
+          if (!firstName) {
+            firstName = data.user?.email?.split("@")[0] || "User";
+          }
+
+          setUserName(firstName.split(" ")[0]); // Get first name only
         }
 
         // 1. Match Readiness

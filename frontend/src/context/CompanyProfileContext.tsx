@@ -58,6 +58,8 @@ const CompanyProfileContext = createContext<CompanyProfileContextType | null>(
   null,
 );
 
+export { CompanyProfileContext };
+
 export function CompanyProfileProvider({ children }: { children: ReactNode }) {
   const [companyProfile, setCompanyProfile] = useState<CompanyProfileData>({
     companyImages: [],

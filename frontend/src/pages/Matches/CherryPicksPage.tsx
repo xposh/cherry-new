@@ -24,10 +24,10 @@ export function CherryPicksPage() {
       <Logo />
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto px-8 pt-24 pb-8">
+      <div className="max-w-6xl mx-auto px-8 pt-40 pb-8">
         <div className="flex items-center gap-4 mb-8">
           <Cherry className="w-8 h-8 text-white" />
-          <h1 className="text-4xl font-light text-white uppercase tracking-wider">
+          <h1 className="text-3xl font-light text-white uppercase tracking-widest">
             Cherry Picks
           </h1>
         </div>

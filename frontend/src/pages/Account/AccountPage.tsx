@@ -29,6 +29,7 @@ interface ProfileData {
     location?: string;
     locations?: string;
     position?: string;
+    specialty?: string;
     industry?: string;
     claim?: string;
     website?: string;
@@ -95,6 +96,8 @@ export function AccountPage() {
   const isTalent = profileData?.user?.role === "talent";
   const isCompany = profileData?.user?.role === "company";
   const backendProfile = profileData?.profile || {};
+
+  // Lokale Datenstrukturen für Fallbacks auslesen
   const localCompanySetup1 = safeParse(
     localStorage.getItem("companySetup1") ?? "null",
   );
@@ -105,6 +108,15 @@ export function AccountPage() {
     localStorage.getItem("companySetup3") ?? "null",
   );
 
+  // FIX: Talent-Daten werden jetzt sauber aus beiden Setup-Schritten rehydriert
+  const localTalentSetup1 = safeParse(
+    localStorage.getItem("talentSetup1") ?? "null",
+  );
+  const localTalentSetup2 = safeParse(
+    localStorage.getItem("talentSetup2") ?? "null",
+  );
+
+  // Dynamische Fallback-Generierung basierend auf der Benutzerrolle
   const localFallbackProfile = isCompany
     ? {
         companyLogo: localCompanySetup1?.companyLogoUrl,
@@ -118,8 +130,19 @@ export function AccountPage() {
         contactPhone: localCompanySetup3?.contactInfo?.contactPhone,
         profileImage: localCompanySetup1?.companyLogoUrl,
       }
-    : {};
+    : {
+        profileImage: localTalentSetup1?.profileImage, // FIX: Holt den Supabase-Avatar-Link aus Setup 1
+        firstName: localTalentSetup2?.formData?.firstName,
+        lastName: localTalentSetup2?.formData?.lastName,
+        location: localTalentSetup2?.formData?.location,
+        position: localTalentSetup2?.formData?.position,
+        specialty: localTalentSetup2?.formData?.specialty,
+        phone: localTalentSetup2?.formData?.phone,
+      };
+
   const profile = { ...localFallbackProfile, ...backendProfile };
+
+  // Bestimmung des Bildes nach Priorisierungskette
   const profileImage =
     profile.profileImage ||
     profile.companyLogo ||
@@ -133,7 +156,7 @@ export function AccountPage() {
       <Logo />
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-8 pt-24 pb-8">
+      <div className="max-w-4xl mx-auto px-8 pt-40 pb-8">
         {error && (
           <div className="mb-6 rounded-xl border border-red-500/50 bg-red-500/10 p-4 text-red-200">
             {error}
@@ -141,7 +164,7 @@ export function AccountPage() {
         )}
         <div className="flex items-center gap-4 mb-8">
           <User className="w-8 h-8 text-white" />
-          <h1 className="text-4xl font-light text-white uppercase tracking-wider">
+          <h1 className="text-3xl font-light text-white uppercase tracking-widest">
             Account
           </h1>
         </div>
@@ -149,7 +172,7 @@ export function AccountPage() {
         {/* Profile Section */}
         <section className="mb-8">
           <div className="flex items-center gap-6 p-6 border border-white/30">
-            <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+            <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center overflow-hidden border border-white/10">
               {profileImage ? (
                 <img
                   src={profileImage}
@@ -188,6 +211,7 @@ export function AccountPage() {
               </div>
             </div>
 
+            {/* Phone */}
             {(profile.phone || profile.contactPhone) && (
               <div className="flex items-center gap-4 p-4 border border-white/30">
                 <Phone className="w-5 h-5 text-white" />
@@ -200,6 +224,7 @@ export function AccountPage() {
               </div>
             )}
 
+            {/* Location */}
             {(profile.location || profile.locations) && (
               <div className="flex items-center gap-4 p-4 border border-white/30">
                 <MapPin className="w-5 h-5 text-white" />
@@ -212,16 +237,22 @@ export function AccountPage() {
               </div>
             )}
 
-            {isTalent && profile.position && (
+            {/* Position & Specialty */}
+            {isTalent && (profile.position || profile.specialty) && (
               <div className="flex items-center gap-4 p-4 border border-white/30">
                 <Briefcase className="w-5 h-5 text-white" />
                 <div>
-                  <p className="text-sm text-gray-400">Position</p>
-                  <p className="text-white">{profile.position}</p>
+                  <p className="text-sm text-gray-400">Position & Specialty</p>
+                  <p className="text-white">
+                    {[profile.position, profile.specialty]
+                      .filter(Boolean)
+                      .join(" • ")}
+                  </p>
                 </div>
               </div>
             )}
 
+            {/* Industry */}
             {isCompany && profile.industry && (
               <div className="flex items-center gap-4 p-4 border border-white/30">
                 <Briefcase className="w-5 h-5 text-white" />

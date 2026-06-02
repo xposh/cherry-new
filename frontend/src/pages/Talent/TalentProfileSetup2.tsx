@@ -226,12 +226,12 @@ export function TalentProfileSetup2() {
   };
 
   const removePosition = (position: string) => {
-      setJobPreferences({
-        ...jobPreferences,
-        otherPositions: jobPreferences.otherPositions.filter(
-          (p: string) => p !== position,
-        ),
-      });
+    setJobPreferences({
+      ...jobPreferences,
+      otherPositions: jobPreferences.otherPositions.filter(
+        (p: string) => p !== position,
+      ),
+    });
   };
 
   const toggleWorkModel = (model: string) => {

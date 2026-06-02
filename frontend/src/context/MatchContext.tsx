@@ -36,6 +36,8 @@ interface MatchContextType {
 
 const MatchContext = createContext<MatchContextType | undefined>(undefined);
 
+export { MatchContext };
+
 export function MatchProvider({ children }: { children: ReactNode }) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [likedProfiles, setLikedProfiles] = useState<string[]>([]);

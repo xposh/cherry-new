@@ -27,6 +27,8 @@ const DiscoverContext = createContext<DiscoverContextType | undefined>(
   undefined,
 );
 
+export { DiscoverContext };
+
 export function DiscoverProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);

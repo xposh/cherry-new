@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useState, type ReactNode } from "react";
 
 // Das Interface definiert die Struktur des Objekts im gesamten Projekt
 interface ProfileData {
@@ -41,6 +41,8 @@ interface ProfileContextType {
 
 const ProfileContext = createContext<ProfileContextType | null>(null);
 
+export { ProfileContext };
+
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<ProfileData>({
     skills: [],
@@ -61,12 +63,3 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     </ProfileContext.Provider>
   );
 }
-
-export const useProfile = () => {
-  const context = useContext(ProfileContext);
-  if (!context)
-    throw new Error(
-      "useProfile muss innerhalb eines ProfileProviders genutzt werden!",
-    );
-  return context;
-};
