@@ -21,6 +21,7 @@ import { PreferencesPage } from "../pages/Account/PreferencesPage";
 import { PrivacySecurityPage } from "../pages/Account/PrivacySecurityPage";
 import { TalentProfileView } from "../pages/Profile/TalentProfileView";
 import { CompanyProfileView } from "../pages/Profile/CompanyProfileView";
+import { MatchScreen } from "../components/match/MatchScreen";
 import { TalentMatchDetailsPage } from "../pages/Matches/TalentMatchDetailsPage.tsx";
 import { CompanyMatchDetailsPage } from "../pages/Matches/CompanyMatchDetailsPage";
 import { ProtectedRoute } from "../components/ProtectedRoute.tsx";
@@ -38,8 +39,6 @@ export const routes = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       // PROFILE SETUP (No Navigation)
-      // Open to any logged-in user: new users fill these step by step,
-      // existing users revisit them to edit their profile.
       { path: "/talent-profile-setup-1", element: <TalentProfileSetup1 /> },
       { path: "/talent-profile-setup-2", element: <TalentProfileSetup2 /> },
       { path: "/talent-profile-setup-3", element: <TalentProfileSetup3 /> },
@@ -47,7 +46,7 @@ export const routes = createBrowserRouter([
       { path: "/company-profile-setup-2", element: <CompanyProfileSetup2 /> },
       { path: "/company-profile-setup-3", element: <CompanyProfileSetup3 /> },
 
-      // PROFILE-COMPLETE ROUTES — a completed, server-stored profile required
+      // PROFILE-COMPLETE ROUTES
       {
         element: <RequireProfile />,
         children: [
@@ -65,21 +64,30 @@ export const routes = createBrowserRouter([
               },
               { path: "home", element: <HomePage /> },
               { path: "discover", element: <DiscoverPage /> },
+
+              // Profil-Detailseiten (von Discover aus)
               { path: "talent/:id", element: <TalentProfileView /> },
               { path: "company/:id", element: <CompanyProfileView /> },
-              { path: "cherry-picks", element: <CherryPicksPage /> },
-              { path: "match/talent/:id", element: <TalentMatchDetailsPage /> },
+
+              // Match-Flow: Animation → dann Detailseite
+              { path: "match/:targetType/:id", element: <MatchScreen /> },
               {
-                path: "match/company/:id",
+                path: "match-details/talent/:id",
+                element: <TalentMatchDetailsPage />,
+              },
+              {
+                path: "match-details/company/:id",
                 element: <CompanyMatchDetailsPage />,
               },
+
+              { path: "cherry-picks", element: <CherryPicksPage /> },
               { path: "messages", element: <MessagesPage /> },
               { path: "account", element: <AccountPage /> },
               { path: "preferences/:role", element: <PreferencesPage /> },
               {
                 path: "account/privacy-security",
                 element: <PrivacySecurityPage />,
-              }, // ARCHITEKTUR-FIX: Sauberer, statischer und manipulationssicherer Unterpfad
+              },
             ],
           },
         ],

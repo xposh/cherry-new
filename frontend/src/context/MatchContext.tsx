@@ -1,20 +1,13 @@
-/*Speichert:
-- likedProfiles (Profile die ich geliked habe)
-- matches (gegenseitige Matches)
-- pendingLikes (wartet auf Gegenmatch)
-
-Funktionen:
-- likeProfile(profileId)
-- skipProfile(profileId)
-- checkForMatch(profileId) */
-
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useContext,
   useState,
-  type ReactNode,
   useEffect,
+  type ReactNode,
 } from "react";
+import { useAuth } from "./useAuth";
+import { discoverService } from "../services/discoverService";
 
 interface Match {
   id: string;
@@ -28,84 +21,95 @@ interface MatchContextType {
   matches: Match[];
   likedProfiles: string[];
   skippedProfiles: string[];
-  likeProfile: (profileId: string, profileType: "talent" | "company") => void;
-  skipProfile: (profileId: string, profileType: "talent" | "company") => void;
+  likeProfile: (
+    profileId: string,
+    profileType: "talent" | "company",
+  ) => Promise<void>;
+  skipProfile: (
+    profileId: string,
+    profileType?: "talent" | "company",
+  ) => Promise<void>;
   checkIfMatch: (profileId: string) => boolean;
   getMatches: () => Match[];
 }
 
 const MatchContext = createContext<MatchContextType | undefined>(undefined);
-
 export { MatchContext };
 
+function load<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function MatchProvider({ children }: { children: ReactNode }) {
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [likedProfiles, setLikedProfiles] = useState<string[]>([]);
-  const [skippedProfiles, setSkippedProfiles] = useState<string[]>([]);
+  const { authFetch } = useAuth();
+
+  const [matches, setMatches] = useState<Match[]>(() => load("matches", []));
+  const [likedProfiles, setLikedProfiles] = useState<string[]>(() =>
+    load("likedProfiles", []),
+  );
+  const [skippedProfiles, setSkippedProfiles] = useState<string[]>(() =>
+    load("skippedProfiles", []),
+  );
   const [showMatchPopup, setShowMatchPopup] = useState(false);
   const [latestMatch, setLatestMatch] = useState<Match | null>(null);
 
-  // Load from localStorage
-  useEffect(() => {
-    const savedMatches = localStorage.getItem("matches");
-    const savedLiked = localStorage.getItem("likedProfiles");
-    const savedSkipped = localStorage.getItem("skippedProfiles");
-
-    if (savedMatches) setMatches(JSON.parse(savedMatches));
-    if (savedLiked) setLikedProfiles(JSON.parse(savedLiked));
-    if (savedSkipped) setSkippedProfiles(JSON.parse(savedSkipped));
-  }, []);
-
-  // Save to localStorage
   useEffect(() => {
     localStorage.setItem("matches", JSON.stringify(matches));
   }, [matches]);
-
   useEffect(() => {
     localStorage.setItem("likedProfiles", JSON.stringify(likedProfiles));
   }, [likedProfiles]);
-
   useEffect(() => {
     localStorage.setItem("skippedProfiles", JSON.stringify(skippedProfiles));
   }, [skippedProfiles]);
 
-  const likeProfile = (
+  const likeProfile = async (
     profileId: string,
     profileType: "talent" | "company",
   ) => {
     setLikedProfiles((prev) => [...prev, profileId]);
-
-    // 50% chance of auto-match
-    const isMatch = Math.random() > 0.5;
-
-    if (isMatch) {
-      const newMatch: Match = {
-        id: `match-${Date.now()}`,
+    try {
+      const result = await discoverService.interact(
         profileId,
-        profileType,
-        matchedAt: new Date().toISOString(),
-        isMatch: true,
-      };
-      setMatches((prev) => [newMatch, ...prev]);
-      setLatestMatch(newMatch);
-      setShowMatchPopup(true);
-
-      // Auto-hide popup after 3 seconds
-      setTimeout(() => setShowMatchPopup(false), 3000);
+        "like",
+        authFetch,
+      );
+      if (result.status === "match") {
+        const newMatch: Match = {
+          id: result.matchId ?? `match-${Date.now()}`,
+          profileId,
+          profileType,
+          matchedAt: new Date().toISOString(),
+          isMatch: true,
+        };
+        setMatches((prev) => [newMatch, ...prev]);
+        setLatestMatch(newMatch);
+        setShowMatchPopup(true);
+        setTimeout(() => setShowMatchPopup(false), 3000);
+      }
+    } catch (err) {
+      console.error("Like fehlgeschlagen:", err);
     }
   };
 
-  const skipProfile = (profileId: string) => {
+  const skipProfile = async (profileId: string) => {
     setSkippedProfiles((prev) => [...prev, profileId]);
+    try {
+      await discoverService.interact(profileId, "skip", authFetch);
+    } catch (err) {
+      console.error("Skip fehlgeschlagen:", err);
+    }
   };
 
-  const checkIfMatch = (profileId: string) => {
-    return matches.some((m) => m.profileId === profileId && m.isMatch);
-  };
+  const checkIfMatch = (profileId: string) =>
+    matches.some((m) => m.profileId === profileId && m.isMatch);
 
-  const getMatches = () => {
-    return matches.filter((m) => m.isMatch);
-  };
+  const getMatches = () => matches.filter((m) => m.isMatch);
 
   return (
     <MatchContext.Provider
@@ -132,13 +136,10 @@ export function MatchProvider({ children }: { children: ReactNode }) {
 
 export function useMatch() {
   const context = useContext(MatchContext);
-  if (!context) {
-    throw new Error("useMatch must be used within MatchProvider");
-  }
+  if (!context) throw new Error("useMatch must be used within MatchProvider");
   return context;
 }
 
-// Match Popup Component
 function MatchPopup({ onClose }: { match: Match; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">

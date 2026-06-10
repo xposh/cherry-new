@@ -1,78 +1,24 @@
 import { Search, SlidersHorizontal, MapPin, Sparkles, X } from "lucide-react";
-import { useNavigate, Link } from "react-router";
-import { useState, useMemo } from "react";
+import { useNavigate } from "react-router";
+import { useState, useEffect, useCallback } from "react";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { Logo } from "../../components/Logo";
-
-// Datensatz erweitert um die Felder für die Filter-Logik
-const cards = [
-  {
-    id: 1,
-    image: "/Photographer/IMG_4417.JPG",
-    name: "Marcus Klein",
-    role: "Photographer",
-    city: "Hamburg",
-    experience: "Senior (5-8 years)",
-    model: "Office",
-    match: true,
-  },
-  {
-    id: 2,
-    image: "/barkeeper-sommelier/IMG_4431.JPG",
-    name: "Jason Brick",
-    role: "Sommelier",
-    city: "Berlin",
-    experience: "Mid (3-5 years)",
-    model: "Hybrid",
-  },
-  {
-    id: 3,
-    image: "/barkeeper-sommelier/IMG_4435.JPG",
-    name: "Steven Cole",
-    role: "Bar Manager",
-    city: "Frankfurt",
-    experience: "Expert (8+ years)",
-    model: "Office",
-  },
-  {
-    id: 4,
-    image: "/chef-restaurant/joshua-hoehne-t4WnlmQtUnE-unsplash.jpg",
-    name: "Danni Chang",
-    role: "Head Chef",
-    city: "Berlin",
-    experience: "Senior (5-8 years)",
-    model: "Office",
-    match: true,
-  },
-  {
-    id: 5,
-    image: "/barista/brent-gorwin-vhQUnmnOLys-unsplash.jpg",
-    name: "Emma Ford",
-    role: "Barista",
-    city: "Köln",
-    experience: "Junior (0-2 years)",
-    model: "Remote",
-  },
-  {
-    id: 6,
-    image: "/pilates/Pilates Black 1.png",
-    name: "Zara Makovic",
-    role: "Pilates Instructor",
-    city: "Hamburg",
-    experience: "Mid (3-5 years)",
-    model: "Hybrid",
-  },
-];
+import { useAuth } from "../../context/useAuth";
+import {
+  discoverService,
+  type DiscoverProfile,
+} from "../../services/discoverService";
 
 export function DiscoverPage() {
   const navigate = useNavigate();
+  const { user, authFetch } = useAuth();
 
-  // --- LOGIK-BLOCK ---
+  const [profiles, setProfiles] = useState<DiscoverProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
 
-  // Zentraler Filter-State für einfache Backend-Anbindung
   const [filters, setFilters] = useState({
     role: "",
     city: "",
@@ -80,47 +26,50 @@ export function DiscoverPage() {
     models: [] as string[],
   });
 
-  // Kombinierte Filter-Funktion (Searchbar + Sidebar)
-  const filteredCards = useMemo(() => {
-    return cards.filter((card) => {
-      const s = searchQuery.toLowerCase();
-      // Suche über Name, Rolle oder Stadt
-      const matchesSearch =
-        card.name.toLowerCase().includes(s) ||
-        card.role.toLowerCase().includes(s) ||
-        card.city.toLowerCase().includes(s);
+  const targetType = user?.role === "talent" ? "company" : "talent";
 
-      // Abgleich mit den Sidebar-Filtern
-      const matchesRole =
-        filters.role === "" ||
-        card.role.toLowerCase().includes(filters.role.toLowerCase());
-      const matchesCity =
-        filters.city === "" ||
-        card.city.toLowerCase().includes(filters.city.toLowerCase());
-      const matchesExp =
-        filters.experience === "All levels" ||
-        card.experience === filters.experience;
-      const matchesModel =
-        filters.models.length === 0 || filters.models.includes(card.model);
+  const loadFeed = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await discoverService.getFeed(authFetch);
+      console.log("📦 Feed geladen:", data.length, "Profile");
+      setProfiles(data);
+    } catch (err) {
+      console.error("❌ Feed Fehler:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [authFetch]);
 
-      return (
-        matchesSearch &&
-        matchesRole &&
-        matchesCity &&
-        matchesExp &&
-        matchesModel
-      );
-    });
-  }, [searchQuery, filters]);
+  useEffect(() => {
+    loadFeed();
+  }, [loadFeed]);
 
-  // DEINE ONCLICK LOGIK (Wiederhergestellt)
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchQuery || filters.city) {
+        try {
+          const data = await discoverService.search(
+            searchQuery,
+            filters.city,
+            authFetch,
+          );
+          setProfiles(data);
+        } catch (err) {
+          console.error("❌ Suche Fehler:", err);
+        }
+      } else {
+        loadFeed();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, filters.city, authFetch, loadFeed]);
+
   const handleProfileClick = (e: React.MouseEvent, profileId: string) => {
     e.preventDefault();
     if (activeProfileId === profileId) {
-      // Zweiter Klick -> Navigation zur dynamischen ID
-      navigate(`/talent/${profileId}`);
+      navigate(`/${targetType}/${profileId}`);
     } else {
-      // Erster Klick -> Zeigt Details (Hover-Zustand fixieren)
       setActiveProfileId(profileId);
     }
   };
@@ -134,31 +83,59 @@ export function DiscoverPage() {
     }));
   };
 
-  // Funktion zum Zurücksetzen aller Filter- und Suchzustände
   const resetFilters = () => {
-    setSearchQuery(""); // Leert das Suchfeld
-    setFilters({
-      // Setzt das Filter-Objekt auf Initialwerte
-      role: "",
-      city: "",
-      experience: "All levels",
-      models: [],
-    });
+    setSearchQuery("");
+    setFilters({ role: "", city: "", experience: "All levels", models: [] });
+    loadFeed();
   };
 
+  const resolveImageUrl = (raw: string): string => {
+    if (!raw) return "";
+    let src = raw;
+    if (src.startsWith("http://localhost:3000")) {
+      src = src.replace("http://localhost:3000", "");
+    }
+    if (src.toLowerCase().includes("/photographer/")) {
+      src = src.replace(/\/photographer\//i, "/Photographer/");
+    }
+    if (src.toLowerCase().includes("/recruter-hr/")) {
+      src = src.replace(/\/recruter-hr\//i, "/Recruter-Hr/");
+    }
+    return src;
+  };
+
+  const getInitials = (name: string): string => {
+    return name
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  };
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-black flex items-center justify-center">
+        <p className="text-white/40 text-sm tracking-[0.3em] uppercase">
+          Loading...
+        </p>
+      </main>
+    );
+  }
+
   return (
-    <main className="relative min-h-screen bg-black text-white overflow-hidden font-['Helvetica_Neue',sans-serif]">
+    <main className="relative min-h-screen bg-black text-white font-['Helvetica_Neue',sans-serif]">
       {/* HEADER */}
       <header className="fixed top-0 left-0 right-0 z-30 px-4 pt-20">
-        <div className="mx-auto max-w-[520px]">
+        <div className="mx-auto max-w-[640px]">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for talents..."
-              className="w-full h-14 border border-white/30 bg-transparent pl-12 pr-14 outline-none placeholder:text-white/50 backdrop-blur-[2px]"
+              placeholder={`Search for ${targetType === "talent" ? "talents" : "companies"}...`}
+              className="w-full h-14 border border-white/30 bg-transparent pl-12 pr-14 outline-none placeholder:text-white/50 text-white backdrop-blur-sm"
             />
             <button
               onClick={() => setShowFilter(true)}
@@ -167,54 +144,117 @@ export function DiscoverPage() {
               <SlidersHorizontal className="w-5 h-5 text-white" />
             </button>
           </div>
-          {/* Logo */}
-
-          <Link to="/">
-            <Logo className="fixed" />
-          </Link>
         </div>
       </header>
 
+      <Logo className="fixed" />
+
       {/* GRID */}
-      <section className="columns-2 md:columns-3 lg:columns-4 gap-0 pt-0">
-        {filteredCards.map((card) => (
-          <div
-            key={card.id}
-            onClick={(e) => handleProfileClick(e, card.id.toString())}
-            className="relative break-inside-avoid mb-0 cursor-pointer group overflow-hidden"
-          >
-            <img
-              src={card.image}
-              alt={card.name}
-              className="w-full block object-cover transition duration-500 group-hover:scale-[1.03]"
-            />
-            <div className="absolute inset-0 bg-black/45 group-hover:bg-black/20 transition duration-300" />
+      {profiles.length === 0 ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <p className="text-white/30 text-sm tracking-widest uppercase">
+            No profiles found
+          </p>
+        </div>
+      ) : (
+        <section className="columns-2 md:columns-3 lg:columns-4 gap-0 pt-36 pb-24">
+          {profiles.map((profile) => {
+            const imageSrc = resolveImageUrl(profile.main_image_url || "");
+            const isActive = activeProfileId === profile.id;
 
-            {card.match && (
-              <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-sm text-[10px] tracking-wider uppercase flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-[#2A6087]" />
-                Match
+            return (
+              <div
+                key={profile.id}
+                onClick={(e) => handleProfileClick(e, profile.id)}
+                className="relative break-inside-avoid cursor-pointer group overflow-hidden"
+                style={{ minHeight: "220px" }}
+              >
+                {/* IMAGE or PLACEHOLDER */}
+                {imageSrc ? (
+                  <img
+                    src={imageSrc}
+                    alt={profile.full_name}
+                    className="w-full block object-cover transition duration-500 group-hover:scale-[1.03]"
+                    style={{ minHeight: "220px" }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                      const parent = target.parentElement;
+                      if (parent) {
+                        const placeholder = parent.querySelector(
+                          "[data-placeholder]",
+                        ) as HTMLElement | null;
+                        if (placeholder) {
+                          placeholder.style.display = "flex";
+                        }
+                      }
+                    }}
+                  />
+                ) : null}
+
+                {/* PLACEHOLDER (shown when no image or image fails) */}
+                <div
+                  data-placeholder
+                  style={{
+                    display: imageSrc ? "none" : "flex",
+                    minHeight: "220px",
+                    background:
+                      "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)",
+                  }}
+                  className="w-full flex-col items-center justify-center gap-3 border border-white/10"
+                >
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center border border-white/20"
+                    style={{ background: "rgba(42,96,135,0.3)" }}
+                  >
+                    <span className="text-white/60 text-lg tracking-wider">
+                      {getInitials(profile.full_name)}
+                    </span>
+                  </div>
+                  <span className="text-white/50 text-xs uppercase tracking-widest px-4 text-center">
+                    {profile.full_name}
+                  </span>
+                </div>
+
+                {/* OVERLAY — only when image exists */}
+                {imageSrc && (
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition duration-300" />
+                )}
+
+                {/* MATCH BADGE */}
+                {profile.is_match_preview && (
+                  <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 backdrop-blur-sm text-[10px] tracking-wider uppercase flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-[#2A6087]" />
+                    Match
+                  </div>
+                )}
+
+                {/* INFO OVERLAY */}
+                <div
+                  className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition duration-300 ${
+                    isActive
+                      ? "translate-y-0 opacity-100"
+                      : "translate-y-6 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
+                  }`}
+                >
+                  <h3 className="text-white text-base font-light">
+                    {profile.full_name}
+                  </h3>
+                  <p className="text-white/70 text-sm font-light">
+                    {profile.current_role}
+                  </p>
+                  <div className="flex items-center gap-1 mt-1 text-white/50 text-xs">
+                    <MapPin className="w-3 h-3" />
+                    {profile.city}
+                  </div>
+                </div>
               </div>
-            )}
+            );
+          })}
+        </section>
+      )}
 
-            {/* Sichtbarkeit gesteuert durch Hover ODER aktiven State (erster Tap) */}
-            <div
-              className={`absolute bottom-0 left-0 right-0 p-4 transition duration-300 ${activeProfileId === card.id.toString() ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"}`}
-            >
-              <h3 className="text-white text-[18px] font-medium">
-                {card.name}
-              </h3>
-              <p className="text-white/80 text-sm">{card.role}</p>
-              <div className="flex items-center gap-1 mt-1 text-white/70 text-xs">
-                <MapPin className="w-3 h-3" />
-                {card.city}
-              </div>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      {/* SIDEBAR */}
+      {/* FILTER SIDEBAR */}
       {showFilter && (
         <>
           <div
@@ -247,7 +287,7 @@ export function DiscoverPage() {
                       setFilters({ ...filters, role: e.target.value })
                     }
                     className="w-full px-3 py-2 bg-white/5 border border-white/20 text-white outline-none focus:border-white/40 transition-colors"
-                    placeholder="e.g. Chef"
+                    placeholder="e.g. Chef, Designer"
                   />
                 </div>
 
@@ -262,7 +302,7 @@ export function DiscoverPage() {
                       setFilters({ ...filters, city: e.target.value })
                     }
                     className="w-full px-3 py-2 bg-white/5 border border-white/20 text-white outline-none focus:border-white/40 transition-colors"
-                    placeholder="City or Remote"
+                    placeholder="z.B. Hamburg, Berlin"
                   />
                 </div>
 
@@ -316,8 +356,6 @@ export function DiscoverPage() {
                   >
                     Apply Filters
                   </button>
-
-                  {/* Reset Button */}
                   <button
                     onClick={resetFilters}
                     className="w-full py-2 text-xs text-white/50 uppercase tracking-widest hover:text-white transition-colors"
@@ -331,7 +369,6 @@ export function DiscoverPage() {
         </>
       )}
 
-      {/* NAV */}
       <div className="fixed bottom-0 left-0 right-0 z-40">
         <BottomNavigation />
       </div>

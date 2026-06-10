@@ -56,7 +56,7 @@ export function PreferencesPage() {
             {/* Feld 1: Discovery Mode */}
             <div className="flex items-center justify-between p-6 border border-white/30 bg-transparent">
               <div className="flex items-start gap-4">
-                <Eye className="w-5 h-5 text-white mt-1 flex-shrink-0" />
+                <Eye className="w-5 h-5 text-white mt-1 shrink-0" />
                 <div>
                   <p className="font-normal text-lg tracking-wide text-white">
                     Discovery Mode
@@ -72,9 +72,7 @@ export function PreferencesPage() {
               <button
                 onClick={() => setDiscoveryMode(!discoveryMode)}
                 className={`w-14 h-8 rounded-full border border-white/20 p-1 transition-all duration-300 ease-in-out ${
-                  discoveryMode
-                    ? "bg-[#2A6087] border-[#2A6087]"
-                    : "bg-neutral-800"
+                  discoveryMode ? "bg-primary border-primary" : "bg-neutral-800"
                 }`}
               >
                 <div
@@ -88,7 +86,7 @@ export function PreferencesPage() {
             {/* Feld 2: Job Opportunities (Mit Briefcase Icon & Signature-Blau) */}
             <div className="flex items-center justify-between p-6 border border-white/30 bg-transparent">
               <div className="flex items-start gap-4">
-                <Briefcase className="w-5 h-5 text-white mt-1 flex-shrink-0" />
+                <Briefcase className="w-5 h-5 text-white mt-1 shrink-0" />
                 <div>
                   <p className="font-normal text-lg tracking-wide text-white">
                     {isTalentRoute
@@ -105,7 +103,7 @@ export function PreferencesPage() {
               <button
                 onClick={() => setShowJobs(!showJobs)}
                 className={`w-14 h-8 rounded-full border border-white/20 p-1 transition-all duration-300 ease-in-out ${
-                  showJobs ? "bg-[#2A6087] border-[#2A6087]" : "bg-neutral-800"
+                  showJobs ? "bg-primary border-primary" : "bg-neutral-800"
                 }`}
               >
                 <div
@@ -119,7 +117,7 @@ export function PreferencesPage() {
             {/* Feld 3: Event Filter (Mit CalendarDays Icon & Signature-Blau) */}
             <div className="flex items-center justify-between p-6 border border-white/30 bg-transparent">
               <div className="flex items-start gap-4">
-                <CalendarDays className="w-5 h-5 text-white mt-1 flex-shrink-0" />
+                <CalendarDays className="w-5 h-5 text-white mt-1 shrink-0" />
                 <div>
                   <p className="font-normal text-lg tracking-wide text-white">
                     {isTalentRoute
@@ -136,9 +134,7 @@ export function PreferencesPage() {
               <button
                 onClick={() => setShowEvents(!showEvents)}
                 className={`w-14 h-8 rounded-full border border-white/20 p-1 transition-all duration-300 ease-in-out ${
-                  showEvents
-                    ? "bg-[#2A6087] border-[#2A6087]"
-                    : "bg-neutral-800"
+                  showEvents ? "bg-primary border-primary" : "bg-neutral-800"
                 }`}
               >
                 <div
@@ -152,7 +148,7 @@ export function PreferencesPage() {
             {/* Feld 4: Travel Mode */}
             <div className="flex items-center justify-between p-6 border border-white/30 bg-transparent">
               <div className="flex items-start gap-4">
-                <Map className="w-5 h-5 text-white mt-1 flex-shrink-0" />
+                <Map className="w-5 h-5 text-white mt-1 shrink-0" />
                 <div>
                   <p className="font-normal text-lg tracking-wide text-white">
                     Travel Mode
@@ -166,9 +162,7 @@ export function PreferencesPage() {
               <button
                 onClick={() => setTravelMode(!travelMode)}
                 className={`w-14 h-8 rounded-full border border-white/20 p-1 transition-all duration-300 ease-in-out ${
-                  travelMode
-                    ? "bg-[#2A6087] border-[#2A6087]"
-                    : "bg-neutral-800"
+                  travelMode ? "bg-primary border-primary" : "bg-neutral-800"
                 }`}
               >
                 <div

@@ -47,7 +47,7 @@ export function MatchScreen() {
           className="text-center"
           style={{ animation: "popIn 1s ease-out forwards" }}
         >
-          <h1 className="font-light tracking-[0.1em] uppercase text-white text-[36px]">
+          <h1 className="font-light tracking-widest uppercase text-white text-[36px]">
             Cherry!
           </h1>
         </div>

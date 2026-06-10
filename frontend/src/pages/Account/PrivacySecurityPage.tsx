@@ -152,7 +152,7 @@ export function PrivacySecurityPage() {
               className="w-full flex items-center justify-between p-6 border border-white/30 bg-transparent hover:border-white transition-all text-left"
             >
               <div className="flex items-start gap-4">
-                <Download className="w-5 h-5 text-white mt-1 flex-shrink-0" />
+                <Download className="w-5 h-5 text-white mt-1 shrink-0" />
                 <div>
                   <p className="font-normal text-lg tracking-wide text-white">
                     Request Data Report
@@ -172,7 +172,7 @@ export function PrivacySecurityPage() {
             {isTalent ? (
               <button className="w-full flex items-center justify-between p-6 border border-red-900/50 bg-red-950/10 hover:border-red-500 transition-all text-left group">
                 <div className="flex items-start gap-4">
-                  <Trash2 className="w-5 h-5 text-red-500 mt-1 flex-shrink-0" />
+                  <Trash2 className="w-5 h-5 text-red-500 mt-1 shrink-0" />
                   <div>
                     <p className="font-normal text-lg tracking-wide text-red-500">
                       Delete Account
@@ -190,7 +190,7 @@ export function PrivacySecurityPage() {
             ) : (
               <div className="w-full flex items-center justify-between p-6 border border-amber-900/40 bg-amber-950/5 text-left">
                 <div className="flex items-start gap-4">
-                  <Building2 className="w-5 h-5 text-amber-500 mt-1 flex-shrink-0" />
+                  <Building2 className="w-5 h-5 text-amber-500 mt-1 shrink-0" />
                   <div>
                     <p className="font-normal text-lg tracking-wide text-amber-500">
                       Company Deactivation
