@@ -1,5 +1,5 @@
-import { Cherry } from "lucide-react";
 import { Link } from "react-router";
+import { Logo } from "../../components/Logo";
 
 export function OpenerPage() {
   return (
@@ -12,8 +12,7 @@ export function OpenerPage() {
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
       >
-        <source src="/videos/opener-background.mp4" type="video/mp4" />
-        {/* Fallback Image */}
+        <source src="/videos/opener-background-final.mp4" type="video/mp4" />
         <div className="absolute inset-0 bg-black" />
       </video>
 
@@ -22,24 +21,18 @@ export function OpenerPage() {
 
       {/* Content - Above video */}
       <div className="relative z-10">
-        {/* Logo */}
+        {/* Logo Layout Wrapper */}
         <div className="mb-12 md:mb-16">
-          <h2
-            className="text-2xl tracking-[0.3em] uppercase flex items-center gap-1"
-            style={{ color: "#2A6087" }}
-          >
-            CHE
-            <Cherry className="w-6 h-6" style={{ color: "#2A6087" }} />Y
-          </h2>
+          <Logo />
         </div>
 
         {/* Dictionary Entry */}
         <div className="max-w-2xl">
           {/* Word */}
           <h1
-            className="mb-6 italic text-[20px]"
+            className="mb-6 italic text-[28px]"
             style={{
-              color: "#2A6087",
+              color: "white",
               fontFamily: "Helvetica Neue, sans-serif",
             }}
           >
@@ -49,11 +42,11 @@ export function OpenerPage() {
           {/* Definition */}
           <div
             className="text-lg md:text-xl leading-relaxed"
-            style={{ color: "#2A6087" }}
+            style={{ color: "white" }}
           >
             <span>verb</span> <span>[ I or T ]</span>
             <p
-              className="mt-4 text-[18px]"
+              className="mt-4 text-[22px]"
               style={{ fontFamily: "Helvetica Neue, sans-serif" }}
             >
               to pick only the best people or things from a group, so that only
