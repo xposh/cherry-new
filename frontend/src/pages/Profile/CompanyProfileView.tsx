@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Cherry, MapPin, X, Check } from "lucide-react";
+import { MapPin, X, Check } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { useAuth } from "../../context/useAuth";
+import { Logo } from "../../components/Logo";
 import {
   discoverService,
   type FullProfile,
@@ -95,15 +96,8 @@ export function CompanyProfileView() {
   return (
     <div className="relative min-h-screen w-full bg-black overflow-hidden">
       {/* Logo */}
-      <div className="fixed top-24 left-6 z-50">
-        <h2
-          className="text-2xl tracking-[0.3em] uppercase flex items-center gap-1"
-          style={{ color: "#2A6087" }}
-        >
-          CHE
-          <Cherry className="w-6 h-6" style={{ color: "#2A6087" }} />Y
-        </h2>
-      </div>
+
+      <Logo />
 
       {/* Scroll Indicator */}
       <div className="fixed top-8 right-8 z-50 flex gap-1">

@@ -15,7 +15,7 @@ export function Logo({
   to = "/home",
 }: LogoProps) {
   return (
-    <div className={`fixed top-8 left-8 z-30 ${className}`}>
+    <div className={`fixed top-22 left-16 z-30 ${className}`}>
       <Link to={to}>
         <h2
           className="text-2xl tracking-[0.3em] uppercase flex items-center gap-1 font-bold"

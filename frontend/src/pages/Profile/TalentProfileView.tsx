@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Cherry, MapPin, X, Check } from "lucide-react";
+import { MapPin, X, Check } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { useAuth } from "../../context/useAuth";
+import { Logo } from "../../components/Logo";
 import {
   discoverService,
   type FullProfile,
@@ -39,7 +40,7 @@ export function TalentProfileView() {
     const el = scrollRef.current;
     if (!el) return;
     const onScroll = () => {
-      const index = Math.round(el.scrollTop / window.innerHeight);
+      const index = Math.round(el.scrollTop / el.clientHeight);
       setCurrentIndex(index);
     };
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -87,20 +88,12 @@ export function TalentProfileView() {
   }
 
   const portfolioItems = profile.portfolioItems ?? [];
-  const totalSlides = portfolioItems.length + 2; // portfolio + bio slide + info slide
+  const totalSlides = portfolioItems.length + 2;
 
   return (
     <div className="relative min-h-screen w-full bg-black overflow-hidden">
-      {/* Logo */}
-      <div className="fixed top-24 left-6 z-50">
-        <h2
-          className="text-2xl tracking-[0.3em] uppercase flex items-center gap-1"
-          style={{ color: "#2A6087" }}
-        >
-          CHE
-          <Cherry className="w-6 h-6" style={{ color: "#2A6087" }} />Y
-        </h2>
-      </div>
+      {/* Autarkes Logo aus Logo.tsx */}
+      <Logo />
 
       {/* Scroll Indicator */}
       <div className="fixed top-8 right-8 z-50 flex gap-1">
@@ -185,8 +178,8 @@ export function TalentProfileView() {
         </div>
 
         {/* Info Slide */}
-        <div className="min-h-screen w-full snap-start bg-black p-8 pb-32">
-          <div className="max-w-2xl mx-auto space-y-8 pt-20">
+        <div className="h-screen w-full snap-start bg-black overflow-hidden relative">
+          <div className="h-full w-full overflow-y-auto p-8 pb-32 pt-20 max-w-2xl mx-auto space-y-8">
             {profile.about && (
               <section>
                 <h2 className="text-2xl font-light text-white mb-4 uppercase tracking-wider">
@@ -298,7 +291,7 @@ export function TalentProfileView() {
         </div>
       </div>
 
-      {/* X und ✓ Buttons — runde Kreise wie in Figma */}
+      {/* X und ✓ Buttons */}
       <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 flex items-center gap-6">
         <button
           onClick={handleSkip}
