@@ -32,7 +32,7 @@ export function OpenerPage() {
           <h1
             className="mb-6 italic text-[28px]"
             style={{
-              color: "white",
+              color: "#2A6087",
               fontFamily: "Helvetica Neue, sans-serif",
             }}
           >

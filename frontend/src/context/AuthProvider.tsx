@@ -66,6 +66,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
       }
       const { user, accessToken } = await response.json();
+
+      // ✅ FIX 2: Alte Onboarding-Daten löschen, damit neue Accounts
+      // nicht versehentlich Daten von vorherigen Registrierungen erben.
+      [
+        "talentSetup1",
+        "talentSetup2",
+        "talentSetup3",
+        "companySetup1",
+        "companySetup2",
+        "companySetup3",
+      ].forEach((key) => localStorage.removeItem(key));
+
       setToken(accessToken);
       setUser(user);
     } catch (err) {

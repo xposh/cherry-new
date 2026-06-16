@@ -180,16 +180,13 @@ export function TalentProfileSetup3() {
       return;
     }
 
-    // 2. LOKALE PERSISTIERUNG FÜR DIE SUMMARY
-    const localPage3Data = {
-      cvUrl,
-      cvFile,
-      availability,
-      socialLinks,
-    };
+    const localPage3Data = { cvUrl, cvFile, availability, socialLinks };
     localStorage.setItem("talentSetup3", JSON.stringify(localPage3Data));
 
-    // Transformation der Links für das Backend
+    // ✅ FIX: Setup 1 und Setup 2 Daten einsammeln — vorher fehlten sie komplett
+    const setup1 = JSON.parse(localStorage.getItem("talentSetup1") ?? "null");
+    const setup2 = JSON.parse(localStorage.getItem("talentSetup2") ?? "null");
+
     const structuredSocialLinks = socialLinks.reduce(
       (acc, curr) => {
         acc[curr.platform.toLowerCase().replace(/[^a-z0-9]/g, "")] = curr.url;
@@ -198,38 +195,55 @@ export function TalentProfileSetup3() {
       {} as Record<string, string>,
     );
 
-    // ✅ FIX: user_id wurde entfernt - kommt aus Token!
-    const page3Data = {
-      availability: availability,
-      socialLinks: socialLinks,
+    const f = setup2?.formData;
+    const fullName =
+      f?.name || `${f?.firstName ?? ""} ${f?.lastName ?? ""}`.trim();
+
+    // ✅ Komplettes Payload: Setup 1 + Setup 2 + Setup 3 zusammen
+    const fullPayload = {
+      profileImage: setup1?.profileImage ?? "",
+      portfolioItems: setup1?.images ?? [],
+
+      name: fullName,
+      firstName: f?.firstName ?? "",
+      lastName: f?.lastName ?? "",
+      age: f?.age ?? "",
+      location: f?.location ?? "",
+      position: f?.position ?? "",
+      specialty: f?.specialty ?? "",
+      about: f?.about ?? "",
+      education: setup2?.education ?? null,
+      skills: setup2?.skills ?? [],
+      experiences: setup2?.experiences ?? [],
+      otherExperiences: setup2?.otherExperiences ?? [],
+      languages: setup2?.languages ?? [],
+      recognitions: setup2?.recognitions ?? [],
+      jobPreferences: setup2?.jobPreferences ?? null,
+
+      availability,
+      socialLinks,
       social_links: structuredSocialLinks,
-      cvUrl: cvUrl,
+      cvUrl,
       cvMetadata: cvFile,
     };
 
     try {
-      // ✅ FIX: authFetch schickt automatisch Token mit!
       const response = await authFetch("http://localhost:3000/profile", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(page3Data),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fullPayload),
       });
 
       if (!response.ok) {
-        throw new Error("Fehler beim Senden der Page 3 Daten an den Server.");
+        throw new Error("Fehler beim Senden der Profildaten an den Server.");
       }
 
       const result = await response.json();
       finishProfile();
       navigate("/talent-profile-summary");
-      console.log("Server-Antwort Page 3 erfolgreich:", result.message);
+      console.log("Server-Antwort erfolgreich:", result.message);
     } catch (error) {
-      console.warn(
-        "API Error temporär ignoriert, fahre mit LocalStorage-Daten fort:",
-        error,
-      );
+      console.error("API Error:", error);
       alert("Profile could not be saved");
     }
   };

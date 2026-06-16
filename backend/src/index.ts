@@ -156,20 +156,50 @@ app.post("/profile", requireAuth, async (req, res) => {
 
     // Role-Check: Speichere in der richtigen Tabelle
     if (userRole === "talent") {
-      await sql`
-        INSERT INTO talent_profiles (user_id, profile_data)
-        VALUES (${userId}, ${JSON.stringify(formData)})
-        ON CONFLICT (user_id)
-        DO UPDATE SET profile_data = talent_profiles.profile_data || EXCLUDED.profile_data;
+      const [existing] = await sql`
+        SELECT profile_data FROM talent_profiles WHERE user_id = ${userId}
       `;
+      if (existing) {
+        const current =
+          typeof existing.profile_data === "object" &&
+          !Array.isArray(existing.profile_data)
+            ? existing.profile_data
+            : {};
+        const merged = { ...current, ...formData };
+        await sql`
+          UPDATE talent_profiles
+          SET profile_data = ${sql.json(merged)}
+          WHERE user_id = ${userId}
+        `;
+      } else {
+        await sql`
+          INSERT INTO talent_profiles (user_id, profile_data)
+          VALUES (${userId}, ${sql.json(formData)})
+        `;
+      }
       return res.json({ message: "Talent-Profil erfolgreich gespeichert!" });
     } else if (userRole === "company") {
-      await sql`
-        INSERT INTO company_profiles (user_id, profile_data)
-        VALUES (${userId}, ${JSON.stringify(formData)})
-        ON CONFLICT (user_id)
-        DO UPDATE SET profile_data = company_profiles.profile_data || EXCLUDED.profile_data;
+      const [existing] = await sql`
+        SELECT profile_data FROM company_profiles WHERE user_id = ${userId}
       `;
+      if (existing) {
+        const current =
+          typeof existing.profile_data === "object" &&
+          !Array.isArray(existing.profile_data)
+            ? existing.profile_data
+            : {};
+        const merged = { ...current, ...formData };
+        await sql`
+          UPDATE company_profiles
+          SET profile_data = ${sql.json(merged)}
+          WHERE user_id = ${userId}
+        `;
+      } else {
+        await sql`
+          INSERT INTO company_profiles (user_id, profile_data)
+          VALUES (${userId}, ${sql.json(formData)})
+        `;
+      }
       return res.json({ message: "Company-Profil erfolgreich gespeichert!" });
     } else {
       return res.status(403).json({
