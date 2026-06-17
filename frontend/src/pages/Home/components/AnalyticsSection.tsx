@@ -18,7 +18,7 @@ export function AnalyticsSection({
       <div className="max-w-7xl mx-auto">
         <h2
           className="text-xs uppercase tracking-[0.3em] mb-16 text-center"
-          style={{ color: "rgba(255,255,255,0.5)" }}
+          style={{ color: "rgba(254,246,234,0.5)" }}
         >
           Your Analytics
         </h2>
@@ -33,7 +33,7 @@ export function AnalyticsSection({
                   cy="96"
                   r="80"
                   fill="none"
-                  stroke="rgba(255, 255, 255, 0.05)"
+                  stroke="rgba(78, 52, 46, 0.18)"
                   strokeWidth="2"
                 />
                 <circle
@@ -41,7 +41,7 @@ export function AnalyticsSection({
                   cy="96"
                   r="80"
                   fill="none"
-                  stroke="#00FF88"
+                  stroke="#FF6F00"
                   strokeWidth="2"
                   strokeDasharray={2 * Math.PI * 80}
                   strokeDashoffset={
@@ -49,7 +49,7 @@ export function AnalyticsSection({
                   }
                   strokeLinecap="round"
                   style={{
-                    filter: "drop-shadow(0 0 8px rgba(0, 255, 136, 0.4))",
+                    filter: "drop-shadow(0 0 8px rgba(255, 111, 0, 0.4))",
                   }}
                 />
               </svg>
@@ -57,15 +57,15 @@ export function AnalyticsSection({
                 <p
                   className="text-5xl font-extralight"
                   style={{
-                    color: "#00FF88",
-                    textShadow: "0 0 15px rgba(0, 255, 136, 0.4)",
+                    color: "#FF6F00",
+                    textShadow: "0 0 15px rgba(255, 111, 0, 0.4)",
                   }}
                 >
                   {responseReliability}
                 </p>
                 <p
                   className="text-xs uppercase tracking-[0.2em] text-center"
-                  style={{ color: "rgba(255,255,255,0.4)" }}
+                  style={{ color: "rgba(254,246,234,0.4)" }}
                 >
                   %
                 </p>
@@ -73,13 +73,13 @@ export function AnalyticsSection({
             </div>
             <p
               className="text-xs uppercase tracking-[0.3em] text-center"
-              style={{ color: "rgba(255,255,255,0.5)" }}
+              style={{ color: "rgba(254,246,234,0.5)" }}
             >
               Response Reliability
             </p>
             <p
               className="text-sm mt-2 text-center"
-              style={{ color: "rgba(255,255,255,0.7)" }}
+              style={{ color: "rgba(254,246,234,0.7)" }}
             >
               Companies value your quick replies
             </p>
@@ -106,13 +106,13 @@ export function AnalyticsSection({
                         style={{
                           height: `${barHeight}%`,
                           background:
-                            "linear-gradient(180deg, #FF10F0 0%, #FF1493 100%)",
-                          boxShadow: "0 0 15px rgba(255, 16, 240, 0.4)",
+                            "linear-gradient(180deg, #FF6F00 0%, #B86B19 100%)",
+                          boxShadow: "0 0 15px rgba(255, 111, 0, 0.4)",
                         }}
                       />
                       <p
                         className="text-[10px] mt-4 font-light tracking-wider"
-                        style={{ color: "rgba(255,255,255,0.4)" }}
+                        style={{ color: "rgba(254,246,234,0.4)" }}
                       >
                         {item.day.substring(0, 2)}
                       </p>
@@ -120,14 +120,14 @@ export function AnalyticsSection({
                   );
                 })
               ) : (
-                <p className="text-white/50 text-sm">No data yet</p>
+                <p className="text-[#FEF6EA]/50 text-sm">No data yet</p>
               )}
             </div>
 
             <div className="text-center">
               <p
                 className="text-[10px] uppercase tracking-[0.3em]"
-                style={{ color: "rgba(255,255,255,0.5)" }}
+                style={{ color: "rgba(254,246,234,0.5)" }}
               >
                 Profile Views (7 Days)
               </p>
@@ -142,19 +142,19 @@ export function AnalyticsSection({
                   label: "Profil",
                   value: matchReadinessBreakdown.profileScore,
                   max: 60,
-                  color: "#FF10F0",
+                  color: "#FF6F00",
                 },
                 {
                   label: "Engagement",
                   value: matchReadinessBreakdown.engagementScore,
                   max: 30,
-                  color: "#00FF88",
+                  color: "#B86B19",
                 },
                 {
                   label: "Freshness",
                   value: matchReadinessBreakdown.freshnessScore,
                   max: 10,
-                  color: "#FFA500",
+                  color: "#BC4E4E",
                 },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-4">
@@ -169,7 +169,7 @@ export function AnalyticsSection({
                         cy="32"
                         r="28"
                         fill="none"
-                        stroke="rgba(255, 255, 255, 0.05)"
+                        stroke="rgba(78, 52, 46, 0.18)"
                         strokeWidth="4"
                       />
                       <circle
@@ -201,11 +201,11 @@ export function AnalyticsSection({
                   <div className="flex-grow">
                     <p
                       className="text-sm uppercase tracking-[0.2em] mb-1"
-                      style={{ color: "rgba(255,255,255,0.7)" }}
+                      style={{ color: "rgba(254,246,234,0.7)" }}
                     >
                       {item.label}
                     </p>
-                    <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                    <div className="w-full h-1 bg-[#4E342E]/20 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
@@ -217,7 +217,7 @@ export function AnalyticsSection({
                     </div>
                     <p
                       className="text-xs mt-1"
-                      style={{ color: "rgba(255,255,255,0.4)" }}
+                      style={{ color: "rgba(254,246,234,0.4)" }}
                     >
                       {item.value} / {item.max} Punkte
                     </p>
@@ -227,7 +227,7 @@ export function AnalyticsSection({
             </div>
             <p
               className="text-xs uppercase tracking-[0.3em] text-center mt-8"
-              style={{ color: "rgba(255,255,255,0.5)" }}
+              style={{ color: "rgba(254,246,234,0.5)" }}
             >
               Score Breakdown
             </p>

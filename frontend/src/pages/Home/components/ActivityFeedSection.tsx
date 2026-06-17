@@ -30,7 +30,7 @@ export function ActivityFeedSection({ activities }: ActivityFeedSectionProps) {
       <div className="max-w-4xl mx-auto">
         <h2
           className="text-xs uppercase tracking-[0.3em] mb-12"
-          style={{ color: "rgba(255,255,255,0.5)" }}
+          style={{ color: "rgba(254,246,234,0.5)" }}
         >
           Recent Activity
         </h2>
@@ -45,7 +45,7 @@ export function ActivityFeedSection({ activities }: ActivityFeedSectionProps) {
                 <div className="flex items-center gap-6">
                   {activity.activity_type === "profile_view" && (
                     <Eye
-                      className="w-5 h-5 text-white/30 group-hover:text-white/50 transition-colors"
+                      className="w-5 h-5 text-[#FEF6EA]/30 group-hover:text-[#FF6F00] transition-colors"
                       strokeWidth={1}
                     />
                   )}
@@ -61,27 +61,29 @@ export function ActivityFeedSection({ activities }: ActivityFeedSectionProps) {
                     )}
                   {activity.activity_type === "save" && (
                     <Cherry
-                      className="w-5 h-5 text-white/30 group-hover:text-white/50 transition-colors"
+                      className="w-5 h-5 text-[#FEF6EA]/30 group-hover:text-[#FF6F00] transition-colors"
                       strokeWidth={1}
                     />
                   )}
                   <div>
-                    <p className="text-lg font-light text-white mb-1">
+                    <p className="text-lg font-light text-[#FEF6EA] mb-1">
                       {activity.activity_text}
                     </p>
-                    <p className="text-xs text-white/40 uppercase tracking-wider">
+                    <p className="text-xs text-[#FEF6EA]/40 uppercase tracking-wider">
                       {formatTimeAgo(activity.created_at)}
                     </p>
                   </div>
                 </div>
                 <ArrowRight
-                  className="w-5 h-5 text-white/20 group-hover:text-white/40 transition-colors"
+                  className="w-5 h-5 text-[#FEF6EA]/20 group-hover:text-[#FF6F00]/60 transition-colors"
                   strokeWidth={1}
                 />
               </div>
             ))
           ) : (
-            <p className="text-white/50 text-center py-8">No recent activity</p>
+            <p className="text-[#FEF6EA]/50 text-center py-8">
+              No recent activity
+            </p>
           )}
         </div>
       </div>

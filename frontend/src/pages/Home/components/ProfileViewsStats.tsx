@@ -15,15 +15,15 @@ export function ProfileViewsStats({
         <p
           className="text-5xl font-light mb-2"
           style={{
-            color: "#FF10F0",
-            textShadow: "0 0 15px rgba(255, 16, 240, 0.4)",
+            color: "#B86B19",
+            textShadow: "0 0 15px rgba(184, 107, 25, 0.4)",
           }}
         >
           {total}
         </p>
         <p
           className="text-xs uppercase tracking-[0.2em]"
-          style={{ color: "rgba(255,255,255,0.5)" }}
+          style={{ color: "rgba(254,246,234,0.5)" }}
         >
           Profile Views
         </p>
@@ -31,8 +31,8 @@ export function ProfileViewsStats({
           <p
             className="text-sm mt-1"
             style={{
-              color: "#FF10F0",
-              textShadow: "0 0 10px rgba(255, 16, 240, 0.3)",
+              color: "#BC4E4E",
+              textShadow: "0 0 10px rgba(188, 78, 78, 0.3)",
             }}
           >
             ↗ +{increase} this week
@@ -43,15 +43,15 @@ export function ProfileViewsStats({
         <p
           className="text-5xl font-light mb-2"
           style={{
-            color: "#FF10F0",
-            textShadow: "0 0 15px rgba(255, 16, 240, 0.4)",
+            color: "#FF6F00",
+            textShadow: "0 0 15px rgba(255, 111, 0, 0.4)",
           }}
         >
           {newMatches}
         </p>
         <p
           className="text-xs uppercase tracking-[0.2em]"
-          style={{ color: "rgba(255,255,255,0.5)" }}
+          style={{ color: "rgba(254,246,234,0.5)" }}
         >
           New Matches
         </p>

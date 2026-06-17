@@ -72,7 +72,7 @@ export function CompanyHomePage() {
   const [screenTime, setScreenTime] = useState<ScreenTime>({
     totalMinutes: 0,
     status: "Perfect Balance",
-    color: "#00FF88",
+    color: "#FF6F00",
     remainingHealthyMinutes: 60,
   });
   const [profileViews, setProfileViews] = useState<ProfileViewsData>({
@@ -368,7 +368,7 @@ export function CompanyHomePage() {
           <div className="text-center px-8 max-w-4xl">
             <p
               className="text-sm uppercase tracking-[0.3em] mb-4"
-              style={{ color: "rgba(255,255,255,0.7)" }}
+              style={{ color: "rgba(254,246,234,0.7)" }}
             >
               {new Date().toLocaleDateString("en-US", {
                 weekday: "long",
@@ -378,21 +378,21 @@ export function CompanyHomePage() {
             </p>
             <h1
               className="text-7xl font-light mb-6 tracking-tight"
-              style={{ color: "#FFFFFF", lineHeight: "1.1" }}
+              style={{ color: "#FEF6EA", lineHeight: "1.1" }}
             >
               {greeting},<br />
               {userName}
             </h1>
             <p
               className="text-xl font-light mb-12"
-              style={{ color: "rgba(255,255,255,0.8)" }}
+              style={{ color: "rgba(254,246,234,0.8)" }}
             >
               Your curated talent pool awaits
             </p>
 
             <button
               onClick={() => navigate("/discover")}
-              className="px-12 py-4 bg-white text-black uppercase tracking-[0.2em] text-sm font-medium hover:bg-white/90 transition-all"
+              className="px-12 py-4 bg-[#FEF6EA] text-black uppercase tracking-[0.2em] text-sm font-medium hover:bg-[#FEF6EA]/90 transition-all"
             >
               Start Discovering
             </button>
@@ -400,10 +400,10 @@ export function CompanyHomePage() {
         </div>
 
         <div className="absolute bottom-12 left-1/2 -translate-x-1/2 text-center">
-          <p className="text-white/60 text-xs uppercase tracking-wider mb-2">
+          <p className="text-[#FEF6EA]/60 text-xs uppercase tracking-wider mb-2">
             Scroll
           </p>
-          <div className="w-px h-12 bg-white/30 mx-auto" />
+          <div className="w-px h-12 bg-[#FEF6EA]/30 mx-auto" />
         </div>
       </section>
 
@@ -416,13 +416,13 @@ export function CompanyHomePage() {
             <div>
               <h2
                 className="text-5xl font-light mb-6 tracking-tight"
-                style={{ color: "#FFFFFF", lineHeight: "1.2" }}
+                style={{ color: "#FEF6EA", lineHeight: "1.2" }}
               >
                 You're making an impression
               </h2>
               <p
                 className="text-lg font-light mb-12 leading-relaxed"
-                style={{ color: "rgba(255,255,255,0.7)" }}
+                style={{ color: "rgba(254,246,234,0.7)" }}
               >
                 Your company profile is resonating. Keep engaging with talent
                 that aligns with your vision.
@@ -465,9 +465,9 @@ export function CompanyHomePage() {
               <span
                 className="inline-block px-4 py-1 border text-xs uppercase tracking-[0.3em] mb-4"
                 style={{
-                  borderColor: "#FF10F0",
-                  color: "#FF10F0",
-                  boxShadow: "0 0 15px rgba(255, 16, 240, 0.3)",
+                  borderColor: "#FF6F00",
+                  color: "#FF6F00",
+                  boxShadow: "0 0 15px rgba(255, 111, 0, 0.3)",
                 }}
               >
                 Featured Talent
@@ -475,7 +475,7 @@ export function CompanyHomePage() {
             </div>
             <h3
               className="text-6xl font-light mb-4 tracking-tight"
-              style={{ color: "#FFFFFF", lineHeight: "1.1" }}
+              style={{ color: "#FEF6EA", lineHeight: "1.1" }}
             >
               {mockFeaturedTalent.name}
               <br />
@@ -483,18 +483,18 @@ export function CompanyHomePage() {
             </h3>
             <p
               className="text-xl font-light mb-2"
-              style={{ color: "rgba(255,255,255,0.8)" }}
+              style={{ color: "rgba(254,246,234,0.8)" }}
             >
               {mockFeaturedTalent.description}
             </p>
             <p
               className="text-sm mb-8"
-              style={{ color: "rgba(255,255,255,0.5)" }}
+              style={{ color: "rgba(254,246,234,0.5)" }}
             >
               {mockFeaturedTalent.availability}
             </p>
 
-            <button className="group flex items-center gap-3 text-white uppercase tracking-[0.2em] text-sm font-medium hover:gap-4 transition-all">
+            <button className="group flex items-center gap-3 text-[#FEF6EA] uppercase tracking-[0.2em] text-sm font-medium hover:gap-4 transition-all">
               View Profile
               <ArrowRight
                 className="w-5 h-5 transition-transform group-hover:translate-x-1"
@@ -512,14 +512,14 @@ export function CompanyHomePage() {
 
           <div className="relative max-w-7xl mx-auto p-8 md:px-12 pt-14 flex items-end justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] mb-3 text-white/50">
+              <p className="text-xs uppercase tracking-[0.3em] mb-3 text-[#FEF6EA]/50">
                 Curated For You
               </p>
-              <h2 className="text-5xl font-light tracking-tight text-white">
+              <h2 className="text-5xl font-light tracking-tight text-[#FEF6EA]">
                 Handpicked Talent
               </h2>
             </div>
-            <button className="pointer-events-auto flex items-center gap-2 text-white/60 hover:text-white transition-colors uppercase tracking-[0.2em] text-sm">
+            <button className="pointer-events-auto flex items-center gap-2 text-[#FEF6EA]/60 hover:text-[#FEF6EA] transition-colors uppercase tracking-[0.2em] text-sm">
               View All
               <ArrowRight className="w-4 h-4" strokeWidth={1} />
             </button>
@@ -565,11 +565,13 @@ export function CompanyHomePage() {
               </div>
 
               <div className="relative z-10 h-full flex flex-col justify-end p-8 pb-32 max-w-7xl mx-auto w-full">
-                <h3 className="text-2xl font-light mb-2 tracking-tight text-white">
+                <h3 className="text-2xl font-light mb-2 tracking-tight text-[#FEF6EA]">
                   {talent.name}
                 </h3>
-                <p className="text-sm mb-1 text-white/60">{talent.location}</p>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/40">
+                <p className="text-sm mb-1 text-[#FEF6EA]/60">
+                  {talent.location}
+                </p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[#FEF6EA]/40">
                   {talent.position}
                 </p>
               </div>
@@ -595,7 +597,7 @@ export function CompanyHomePage() {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(135deg, rgba(255, 16, 240, 0.15) 0%, rgba(255, 20, 147, 0.08) 100%)",
+              "linear-gradient(135deg, rgba(255, 111, 0, 0.15) 0%, rgba(184, 107, 25, 0.08) 100%)",
           }}
         />
         <div className="max-w-4xl mx-auto relative z-10">
@@ -603,7 +605,7 @@ export function CompanyHomePage() {
             <div
               className="text-5xl flex-shrink-0"
               style={{
-                filter: "drop-shadow(0 0 10px rgba(255, 16, 240, 0.5))",
+                filter: "drop-shadow(0 0 10px rgba(255, 111, 0, 0.5))",
               }}
             >
               {todayInsight.icon}
@@ -611,27 +613,27 @@ export function CompanyHomePage() {
             <div className="flex-grow">
               <p
                 className="text-xs uppercase tracking-[0.3em] mb-3"
-                style={{ color: "rgba(255,255,255,0.5)" }}
+                style={{ color: "rgba(254,246,234,0.5)" }}
               >
                 AI Hiring Insight
               </p>
               <h3
                 className="text-3xl font-light mb-4"
-                style={{ color: "#FFFFFF" }}
+                style={{ color: "#FEF6EA" }}
               >
                 {todayInsight.title}
               </h3>
               <p
                 className="text-lg font-light mb-6"
-                style={{ color: "rgba(255,255,255,0.7)" }}
+                style={{ color: "rgba(254,246,234,0.7)" }}
               >
                 {todayInsight.description}
               </p>
               <button
                 className="group flex items-center gap-3 uppercase tracking-[0.2em] text-sm font-medium hover:gap-4 transition-all"
                 style={{
-                  color: "#FF10F0",
-                  textShadow: "0 0 10px rgba(255, 16, 240, 0.3)",
+                  color: "#FF6F00",
+                  textShadow: "0 0 10px rgba(255, 111, 0, 0.3)",
                 }}
               >
                 {todayInsight.action}
@@ -650,13 +652,10 @@ export function CompanyHomePage() {
         <div className="max-w-3xl mx-auto text-center">
           <Sparkles
             className="w-6 h-6 mx-auto mb-4"
-            style={{ color: "rgba(255,255,255,255)" }}
+            style={{ color: "#FEF6EA" }}
             strokeWidth={1}
           />
-          <p
-            className="text-lg font-light"
-            style={{ color: "rgba(255,255,255,255)" }}
-          >
+          <p className="text-lg font-light" style={{ color: "#FEF6EA" }}>
             You've been active today. Take a break — great talent will still be
             here tomorrow.
           </p>

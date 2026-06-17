@@ -85,16 +85,18 @@ router.get("/screen-time", requireAuth, async (req: Request, res: Response) => {
 
     const totalMinutes = parseInt(result[0].total_minutes);
 
-    // Color system
+    // ✅ FARB-FIX: Neues Copper/Orange/Terracotta-Schema statt Neon-Grün/Pink.
+    // Logik bleibt exakt gleich (ruhig -> aufmerksam -> alarmierend),
+    // nur die Hex-Werte sind jetzt an die neue Markenpalette angepasst.
     let status = "Perfect Balance";
-    let color = "#00FF88";
+    let color = "#B86B19"; // Metallic Copper – ruhiger, gesunder Zustand
 
     if (totalMinutes > 120) {
       status = "Consider Taking a Break";
-      color = "#FF3366";
+      color = "#BC4E4E"; // Terracotta Red – Alarm-Zustand
     } else if (totalMinutes > 60) {
       status = "Mindful Usage";
-      color = "#FFA500";
+      color = "#FF6F00"; // Vibrant Neon Orange – Achtsamkeits-Zustand
     }
 
     res.json({

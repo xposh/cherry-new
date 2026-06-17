@@ -32,7 +32,7 @@ export function ScreenTimeBalance({
         />
         <p
           className="text-xs uppercase tracking-[0.3em] mb-4"
-          style={{ color: "rgba(255,255,255,0.5)" }}
+          style={{ color: "rgba(254,246,234,0.5)" }}
         >
           Screen Time This Week
         </p>
@@ -45,11 +45,11 @@ export function ScreenTimeBalance({
         >
           {totalMinutes} min
         </p>
-        <p className="text-2xl font-light mb-2" style={{ color: "#FFFFFF" }}>
+        <p className="text-2xl font-light mb-2" style={{ color: "#FEF6EA" }}>
           {status}
         </p>
         {remainingHealthyMinutes > 0 && (
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
+          <p className="text-sm" style={{ color: "rgba(254,246,234,0.6)" }}>
             {remainingHealthyMinutes} minutes remaining to stay healthy
           </p>
         )}

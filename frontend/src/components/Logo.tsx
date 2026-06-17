@@ -10,7 +10,7 @@ interface LogoProps {
 }
 
 export function Logo({
-  color = "#2A6087",
+  color = "#FEF6EA",
   className = "",
   to = "/home",
 }: LogoProps) {

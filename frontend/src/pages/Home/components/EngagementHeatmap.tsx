@@ -7,7 +7,7 @@ export function EngagementHeatmap({ heatmap }: EngagementHeatmapProps) {
     <div className="mt-20">
       <p
         className="text-xs uppercase tracking-[0.3em] mb-8 text-center"
-        style={{ color: "rgba(255,255,255,0.5)" }}
+        style={{ color: "rgba(254,246,234,0.5)" }}
       >
         Activity Overview (Last 28 Days)
       </p>
@@ -19,10 +19,10 @@ export function EngagementHeatmap({ heatmap }: EngagementHeatmapProps) {
               className="aspect-square rounded transition-all hover:scale-110"
               style={{
                 backgroundColor: day.isActive
-                  ? "#00FF88"
-                  : "rgba(255,255,255,0.05)",
+                  ? "#FF6F00"
+                  : "rgba(209, 180, 140, 0.12)",
                 boxShadow: day.isActive
-                  ? "0 0 8px rgba(0, 255, 136, 0.3)"
+                  ? "0 0 8px rgba(255, 111, 0, 0.3)"
                   : "none",
               }}
               title={day.date}
@@ -30,10 +30,10 @@ export function EngagementHeatmap({ heatmap }: EngagementHeatmapProps) {
           ))}
         </div>
         <div className="flex justify-between mt-4">
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+          <p className="text-xs" style={{ color: "rgba(254,246,234,0.4)" }}>
             4 Wochen zurück
           </p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+          <p className="text-xs" style={{ color: "rgba(254,246,234,0.4)" }}>
             Heute
           </p>
         </div>
