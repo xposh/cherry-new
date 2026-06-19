@@ -6,8 +6,10 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
+import { useNavigate } from "react-router";
 import { useAuth } from "./useAuth";
 import { discoverService } from "../services/discoverService";
+import { MatchScreen } from "../components/match/MatchScreen";
 
 interface Match {
   id: string;
@@ -47,6 +49,7 @@ function load<T>(key: string, fallback: T): T {
 
 export function MatchProvider({ children }: { children: ReactNode }) {
   const { authFetch } = useAuth();
+  const navigate = useNavigate();
 
   const [matches, setMatches] = useState<Match[]>(() => load("matches", []));
   const [likedProfiles, setLikedProfiles] = useState<string[]>(() =>
@@ -55,8 +58,14 @@ export function MatchProvider({ children }: { children: ReactNode }) {
   const [skippedProfiles, setSkippedProfiles] = useState<string[]>(() =>
     load("skippedProfiles", []),
   );
-  const [showMatchPopup, setShowMatchPopup] = useState(false);
-  const [latestMatch, setLatestMatch] = useState<Match | null>(null);
+
+  // ✅ NEU: ersetzt das alte, separate Inline-Modal (MatchPopup). Statt
+  // eines simplen Popups wird jetzt die volle Match-Celebration
+  // (MatchScreen) als globales Overlay gerendert — unabhängig davon, von
+  // welcher Seite aus der Match ausgelöst wurde.
+  const [pendingCelebration, setPendingCelebration] = useState<Match | null>(
+    null,
+  );
 
   useEffect(() => {
     localStorage.setItem("matches", JSON.stringify(matches));
@@ -88,9 +97,7 @@ export function MatchProvider({ children }: { children: ReactNode }) {
           isMatch: true,
         };
         setMatches((prev) => [newMatch, ...prev]);
-        setLatestMatch(newMatch);
-        setShowMatchPopup(true);
-        setTimeout(() => setShowMatchPopup(false), 3000);
+        setPendingCelebration(newMatch);
       }
     } catch (err) {
       console.error("Like fehlgeschlagen:", err);
@@ -111,6 +118,16 @@ export function MatchProvider({ children }: { children: ReactNode }) {
 
   const getMatches = () => matches.filter((m) => m.isMatch);
 
+  // ✅ NEU: Wird aufgerufen, sobald die Celebration-Animation durchgelaufen
+  // ist. Navigiert zur Match-Details-Seite — dem gleichen Pfad, den auch
+  // CherryPicksPage für bestehende Matches verwendet.
+  const handleCelebrationComplete = () => {
+    if (!pendingCelebration) return;
+    const { profileId, profileType } = pendingCelebration;
+    setPendingCelebration(null);
+    navigate(`/match-details/${profileType}/${profileId}`);
+  };
+
   return (
     <MatchContext.Provider
       value={{
@@ -124,11 +141,8 @@ export function MatchProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-      {showMatchPopup && latestMatch && (
-        <MatchPopup
-          match={latestMatch}
-          onClose={() => setShowMatchPopup(false)}
-        />
+      {pendingCelebration && (
+        <MatchScreen onComplete={handleCelebrationComplete} />
       )}
     </MatchContext.Provider>
   );
@@ -138,24 +152,4 @@ export function useMatch() {
   const context = useContext(MatchContext);
   if (!context) throw new Error("useMatch must be used within MatchProvider");
   return context;
-}
-
-function MatchPopup({ onClose }: { match: Match; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="bg-white/10 border border-white/20 rounded-2xl p-8 max-w-md mx-4 text-center">
-        <div className="text-6xl mb-4">🎉</div>
-        <h2 className="text-3xl font-light text-white mb-2">It's a Match!</h2>
-        <p className="text-white/80 mb-6">
-          Beide Seiten haben Interesse. Jetzt könnt ihr Kontakt aufnehmen!
-        </p>
-        <button
-          onClick={onClose}
-          className="px-8 py-3 bg-white text-black rounded-full hover:bg-white/90 transition-all font-light uppercase tracking-wider"
-        >
-          Weiter
-        </button>
-      </div>
-    </div>
-  );
 }

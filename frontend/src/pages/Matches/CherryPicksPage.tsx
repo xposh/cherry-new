@@ -1,29 +1,45 @@
+import { useEffect, useState } from "react";
 import { Cherry, MapPin } from "lucide-react";
 import { Link } from "react-router";
 import { Logo } from "../../components/Logo";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
-import { useMatch } from "../../context/MatchContext";
 import { useAuth } from "../../context/useAuth";
-import { mockTalents } from "../../data/mockTalents";
-import { mockCompanies } from "../../data/mockCompanies";
+import {
+  discoverService,
+  type MatchListItem,
+} from "../../services/discoverService";
 
 export function CherryPicksPage() {
-  const { getMatches } = useMatch();
-  const { user } = useAuth();
-  const matches = getMatches();
+  const { authFetch } = useAuth();
+  const [matches, setMatches] = useState<MatchListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!user) {
-    console.log("user not logged in!");
-    return null;
-  }
-  const isViewingTalents = user.role === "talent";
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadMatches() {
+      try {
+        const result = await discoverService.getMatches(authFetch);
+        if (isMounted) setMatches(result);
+      } catch (err) {
+        console.error("Cherry Picks konnten nicht geladen werden:", err);
+        if (isMounted) setError("Matches konnten nicht geladen werden.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadMatches();
+    return () => {
+      isMounted = false;
+    };
+  }, [authFetch]);
 
   return (
     <div className="relative min-h-screen w-full bg-black pb-24">
-      {/* Logo */}
       <Logo />
 
-      {/* Content */}
       <div className="max-w-6xl mx-auto px-8 pt-40 pb-8">
         <div className="flex items-center gap-4 mb-8">
           <Cherry className="w-8 h-8 text-white" />
@@ -32,54 +48,47 @@ export function CherryPicksPage() {
           </h1>
         </div>
 
-        {matches.length > 0 ? (
+        {loading ? (
+          <p className="text-gray-400 text-center py-20">Loading...</p>
+        ) : error ? (
+          <p className="text-red-400 text-center py-20">{error}</p>
+        ) : matches.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {matches.map((match) => {
-              const profile = isViewingTalents
-                ? mockTalents.find((t) => t.id === match.profileId)
-                : mockCompanies.find((c) => c.id === match.profileId);
-
-              if (!profile) return null;
-
-              const isTalent = "name" in profile;
-              const linkTo = isTalent
-                ? `/match/talent/${profile.id}`
-                : `/match/company/${profile.id}`;
-
-              return (
-                <Link
-                  key={match.id}
-                  to={linkTo}
-                  className="border border-white/30 overflow-hidden hover:border-white transition-all group"
-                >
-                  <div className="relative h-80 overflow-hidden">
+            {matches.map((match) => (
+              <Link
+                key={match.matchId}
+                to={`/match-details/${match.partnerType}/${match.partnerId}`}
+                className="border border-white/30 overflow-hidden hover:border-white transition-all group"
+              >
+                <div className="relative h-80 overflow-hidden bg-white/5">
+                  {match.image && (
                     <img
-                      src={
-                        isTalent ? profile.profileImage : profile.companyLogo
-                      }
-                      alt={isTalent ? profile.name : profile.companyName}
+                      src={match.image}
+                      alt={match.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <h3 className="text-xl font-light text-white mb-2">
-                        {isTalent ? profile.name : profile.companyName}
-                      </h3>
+                  )}
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="text-xl font-light text-white mb-2">
+                      {match.name}
+                    </h3>
+                    {match.location && (
                       <div className="flex items-center gap-2 text-white/80 text-sm">
                         <MapPin className="w-4 h-4" />
-                        <span>{profile.location}</span>
+                        <span>{match.location}</span>
                       </div>
-                    </div>
+                    )}
                   </div>
-                  <div className="p-4 border-t border-white/30">
-                    <p className="text-gray-400 text-xs">
-                      Matched on{" "}
-                      {new Date(match.matchedAt).toLocaleDateString("en-US")}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
+                </div>
+                <div className="p-4 border-t border-white/30">
+                  <p className="text-gray-400 text-xs">
+                    Matched on{" "}
+                    {new Date(match.matchedAt).toLocaleDateString("en-US")}
+                  </p>
+                </div>
+              </Link>
+            ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20">

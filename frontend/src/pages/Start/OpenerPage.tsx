@@ -32,7 +32,7 @@ export function OpenerPage() {
           <h1
             className="mb-6 italic text-[28px]"
             style={{
-              color: "#2A6087",
+              color: "#B86B19",
               fontFamily: "Helvetica Neue, sans-serif",
             }}
           >
@@ -69,7 +69,7 @@ export function OpenerPage() {
         >
           <polyline
             points="10,10 25,20 10,30"
-            className="fill-none stroke-[#2A6087] group-hover:stroke-white group-active:stroke-[#6F6F6F] stroke-[3] transition-colors duration-300"
+            className="fill-none stroke-[#B86B19] group-hover:stroke-white group-active:stroke-[#6F6F6F] stroke-[3] transition-colors duration-300"
             strokeLinejoin="miter"
           />
         </svg>

@@ -14,6 +14,16 @@ export interface InteractResult {
   matchId?: string;
 }
 
+export interface MatchListItem {
+  matchId: string;
+  partnerId: string;
+  partnerType: "talent" | "company";
+  name: string;
+  image: string;
+  location: string;
+  matchedAt: string;
+}
+
 export interface FullProfile {
   // ── Talent ──────────────────────────────────────────────
   name?: string;
@@ -132,5 +142,15 @@ export const discoverService = {
     });
     if (!res.ok) throw new Error(`Interact error ${res.status}`);
     return res.json();
+  },
+
+  async getMatches(authFetch: typeof fetch): Promise<MatchListItem[]> {
+    const res = await authFetch(`${API_BASE}/discover/matches`);
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { detail?: string };
+      throw new Error(err.detail ?? `Matches error ${res.status}`);
+    }
+    const data = (await res.json()) as { matches: MatchListItem[] };
+    return data.matches ?? [];
   },
 };

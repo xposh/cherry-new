@@ -8,6 +8,7 @@ import { requireAuth } from "./authMiddleware";
 import analyticsRoutes from "./routes/analytics";
 import { startCronJobs } from "./services/cronJobs";
 import discoverRoutes from "./routes/discover";
+import { calculateMatchReadinessScore } from "./services/scoreCalculation"; // 🆕 ZUSATZ
 
 if (!process.env.JWT_SECRET) {
   console.error("Denk dran! JWT_SECRET must be configured in .env");
@@ -177,6 +178,19 @@ app.post("/profile", requireAuth, async (req, res) => {
           VALUES (${userId}, ${sql.json(formData)})
         `;
       }
+
+      // 🆕 ZUSATZ: Score sofort neu berechnen, statt auf den nächsten
+      // stündlichen Cron-Job zu warten. Löst das Problem, dass die Analytics
+      // gefühlt "nie" reagieren, wenn man gerade ein Profil ausgefüllt hat.
+      try {
+        await calculateMatchReadinessScore(userId, userRole);
+      } catch (scoreErr) {
+        console.error(
+          "Konnte Match Readiness Score nicht sofort aktualisieren:",
+          scoreErr,
+        );
+      }
+
       return res.json({ message: "Talent-Profil erfolgreich gespeichert!" });
     } else if (userRole === "company") {
       const [existing] = await sql`
@@ -200,6 +214,17 @@ app.post("/profile", requireAuth, async (req, res) => {
           VALUES (${userId}, ${sql.json(formData)})
         `;
       }
+
+      // 🆕 ZUSATZ: gleiche sofortige Neuberechnung wie beim Talent-Branch oben.
+      try {
+        await calculateMatchReadinessScore(userId, userRole);
+      } catch (scoreErr) {
+        console.error(
+          "Konnte Match Readiness Score nicht sofort aktualisieren:",
+          scoreErr,
+        );
+      }
+
       return res.json({ message: "Company-Profil erfolgreich gespeichert!" });
     } else {
       return res.status(403).json({

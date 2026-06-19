@@ -29,32 +29,28 @@ export async function calculateMatchReadinessScore(
     // ========================================
     let profileScore = 0;
 
-    // Required fields (20 points)
     const hasRequiredFields =
       profileData.name &&
-      profileData.email &&
       (userRole === "talent" ? profileData.position : profileData.companyName);
     if (hasRequiredFields) profileScore += 20;
 
-    // Profile image + portfolio (20 points)
-    const hasProfileImage = profileData.profileImage || profileData.logo;
+    const hasProfileImage = profileData.profileImage || profileData.companyLogo;
+
     const portfolioCount =
-      profileData.portfolioImages?.length ||
-      profileData.galleryImages?.length ||
+      profileData.portfolioItems?.length ||
+      profileData.companyImages?.length ||
       0;
     if (hasProfileImage) profileScore += 10;
     if (portfolioCount >= 3) profileScore += 10;
 
-    // Bio/Description (10 points)
-    const bioLength = (profileData.bio || profileData.description || "").length;
+    const bioLength = (profileData.about || profileData.description || "")
+      .length;
     if (bioLength >= 150) profileScore += 10;
 
-    // Skills (5 points)
     const skillsCount =
-      profileData.skills?.length || profileData.values?.length || 0;
+      profileData.skills?.length || profileData.cultureValues?.length || 0;
     if (skillsCount >= 3) profileScore += 5;
 
-    // Availability (5 points)
     if (profileData.availability || profileData.workModel) profileScore += 5;
 
     // ========================================
@@ -66,7 +62,6 @@ export async function calculateMatchReadinessScore(
     const respondedField =
       userRole === "talent" ? "talent_responded" : "company_responded";
 
-    // Response Rate (15 points)
     const responseResult = await sql`
       SELECT
         COUNT(*) FILTER (WHERE ${sql(respondedField)} = TRUE) as responded,
@@ -83,7 +78,6 @@ export async function calculateMatchReadinessScore(
       engagementScore += Math.round(responseRate * 15);
     }
 
-    // Ignored Matches Penalty (10 points max)
     const ignoredResult = await sql`
       SELECT COUNT(*) as ignored
       FROM matches
@@ -96,10 +90,9 @@ export async function calculateMatchReadinessScore(
     if (ignoredMatches === 0) {
       engagementScore += 10;
     } else if (ignoredMatches >= 3) {
-      engagementScore -= 10; // Penalty
+      engagementScore -= 10;
     }
 
-    // Quality Messages (5 points)
     const qualityMsgResult = await sql`
       SELECT COUNT(*) FILTER (WHERE is_quality_message = TRUE) as quality,
              COUNT(*) as total
@@ -118,25 +111,30 @@ export async function calculateMatchReadinessScore(
     // C. FRESHNESS (MAX 10 POINTS)
     // ========================================
     let freshnessScore = 0;
+    try {
+      const profileEditResult = await sql`
+        SELECT updated_at FROM ${sql(tableName)} WHERE user_id = ${userId}
+      `;
 
-    // Profile edited in last 90 days (5 points)
-    const profileEditResult = await sql`
-      SELECT updated_at FROM ${sql(tableName)} WHERE user_id = ${userId}
-    `;
+      if (profileEditResult.length > 0 && profileEditResult[0].updated_at) {
+        const lastEdit = new Date(profileEditResult[0].updated_at);
+        const daysSinceEdit =
+          (Date.now() - lastEdit.getTime()) / (1000 * 60 * 60 * 24);
 
-    if (profileEditResult.length > 0) {
-      const lastEdit = new Date(profileEditResult[0].updated_at);
-      const daysSinceEdit =
-        (Date.now() - lastEdit.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceEdit <= 90) {
+          freshnessScore += 5;
+        }
+      }
 
-      if (daysSinceEdit <= 90) {
+      if (portfolioCount > 0) {
         freshnessScore += 5;
       }
-    }
-
-    // Gallery images exist (5 points)
-    if (portfolioCount > 0) {
-      freshnessScore += 5;
+    } catch (freshnessError) {
+      console.error(
+        `Freshness-Berechnung für User ${userId} fehlgeschlagen:`,
+        freshnessError,
+      );
+      if (portfolioCount > 0) freshnessScore += 5;
     }
 
     // ========================================
@@ -145,7 +143,6 @@ export async function calculateMatchReadinessScore(
     const totalScore =
       profileScore + Math.max(0, engagementScore) + freshnessScore;
 
-    // Update database
     await sql`
       INSERT INTO user_analytics (
         user_id,
@@ -195,7 +192,7 @@ export async function trackDailyEngagement(userId: string) {
 }
 
 // ========================================
-// ADD ACTIVITY TO FEED
+// ADD ACTIVITY TO FEED (für Like / Match — einzelne, benannte Ereignisse)
 // ========================================
 export async function addActivityToFeed(
   userId: string,
@@ -217,7 +214,6 @@ export async function addActivityToFeed(
       ) VALUES (${userId}, ${activityType}, ${activityText}, ${relatedUserId ?? null}, ${relatedUserName ?? null}, ${relatedUserImage ?? null})
     `;
 
-    // Track engagement
     await trackDailyEngagement(userId);
   } catch (error) {
     console.error("Error adding activity to feed:", error);
@@ -227,34 +223,55 @@ export async function addActivityToFeed(
 // ========================================
 // TRACK PROFILE VIEW
 // ========================================
+// ✅ NEU IMPLEMENTIERT nach dem ursprünglichen Aggregations-Plan: statt bei
+// jedem Aufruf eine neue activity_feed-Zeile zu schreiben (Spam-Risiko bei
+// vielen Betrachtern), wird pro User und Tag GENAU EINE Zeile gepflegt und
+// bei jedem weiteren EINMALIGEN Betrachter hochgezählt. Mehrfache Aufrufe
+// derselben Firma am selben Tag erzeugen bewusst KEINEN weiteren Zähler-Tick
+// ("Unique Views"-Anforderung aus der ursprünglichen Planung).
 export async function trackProfileView(
   viewedUserId: string,
   viewerUserId: string,
 ) {
   try {
-    // Add to profile_views
+    const [alreadyViewedToday] = await sql`
+      SELECT 1 FROM profile_views
+      WHERE viewed_user_id = ${viewedUserId}
+        AND viewer_user_id = ${viewerUserId}
+        AND viewed_at >= CURRENT_DATE
+      LIMIT 1
+    `;
+    if (alreadyViewedToday) return;
+
+    // Rohes Event-Log — speist /analytics/profile-views (Totals, 7-Tage-Trend).
     await sql`
       INSERT INTO profile_views (viewed_user_id, viewer_user_id)
       VALUES (${viewedUserId}, ${viewerUserId})
     `;
 
-    // Get viewer info
-    const viewerResult = await sql`
-      SELECT email, role FROM users WHERE id = ${viewerUserId}
+    // Tages-Aggregat für den Activity Feed: eine Zeile pro User und Tag,
+    // die bei jedem zusätzlichen eindeutigen Betrachter hochgezählt wird.
+    const [{ activity_count: newCount }] = await sql`
+      INSERT INTO activity_feed (
+        user_id, activity_type, activity_text, activity_count, activity_date, created_at
+      ) VALUES (
+        ${viewedUserId}, 'profile_view', '1 new profile viewed today', 1, CURRENT_DATE, NOW()
+      )
+      ON CONFLICT (user_id, activity_date) WHERE activity_type = 'profile_view'
+      DO UPDATE SET
+        activity_count = activity_feed.activity_count + 1,
+        created_at = NOW()
+      RETURNING activity_count
     `;
 
-    const viewerName = viewerResult[0]?.email || "Someone";
+    await sql`
+      UPDATE activity_feed
+      SET activity_text = ${newCount} || ' new profile' || CASE WHEN ${newCount} = 1 THEN '' ELSE 's' END || ' viewed today'
+      WHERE user_id = ${viewedUserId}
+        AND activity_type = 'profile_view'
+        AND activity_date = CURRENT_DATE
+    `;
 
-    // Add to activity feed
-    await addActivityToFeed(
-      viewedUserId,
-      "profile_view",
-      `${viewerName} viewed your profile`,
-      viewerUserId,
-      viewerName,
-    );
-
-    // Track engagement
     await trackDailyEngagement(viewedUserId);
   } catch (error) {
     console.error("Error tracking profile view:", error);

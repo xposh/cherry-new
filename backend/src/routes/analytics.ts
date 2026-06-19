@@ -85,18 +85,25 @@ router.get("/screen-time", requireAuth, async (req: Request, res: Response) => {
 
     const totalMinutes = parseInt(result[0].total_minutes);
 
-    // ✅ FARB-FIX: Neues Copper/Orange/Terracotta-Schema statt Neon-Grün/Pink.
-    // Logik bleibt exakt gleich (ruhig -> aufmerksam -> alarmierend),
-    // nur die Hex-Werte sind jetzt an die neue Markenpalette angepasst.
-    let status = "Perfect Balance";
-    let color = "#B86B19"; // Metallic Copper – ruhiger, gesunder Zustand
+    // ✅ FARB-FIX V2: 4 statt 2 Stufen, deutlich vibranter/leuchtender.
+    // Logik-Prinzip: je niedriger die Screen Time, desto heller/strahlender
+    // die Farbe (positiv signalisieren); je höher, desto gesättigter Richtung
+    // Rot (Alarm signalisieren, aber weiterhin glühend statt stumpf-gedeckt).
+    // Alle vier Werte sind bewusst hochgesättigt, damit der bereits
+    // bestehende Glow-Code im Frontend (textShadow/filter mit `${color}50`)
+    // den gewünschten "leuchtenden" Effekt erzeugt.
+    let status = "In The Flow";
+    let color = "#FFD60A"; // strahlendes Gold — bester Zustand, sehr geringe Nutzung
 
     if (totalMinutes > 120) {
       status = "Consider Taking a Break";
-      color = "#BC4E4E"; // Terracotta Red – Alarm-Zustand
+      color = "#FF1744"; // glühendes Alarm-Rot — höchste Stufe
     } else if (totalMinutes > 60) {
       status = "Mindful Usage";
-      color = "#FF6F00"; // Vibrant Neon Orange – Achtsamkeits-Zustand
+      color = "#FF4500"; // glühendes Orange-Rot — Übergangsstufe Richtung Warnung
+    } else if (totalMinutes > 30) {
+      status = "Perfect Balance";
+      color = "#FF6F00"; // Marken-Akzentfarbe (Vibrant Neon Orange) — weiterhin gut
     }
 
     res.json({
