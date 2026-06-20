@@ -45,13 +45,30 @@ export function ActivityFeedSection({ activities }: ActivityFeedSectionProps) {
                 <div className="flex items-center gap-6">
                   {activity.activity_type === "profile_view" && (
                     <Eye
-                      className="w-5 h-5 text-[#FEF6EA]/30 group-hover:text-[#FF6F00] transition-colors"
+                      className="w-5 h-5 text-[#FEF6EA]/30 group-hover:text-[#FF6F00] transition-all duration-300"
                       strokeWidth={1}
+                      style={{
+                        filter: "drop-shadow(0 0 0px rgba(255,111,0,0))",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.filter =
+                          "drop-shadow(0 0 6px rgba(255,111,0,0.8))")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.filter =
+                          "drop-shadow(0 0 0px rgba(255,111,0,0))")
+                      }
                     />
                   )}
                   {activity.activity_type === "like" &&
                     activity.related_user_image && (
-                      <div className="w-12 h-12 rounded-full overflow-hidden">
+                      // Ich gebe dem Avatar einen echten Glow-Ring, weil eine
+                      // reine Randfarbe auf Schwarz nicht "leuchtend" wirkt —
+                      // erst der weiche, farbige box-shadow erzeugt den Licht-Effekt.
+                      <div
+                        className="w-12 h-12 rounded-full overflow-hidden transition-shadow duration-300 group-hover:shadow-[0_0_14px_rgba(255,111,0,0.7)]"
+                        style={{ boxShadow: "0 0 0px rgba(255,111,0,0)" }}
+                      >
                         <img
                           src={activity.related_user_image}
                           alt="Profile"
@@ -59,10 +76,20 @@ export function ActivityFeedSection({ activities }: ActivityFeedSectionProps) {
                         />
                       </div>
                     )}
-                  {activity.activity_type === "save" && (
+                  {activity.activity_type === "match" && (
+                    // Ich nutze hier Cherry als Icon für Match-Events, mit
+                    // demselben Glow-Prinzip wie beim Eye-Icon oben.
                     <Cherry
-                      className="w-5 h-5 text-[#FEF6EA]/30 group-hover:text-[#FF6F00] transition-colors"
+                      className="w-5 h-5 text-[#FEF6EA]/30 group-hover:text-[#FF6F00] transition-all duration-300"
                       strokeWidth={1}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.filter =
+                          "drop-shadow(0 0 6px rgba(255,111,0,0.8))")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.filter =
+                          "drop-shadow(0 0 0px rgba(255,111,0,0))")
+                      }
                     />
                   )}
                   <div>

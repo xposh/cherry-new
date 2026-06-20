@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Cherry,
   MapPin,
   Building2,
   MessageCircle,
@@ -9,6 +8,7 @@ import {
   Globe,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
+import { Logo } from "../../components/Logo"; // Ich verwende die geteilte Logo-Komponente statt hardcoded Markup
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { useAuth } from "../../context/useAuth";
 import {
@@ -64,16 +64,8 @@ export function CompanyMatchDetailsPage() {
 
   return (
     <div className="relative min-h-screen w-full bg-black pb-24">
-      {/* Logo */}
-      <div className="fixed top-8 left-8 z-50">
-        <h2
-          className="text-2xl tracking-[0.3em] uppercase flex items-center gap-1"
-          style={{ color: "#2A6087" }}
-        >
-          CHE
-          <Cherry className="w-6 h-6" style={{ color: "#2A6087" }} />Y
-        </h2>
-      </div>
+      {/* Ich ersetze das hardcodierte Logo-Markup durch die geteilte Komponente */}
+      <Logo className="fixed" />
 
       {/* Hero */}
       <div className="relative h-96 overflow-hidden">
@@ -95,18 +87,19 @@ export function CompanyMatchDetailsPage() {
           </div>
         )}
         <div className="absolute bottom-8 left-8 right-8">
+          {/* Ich passe die Farben an die neue Markenpalette an — #2A6087 → #FF6F00 */}
           <div
             className="inline-block px-4 py-1 border mb-3"
             style={{
-              backgroundColor: "rgba(42,96,135,0.2)",
-              borderColor: "rgba(42,96,135,0.4)",
+              backgroundColor: "rgba(255,111,0,0.15)",
+              borderColor: "rgba(255,111,0,0.4)",
             }}
           >
             <span
-              className="text-sm uppercase tracking-wider"
-              style={{ color: "#2A6087" }}
+              className="text-sm tracking-wider"
+              style={{ color: "#FF6F00" }}
             >
-              ✓ It's a Match
+              ✓ Cherry pick!
             </span>
           </div>
           <h1 className="text-5xl font-light text-white mb-2">
@@ -130,13 +123,13 @@ export function CompanyMatchDetailsPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-8 py-12 space-y-8">
-        {/* CTA */}
+        {/* CTA — Ich navigiere zur StartConversationPage, die den Chat anlegt und weiterleitet */}
         <div className="border border-white/30 p-6">
           <h2 className="text-white text-2xl font-light mb-4">
             Start the Conversation
           </h2>
           <button
-            onClick={() => navigate("/messages")}
+            onClick={() => navigate(`/messages/start/${id}`)}
             className="w-full flex items-center justify-center gap-3 p-4 bg-white text-black hover:bg-white/90 transition-all"
           >
             <MessageCircle className="w-5 h-5" />

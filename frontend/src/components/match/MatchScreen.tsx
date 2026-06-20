@@ -1,4 +1,4 @@
-// @file: frontend/src/components/matching/MatchScreen.tsx
+// @file: frontend/src/components/match/MatchScreen.tsx
 import { Cherry } from "lucide-react";
 import { useEffect } from "react";
 

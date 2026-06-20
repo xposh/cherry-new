@@ -398,7 +398,10 @@ router.post("/interact", requireAuth, async (req: Request, res: Response) => {
 
 // ─── GET /discover/:id — Einzelnes Profil laden ───────────────────────────────
 router.get("/:id", requireAuth, async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
+  if (!id) {
+    return res.status(400).json({ msg: "ID fehlt" });
+  }
   const viewerId = req.auth!.userId!;
 
   try {
@@ -416,6 +419,13 @@ router.get("/:id", requireAuth, async (req: Request, res: Response) => {
       if (viewerId !== id) {
         trackProfileView(id, viewerId).catch((err) =>
           console.error("trackProfileView (talent) fehlgeschlagen:", err),
+        );
+
+        // Ich markiere hier zusätzlich meinen eigenen Tag als aktiv — bisher wurde
+        // nur bei Like/Skip Engagement getrackt, wodurch reines Browsen ohne
+        // Interaktion nie in der Heatmap auftauchte.
+        trackDailyEngagement(viewerId).catch((err) =>
+          console.error("trackDailyEngagement (browsing) fehlgeschlagen:", err),
         );
       }
 
@@ -436,6 +446,13 @@ router.get("/:id", requireAuth, async (req: Request, res: Response) => {
       if (viewerId !== id) {
         trackProfileView(id, viewerId).catch((err) =>
           console.error("trackProfileView (company) fehlgeschlagen:", err),
+        );
+
+        // Ich markiere hier zusätzlich meinen eigenen Tag als aktiv — bisher wurde
+        // nur bei Like/Skip Engagement getrackt, wodurch reines Browsen ohne
+        // Interaktion nie in der Heatmap auftauchte.
+        trackDailyEngagement(viewerId).catch((err) =>
+          console.error("trackDailyEngagement (browsing) fehlgeschlagen:", err),
         );
       }
 
