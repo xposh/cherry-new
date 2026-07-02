@@ -95,7 +95,7 @@ export function WelcomeSlides() {
         {/* ÜBERSCHRIFT: Nutzt 'block', damit jedes Wort eine neue Zeile beginnt (Figma Style) */}
         <h1
           className="text-5xl md:text-6xl lg:text-7xl mb-6 tracking-tight leading-[1.1] font-bold"
-          style={{ color: "#2A6087" }}
+          style={{ color: "red" }}
         >
           {slide.heading[0]}
           {/* Nur wenn ein zweites/drittes Wort existiert, wird das Element gerendert. */}
@@ -121,7 +121,7 @@ export function WelcomeSlides() {
         font-bold: Die dicke Schriftstärke für maximale Aufmerksamkeit.
         rounded-none: Damit der Button eckig bleibt, wie in deinem letzten Code-Schnipsel.
           */}
-            <button className="w-full bg-black/50 hover:bg-[#708090]/50 text-[#f5f5f5] text-base py-5 transition-all duration-300 border border-white/10 font-medium rounded-none">
+            <button className="w-full bg-black/50 hover:bg-[#708090]/50  hover:text-white text-[red] text-base py-5 transition-all duration-300 border border-white/10 font-medium rounded-none">
               Registrieren
             </button>
           </Link>
@@ -131,7 +131,7 @@ export function WelcomeSlides() {
               border-2 border-white: Weißer Rahmen.
               hover:bg-white hover:text-black: Invertiert die Farben beim Hovern (Weißer Hintergrund, schwarzer Text).
           */}
-            <button className="w-full border-1 border-white bg-transparent hover:bg-[#708090]/50 hover:text-white text-[#777676] text-base py-5 transition-all duration-300 font-medium">
+            <button className="w-full border-1 border-white bg-transparent hover:bg-[#708090]/50 hover:text-white text-[red] text-base py-5 transition-all duration-300 font-medium">
               Login
             </button>
           </Link>

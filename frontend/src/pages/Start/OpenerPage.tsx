@@ -32,7 +32,7 @@ export function OpenerPage() {
           <h1
             className="mb-6 italic text-[28px]"
             style={{
-              color: "#B86B19",
+              color: "red",
               fontFamily: "Helvetica Neue, sans-serif",
             }}
           >
@@ -42,7 +42,7 @@ export function OpenerPage() {
           {/* Definition */}
           <div
             className="text-lg md:text-xl leading-relaxed"
-            style={{ color: "white" }}
+            style={{ color: "red" }}
           >
             <span>verb</span> <span>[ I or T ]</span>
             <p
@@ -69,7 +69,7 @@ export function OpenerPage() {
         >
           <polyline
             points="10,10 25,20 10,30"
-            className="fill-none stroke-[#B86B19] group-hover:stroke-white group-active:stroke-[#6F6F6F] stroke-[3] transition-colors duration-300"
+            className="fill-none stroke-[white] group-hover:stroke-[red] group-active:stroke-[#6F6F6F] stroke-[3] transition-colors duration-300"
             strokeLinejoin="miter"
           />
         </svg>
