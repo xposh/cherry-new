@@ -88,7 +88,7 @@ router.get("/", requireAuth, async (req: Request, res: Response) => {
           ELSE tp.profile_data->>'profileImage'
         END AS partner_image,
         (
-          SELECT content FROM messages
+          SELECT message_text FROM messages
           WHERE conversation_id = c.id
           ORDER BY created_at DESC LIMIT 1
         ) AS last_message,
@@ -100,7 +100,7 @@ router.get("/", requireAuth, async (req: Request, res: Response) => {
         (
           SELECT COUNT(*) FROM messages
           WHERE conversation_id = c.id
-            AND is_read = FALSE
+            AND read_at IS NULL
             AND sender_id != ${userId}::uuid
         ) AS unread_count
       FROM conversations c
@@ -112,6 +112,50 @@ router.get("/", requireAuth, async (req: Request, res: Response) => {
     `;
 
     return res.json({ conversations: rows });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: "Server Fehler", detail: msg });
+  }
+});
+
+// ─── GET /conversations/:id — Konversationsinfo für den Chat-Header ──────────
+// Ich brauche diesen Endpoint, weil die ConversationPage den Partnernamen
+// und das Profilbild für den Header-Bereich benötigt, ohne alle Konversationen
+// laden zu müssen.
+router.get("/:id", requireAuth, async (req: Request, res: Response) => {
+  const userId = req.auth!.userId!;
+  const role = req.auth!.role!;
+  const conversationId = req.params.id as string;
+
+  try {
+    const [row] = await sql`
+      SELECT
+        c.id,
+        c.created_at,
+        CASE WHEN ${role} = 'talent' THEN m.company_id ELSE m.talent_id END AS partner_id,
+        CASE WHEN ${role} = 'talent'
+          THEN cp.profile_data->>'companyName'
+          ELSE tp.profile_data->>'name'
+        END AS partner_name,
+        CASE WHEN ${role} = 'talent'
+          THEN cp.profile_data->>'companyLogo'
+          ELSE tp.profile_data->>'profileImage'
+        END AS partner_image
+      FROM conversations c
+      JOIN matches m ON m.id = c.match_id
+      LEFT JOIN talent_profiles tp ON tp.user_id = m.talent_id
+      LEFT JOIN company_profiles cp ON cp.user_id = m.company_id
+      WHERE c.id = ${conversationId}::uuid
+        AND (m.talent_id = ${userId}::uuid OR m.company_id = ${userId}::uuid)
+    `;
+
+    if (!row) {
+      return res
+        .status(403)
+        .json({ error: "Kein Zugriff auf diese Konversation" });
+    }
+
+    return res.json({ conversation: row });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: "Server Fehler", detail: msg });
@@ -144,18 +188,18 @@ router.get(
 
       await sql`
         UPDATE messages
-        SET is_read = TRUE
+        SET read_at = NOW()
         WHERE conversation_id = ${conversationId}::uuid
           AND sender_id != ${userId}::uuid
-          AND is_read = FALSE
+          AND read_at IS NULL
       `;
 
       const messages = await sql`
         SELECT
           id,
           sender_id,
-          content,
-          is_read,
+          message_text AS content,
+          (read_at IS NOT NULL) AS is_read,
           created_at,
           sender_id = ${userId}::uuid AS is_own
         FROM messages
@@ -199,9 +243,9 @@ router.post(
       }
 
       const [message] = await sql`
-        INSERT INTO messages (conversation_id, sender_id, content)
+        INSERT INTO messages (conversation_id, sender_id, message_text)
         VALUES (${conversationId}::uuid, ${userId}::uuid, ${content.trim()})
-        RETURNING id, sender_id, content, is_read, created_at
+        RETURNING id, sender_id, message_text AS content, (read_at IS NOT NULL) AS is_read, created_at
       `;
 
       return res.status(201).json({ message: { ...message, is_own: true } });

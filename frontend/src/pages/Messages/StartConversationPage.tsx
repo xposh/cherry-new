@@ -23,14 +23,11 @@ export function StartConversationPage() {
 
     async function start() {
       try {
-        const res = await authFetch(
-          "http://localhost:3000/conversations/start",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ partnerId }),
-          },
-        );
+        const res = await authFetch("/api/conversations/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ partnerId }),
+        });
 
         if (!isMounted) return;
 

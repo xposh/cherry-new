@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Cherry, MapPin } from "lucide-react";
-import { Link } from "react-router";
+import { Cherry, MapPin, MessageCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { useAuth } from "../../context/useAuth";
@@ -11,6 +11,7 @@ import {
 
 export function CherryPicksPage() {
   const { authFetch } = useAuth();
+  const navigate = useNavigate();
   const [matches, setMatches] = useState<MatchListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,66 +41,113 @@ export function CherryPicksPage() {
     <div className="relative min-h-screen w-full bg-black pb-24">
       <Logo />
 
-      <div className="max-w-6xl mx-auto px-8 pt-40 pb-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Cherry className="w-8 h-8 text-white" />
-          <h1 className="text-3xl font-light text-white uppercase tracking-widest">
-            Cherry Picks
-          </h1>
+      <div className="max-w-6xl mx-auto px-8 pt-36 pb-8">
+        <div className="flex items-end gap-4 mb-12">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/30 mb-2">
+              Your Matches
+            </p>
+            <h1 className="text-4xl font-light text-white tracking-tight">
+              Cherry Picks
+            </h1>
+          </div>
+          {matches.length > 0 && (
+            <span className="text-white/30 text-lg font-light mb-1">
+              {matches.length}
+            </span>
+          )}
         </div>
 
         {loading ? (
-          <p className="text-gray-400 text-center py-20">Loading...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="aspect-[3/4] bg-white/5 animate-pulse" />
+            ))}
+          </div>
         ) : error ? (
           <p className="text-red-400 text-center py-20">{error}</p>
         ) : matches.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {matches.map((match) => (
-              <Link
-                key={match.matchId}
-                to={`/match-details/${match.partnerType}/${match.partnerId}`}
-                className="border border-white/30 overflow-hidden hover:border-white transition-all group"
-              >
-                <div className="relative h-80 overflow-hidden bg-white/5">
-                  {match.image && (
+              <div key={match.matchId} className="relative group">
+                <Link
+                  to={`/match-details/${match.partnerType}/${match.partnerId}`}
+                  className="block relative overflow-hidden aspect-[3/4] bg-white/5"
+                >
+                  {match.image ? (
                     <img
                       src={match.image}
                       alt={match.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
                     />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Cherry className="w-12 h-12 text-white/10" />
+                    </div>
                   )}
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-xl font-light text-white mb-2">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                  {/* Name + Location */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6 pb-16">
+                    <h3 className="text-2xl font-light text-white mb-1 leading-tight">
                       {match.name}
                     </h3>
                     {match.location && (
-                      <div className="flex items-center gap-2 text-white/80 text-sm">
-                        <MapPin className="w-4 h-4" />
-                        <span>{match.location}</span>
+                      <div className="flex items-center gap-1.5 text-white/60">
+                        <MapPin className="w-3.5 h-3.5" strokeWidth={1.5} />
+                        <span className="text-sm">{match.location}</span>
                       </div>
                     )}
                   </div>
+                </Link>
+
+                {/* Ich setze den Chat-Button unten über die Karte, damit man
+                    direkt aus der Liste heraus eine Konversation starten kann */}
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/messages/start/${match.partnerId}`);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 text-sm uppercase tracking-[0.2em] transition-all"
+                    style={{
+                      backgroundColor: "rgba(255,111,0,0.9)",
+                      color: "#000",
+                    }}
+                  >
+                    <MessageCircle className="w-4 h-4" strokeWidth={2} />
+                    Message
+                  </button>
                 </div>
-                <div className="p-4 border-t border-white/30">
-                  <p className="text-gray-400 text-xs">
-                    Matched on{" "}
-                    {new Date(match.matchedAt).toLocaleDateString("en-US")}
-                  </p>
+
+                {/* Match-Datum */}
+                <div className="absolute top-3 left-3">
+                  <span className="text-[10px] uppercase tracking-widest text-white/40 bg-black/50 px-2 py-1">
+                    {new Date(match.matchedAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Cherry className="w-24 h-24 text-white/20 mb-6" />
-            <p className="text-gray-400 text-lg text-center">No matches yet</p>
-            <p className="text-gray-500 text-sm text-center mt-2 mb-6">
+          <div className="flex flex-col items-center justify-center py-24">
+            <Cherry
+              className="w-16 h-16 mb-6"
+              style={{ color: "rgba(255,111,0,0.3)" }}
+              strokeWidth={0.5}
+            />
+            <p className="text-white/50 text-xl font-light text-center mb-2">
+              No matches yet
+            </p>
+            <p className="text-white/30 text-sm text-center mb-10">
               Start discovering to find your perfect match
             </p>
             <Link
               to="/discover"
-              className="px-6 py-3 bg-white text-black hover:bg-white/90 transition-all uppercase tracking-wider"
+              className="px-8 py-3 bg-white text-black hover:bg-white/90 transition-all uppercase tracking-[0.2em] text-sm"
             >
               Discover Profiles
             </Link>

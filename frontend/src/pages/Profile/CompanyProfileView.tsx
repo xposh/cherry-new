@@ -51,7 +51,9 @@ export function CompanyProfileView() {
     if (!id) return;
     try {
       await discoverService.interact(id, "skip", authFetch);
-    } catch {}
+    } catch (err) {
+      console.error("Skip interaction failed:", err);
+    }
     navigate("/discover");
   };
 
@@ -60,7 +62,7 @@ export function CompanyProfileView() {
     try {
       const result = await discoverService.interact(id, "like", authFetch);
       if (result.status === "match") {
-        navigate(`/match/company/${id}`);
+        navigate(`/match-details/company/${id}`);
       } else {
         navigate("/discover");
       }

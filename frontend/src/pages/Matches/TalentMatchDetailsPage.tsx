@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { MapPin, MessageCircle, Globe, Award } from "lucide-react";
+import { MapPin, MessageCircle, Globe, Award, ArrowLeft } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo"; // Ich verwende die geteilte Logo-Komponente statt hardcoded Markup
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
@@ -54,11 +54,22 @@ export function TalentMatchDetailsPage() {
 
   return (
     <div className="relative min-h-screen w-full bg-black pb-24">
-      {/*Logo*/}
-      <Logo className="fixed" />
+      {/* ÄNDERUNG 1: Back-Button ergänzt, Logo bleibt */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 pt-10 pb-4 pointer-events-none">
+        <button
+          onClick={() => navigate(-1)}
+          className="pointer-events-auto w-10 h-10 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-full border border-white/10 hover:border-white/30 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 text-white" strokeWidth={1.5} />
+        </button>
+        <div className="pointer-events-auto">
+          <Logo />
+        </div>
+        <div className="w-10" />
+      </div>
 
-      {/* Hero */}
-      <div className="relative h-96 overflow-hidden">
+      {/* Hero — ÄNDERUNG 2: h-96 → h-[65vh] */}
+      <div className="relative h-[65vh] overflow-hidden">
         {talent.profileImage && (
           <img
             src={talent.profileImage}
@@ -83,7 +94,8 @@ export function TalentMatchDetailsPage() {
               ✓ Cherry pick!
             </span>
           </div>
-          <h1 className="text-5xl font-light text-white mb-2">{talent.name}</h1>
+          {/* ÄNDERUNG 3: text-5xl → text-6xl */}
+          <h1 className="text-6xl font-light text-white mb-2">{talent.name}</h1>
           {talent.location && (
             <div className="flex items-center gap-2 text-white/80">
               <MapPin className="w-5 h-5" />
@@ -95,13 +107,15 @@ export function TalentMatchDetailsPage() {
 
       <div className="max-w-4xl mx-auto px-8 py-12 space-y-8">
         {/* CTA — Ich navigiere zur StartConversationPage, die den Chat anlegt und weiterleitet */}
+        {/* ÄNDERUNG 4: bg-white text-black → #FF6F00 */}
         <div className="border border-white/30 p-6">
           <h2 className="text-white text-2xl font-light mb-4">
             Start the Conversation
           </h2>
           <button
             onClick={() => navigate(`/messages/start/${id}`)}
-            className="w-full flex items-center justify-center gap-3 p-4 bg-white text-black hover:bg-white/90 transition-all"
+            className="w-full flex items-center justify-center gap-3 p-4 hover:opacity-90 transition-all"
+            style={{ backgroundColor: "#FF6F00", color: "#000" }}
           >
             <MessageCircle className="w-5 h-5" />
             <span className="uppercase tracking-wider">Send Message</span>

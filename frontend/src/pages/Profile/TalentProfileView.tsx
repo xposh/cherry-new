@@ -60,7 +60,7 @@ export function TalentProfileView() {
     try {
       const result = await discoverService.interact(id, "like", authFetch);
       if (result.status === "match") {
-        navigate(`/match/talent/${id}`);
+        navigate(`/match-details/talent/${id}`);
       } else {
         navigate("/discover");
       }
