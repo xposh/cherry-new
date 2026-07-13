@@ -161,9 +161,7 @@ export function CompanyProfileSetup1() {
 
   return (
     <div className="relative min-h-screen w-full bg-black overflow-auto pb-20">
-      <Link to="/">
-        <Logo />
-      </Link>
+      <Logo to="/" />
 
       <div className="fixed top-8 right-8 z-50 flex gap-2">
         <div className="w-12 h-1 bg-white rounded-full"></div>

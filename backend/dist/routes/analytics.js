@@ -77,16 +77,26 @@ router.get("/screen-time", authMiddleware_1.requireAuth, async (req, res) => {
       AND session_start < DATE_TRUNC('week', NOW()) + INTERVAL '1 week'
     `;
         const totalMinutes = parseInt(result[0].total_minutes);
-        // Color system
-        let status = "Perfect Balance";
-        let color = "#00FF88";
+        // ✅ FARB-FIX V2: 4 statt 2 Stufen, deutlich vibranter/leuchtender.
+        // Logik-Prinzip: je niedriger die Screen Time, desto heller/strahlender
+        // die Farbe (positiv signalisieren); je höher, desto gesättigter Richtung
+        // Rot (Alarm signalisieren, aber weiterhin glühend statt stumpf-gedeckt).
+        // Alle vier Werte sind bewusst hochgesättigt, damit der bereits
+        // bestehende Glow-Code im Frontend (textShadow/filter mit `${color}50`)
+        // den gewünschten "leuchtenden" Effekt erzeugt.
+        let status = "In The Flow";
+        let color = "#FFD60A"; // strahlendes Gold — bester Zustand, sehr geringe Nutzung
         if (totalMinutes > 120) {
             status = "Consider Taking a Break";
-            color = "#FF3366";
+            color = "#FF1744"; // glühendes Alarm-Rot — höchste Stufe
         }
         else if (totalMinutes > 60) {
             status = "Mindful Usage";
-            color = "#FFA500";
+            color = "#FF4500"; // glühendes Orange-Rot — Übergangsstufe Richtung Warnung
+        }
+        else if (totalMinutes > 30) {
+            status = "Perfect Balance";
+            color = "#FF6F00"; // Marken-Akzentfarbe (Vibrant Neon Orange) — weiterhin gut
         }
         res.json({
             totalMinutes,

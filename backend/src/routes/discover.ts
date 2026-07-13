@@ -397,6 +397,46 @@ router.post("/interact", requireAuth, async (req: Request, res: Response) => {
 });
 
 // ─── GET /discover/:id — Einzelnes Profil laden ───────────────────────────────
+router.get("/public/:id", async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  if (!id) {
+    return res.status(400).json({ msg: "ID fehlt" });
+  }
+
+  try {
+    const [talentRow] = await sql`
+      SELECT tp.profile_data, u.email
+      FROM talent_profiles tp
+      JOIN users u ON u.id = tp.user_id
+      WHERE tp.user_id = ${id}::uuid AND u.role = 'talent'
+    `;
+
+    if (talentRow) {
+      const cleanData = safelyParseJSON(talentRow.profile_data);
+      if (!cleanData.name) cleanData.name = talentRow.email;
+      return res.json({ profile: cleanData, type: "talent" });
+    }
+
+    const [companyRow] = await sql`
+      SELECT cp.profile_data, u.email
+      FROM company_profiles cp
+      JOIN users u ON u.id = cp.user_id
+      WHERE cp.user_id = ${id}::uuid AND u.role = 'company'
+    `;
+
+    if (companyRow) {
+      const cleanData = safelyParseJSON(companyRow.profile_data);
+      if (!cleanData.companyName) cleanData.companyName = companyRow.email;
+      return res.json({ profile: cleanData, type: "company" });
+    }
+
+    return res.status(404).json({ msg: "Profil nicht gefunden" });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ msg: "Server Fehler", detail: msg });
+  }
+});
+
 router.get("/:id", requireAuth, async (req: Request, res: Response) => {
   const id = req.params.id as string;
   if (!id) {

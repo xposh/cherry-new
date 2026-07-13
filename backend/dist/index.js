@@ -12,6 +12,10 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const authMiddleware_1 = require("./authMiddleware");
 const analytics_1 = __importDefault(require("./routes/analytics"));
 const cronJobs_1 = require("./services/cronJobs");
+const discover_1 = __importDefault(require("./routes/discover"));
+const conversations_1 = __importDefault(require("./routes/conversations")); // Ich importiere conversations hier, damit der Router registriert wird
+const featuredOpportunities_1 = __importDefault(require("./routes/featuredOpportunities"));
+const scoreCalculation_1 = require("./services/scoreCalculation"); // Ich berechne den Score direkt nach dem Speichern
 if (!process.env.JWT_SECRET) {
     console.error("Denk dran! JWT_SECRET must be configured in .env");
     process.exit();
@@ -135,21 +139,67 @@ app.post("/profile", authMiddleware_1.requireAuth, async (req, res) => {
         console.log(`Speichere Profil für User ${userId} mit Role ${userRole}`);
         // Role-Check: Speichere in der richtigen Tabelle
         if (userRole === "talent") {
-            await (0, db_1.default) `
-        INSERT INTO talent_profiles (user_id, profile_data)
-        VALUES (${userId}, ${JSON.stringify(formData)})
-        ON CONFLICT (user_id)
-        DO UPDATE SET profile_data = talent_profiles.profile_data || EXCLUDED.profile_data;
+            const [existing] = await (0, db_1.default) `
+        SELECT profile_data FROM talent_profiles WHERE user_id = ${userId}
       `;
+            if (existing) {
+                const current = typeof existing.profile_data === "object" &&
+                    !Array.isArray(existing.profile_data)
+                    ? existing.profile_data
+                    : {};
+                const merged = { ...current, ...formData };
+                await (0, db_1.default) `
+          UPDATE talent_profiles
+          SET profile_data = ${db_1.default.json(merged)}
+          WHERE user_id = ${userId}
+        `;
+            }
+            else {
+                await (0, db_1.default) `
+          INSERT INTO talent_profiles (user_id, profile_data)
+          VALUES (${userId}, ${db_1.default.json(formData)})
+        `;
+            }
+            // 🆕 ZUSATZ: Score sofort neu berechnen, statt auf den nächsten
+            // stündlichen Cron-Job zu warten. Löst das Problem, dass die Analytics
+            // gefühlt "nie" reagieren, wenn man gerade ein Profil ausgefüllt hat.
+            try {
+                await (0, scoreCalculation_1.calculateMatchReadinessScore)(userId, userRole);
+            }
+            catch (scoreErr) {
+                console.error("Konnte Match Readiness Score nicht sofort aktualisieren:", scoreErr);
+            }
             return res.json({ message: "Talent-Profil erfolgreich gespeichert!" });
         }
         else if (userRole === "company") {
-            await (0, db_1.default) `
-        INSERT INTO company_profiles (user_id, profile_data)
-        VALUES (${userId}, ${JSON.stringify(formData)})
-        ON CONFLICT (user_id)
-        DO UPDATE SET profile_data = company_profiles.profile_data || EXCLUDED.profile_data;
+            const [existing] = await (0, db_1.default) `
+        SELECT profile_data FROM company_profiles WHERE user_id = ${userId}
       `;
+            if (existing) {
+                const current = typeof existing.profile_data === "object" &&
+                    !Array.isArray(existing.profile_data)
+                    ? existing.profile_data
+                    : {};
+                const merged = { ...current, ...formData };
+                await (0, db_1.default) `
+          UPDATE company_profiles
+          SET profile_data = ${db_1.default.json(merged)}
+          WHERE user_id = ${userId}
+        `;
+            }
+            else {
+                await (0, db_1.default) `
+          INSERT INTO company_profiles (user_id, profile_data)
+          VALUES (${userId}, ${db_1.default.json(formData)})
+        `;
+            }
+            // 🆕 ZUSATZ: gleiche sofortige Neuberechnung wie beim Talent-Branch oben.
+            try {
+                await (0, scoreCalculation_1.calculateMatchReadinessScore)(userId, userRole);
+            }
+            catch (scoreErr) {
+                console.error("Konnte Match Readiness Score nicht sofort aktualisieren:", scoreErr);
+            }
             return res.json({ message: "Company-Profil erfolgreich gespeichert!" });
         }
         else {
@@ -209,6 +259,9 @@ app.get("/profile", authMiddleware_1.requireAuth, async (req, res) => {
     }
 });
 app.use("/analytics", analytics_1.default);
+app.use("/discover", discover_1.default);
+app.use("/conversations", conversations_1.default); // Ich registriere conversations AUSSERHALB von app.listen() — drinnen würde die Route nie greifen
+app.use("/featured-opportunities", featuredOpportunities_1.default);
 app.listen(3000, () => {
     console.log("backend started on port 3000");
     (0, cronJobs_1.startCronJobs)();

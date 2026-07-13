@@ -130,6 +130,17 @@ export const discoverService = {
     return res.json();
   },
 
+  async getPublicProfile(
+    id: string,
+  ): Promise<{ profile: FullProfile; type: "talent" | "company" }> {
+    const res = await fetch(`${API_BASE}/discover/public/${id}`);
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { detail?: string };
+      throw new Error(err.detail ?? `Profile error ${res.status}`);
+    }
+    return res.json();
+  },
+
   async interact(
     targetId: string,
     action: "like" | "skip",

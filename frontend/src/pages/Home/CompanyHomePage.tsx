@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Logo } from "../../components/Logo";
+import { FeaturedOpportunityCard } from "../../components/FeaturedOpportunityCard";
 import { useAuth } from "../../context/useAuth";
 import { useNavigate } from "react-router";
 import { MatchReadinessRing } from "./components/MatchReadinessRing";
@@ -48,14 +49,22 @@ interface TalentProfile {
   video_url?: string;
 }
 
-interface FeaturedTalent {
-  name: string;
-  position: string;
-  description: string;
-  availability: string;
+interface FeaturedOpportunity {
+  id: number;
+  owner_id: string;
+  owner_role: "talent" | "company";
+  title: string;
+  description?: string;
+  image_url?: string;
   video_url?: string;
-  image_url: string;
+  deadline: string;
+  is_active: boolean;
+  deleted_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  time_remaining_seconds: number;
 }
+
 
 export function CompanyHomePage() {
   const { authFetch } = useAuth();
@@ -87,6 +96,11 @@ export function CompanyHomePage() {
   const [heatmap, setHeatmap] = useState<
     Array<{ date: string; isActive: boolean }>
   >([]);
+  const [featuredOpportunity, setFeaturedOpportunity] = useState<
+    FeaturedOpportunity | null
+  >(null);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [featuredError, setFeaturedError] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const sessionIdRef = useRef<number | null>(null); // Keep only one declaration
@@ -122,15 +136,6 @@ export function CompanyHomePage() {
   ];
 
   // MOCK DATA - Featured Talent (bis du Backend einbaust)
-  const mockFeaturedTalent: FeaturedTalent = {
-    name: "Lisa Meier",
-    position: "Executive Chef",
-    description: "Award-winning culinary artist",
-    availability: "Available immediately",
-    image_url: "/barkeeper-sommelier/IMG_4431.JPG",
-    video_url: "/videos/CherryPrivateDinner.mp4",
-  };
-
   // AI Career Suggestions (für Companies angepasst)
   const careerInsights = [
     {
@@ -158,6 +163,44 @@ export function CompanyHomePage() {
 
   const todayInsightIndex = new Date().getDate() % careerInsights.length;
   const todayInsight = careerInsights[todayInsightIndex];
+
+  // ========================================
+  // FETCH FEATURED OPPORTUNITY
+  // ========================================
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadFeaturedOpportunity() {
+      try {
+        setFeaturedLoading(true);
+        setFeaturedError(null);
+
+        const res = await authFetch("/api/featured-opportunities/feed");
+        if (!res.ok) {
+          throw new Error("Failed to load featured opportunity");
+        }
+
+        const data = await res.json();
+        if (!isMounted) return;
+
+        setFeaturedOpportunity(data.opportunities?.[0] ?? null);
+      } catch (err: unknown) {
+        if (!isMounted) return;
+        setFeaturedError(
+          err instanceof Error ? err.message : "Unable to load featured opportunity",
+        );
+        setFeaturedOpportunity(null);
+      } finally {
+        if (!isMounted) return;
+        setFeaturedLoading(false);
+      }
+    }
+
+    loadFeaturedOpportunity();
+    return () => {
+      isMounted = false;
+    };
+  }, [authFetch]);
 
   // ========================================
   // FETCH DATA FROM BACKEND
@@ -440,69 +483,54 @@ export function CompanyHomePage() {
 
       {/* FEATURED TALENT */}
       <section className="relative h-screen w-full overflow-hidden">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          {mockFeaturedTalent.video_url && (
-            <source src={mockFeaturedTalent.video_url} type="video/mp4" />
-          )}
-          <img
-            src={mockFeaturedTalent.image_url}
-            alt="Featured"
-            className="w-full h-full object-cover"
-          />
-        </video>
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-
-        <div className="absolute inset-0 flex items-end">
-          <div className="p-16 max-w-3xl">
-            <div className="mb-6">
-              <span
-                className="inline-block px-4 py-1 border text-xs uppercase tracking-[0.3em] mb-4"
-                style={{
-                  borderColor: "#FF6F00",
-                  color: "#FF6F00",
-                  boxShadow: "0 0 15px rgba(255, 111, 0, 0.3)",
-                }}
-              >
-                Featured Talent
-              </span>
-            </div>
-            <h3
-              className="text-6xl font-light mb-4 tracking-tight"
-              style={{ color: "#FEF6EA", lineHeight: "1.1" }}
-            >
-              {mockFeaturedTalent.name}
-              <br />
-              {mockFeaturedTalent.position}
-            </h3>
-            <p
-              className="text-xl font-light mb-2"
-              style={{ color: "rgba(254,246,234,0.8)" }}
-            >
-              {mockFeaturedTalent.description}
+        {featuredLoading ? (
+          <div className="relative h-full bg-black flex items-center justify-center">
+            <p className="text-white/40 text-sm tracking-[0.3em] uppercase">
+              Loading featured opportunity...
             </p>
-            <p
-              className="text-sm mb-8"
-              style={{ color: "rgba(254,246,234,0.5)" }}
-            >
-              {mockFeaturedTalent.availability}
-            </p>
-
-            <button className="group flex items-center gap-3 text-[#FEF6EA] uppercase tracking-[0.2em] text-sm font-medium hover:gap-4 transition-all">
-              View Profile
-              <ArrowRight
-                className="w-5 h-5 transition-transform group-hover:translate-x-1"
-                strokeWidth={1}
-              />
-            </button>
           </div>
-        </div>
+        ) : featuredError ? (
+          <div className="relative h-full bg-black flex items-center justify-center px-8 text-center">
+            <div>
+              <p className="text-white/70 text-sm mb-4">
+                {featuredError}
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 border border-white/20 text-white uppercase tracking-[0.2em] text-sm hover:border-white/40 transition-all"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : featuredOpportunity ? (
+          <FeaturedOpportunityCard
+            opportunity={featuredOpportunity}
+            ctaLabel="View Profile"
+            onClick={() =>
+              navigate(
+                featuredOpportunity.owner_role === "talent"
+                  ? `/talent/${featuredOpportunity.owner_id}`
+                  : `/company/${featuredOpportunity.owner_id}`,
+              )
+            }
+            className="h-full"
+          />
+        ) : (
+          <div className="relative h-full bg-black flex items-center justify-center px-8 text-center">
+            <div>
+              <p className="text-white/70 text-sm mb-4">
+                No featured opportunity is available right now.
+              </p>
+              <button
+                onClick={() => navigate("/account")}
+                className="px-6 py-3 border border-white/20 text-white uppercase tracking-[0.2em] text-sm hover:border-white/40 transition-all"
+              >
+                Create Opportunity
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* HANDPICKED TALENTS */}

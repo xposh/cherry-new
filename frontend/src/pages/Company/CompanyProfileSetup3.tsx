@@ -2,6 +2,7 @@ import { Plus, X, Upload } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
+import { OpportunityCreator } from "../../components/OpportunityCreator/OpportunityCreator";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
 import { useAuth } from "../../context/useAuth"; //  NEU HINZUGEFÜGT
 
@@ -269,9 +270,7 @@ export function CompanyProfileSetup3() {
 
   return (
     <div className="relative min-h-screen w-full bg-black overflow-auto pb-20">
-      <Link to="/">
-        <Logo />
-      </Link>
+      <Logo to="/" />
 
       <div className="fixed top-8 right-8 z-50 flex gap-2">
         <div className="w-12 h-1 bg-white rounded-full"></div>
@@ -402,7 +401,6 @@ export function CompanyProfileSetup3() {
               ))}
             </div>
           </section>
-
           {/* Ansprechpartner */}
           <section>
             <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
@@ -524,6 +522,20 @@ export function CompanyProfileSetup3() {
                 className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
               />
             </div>
+          </section>
+
+          <section>
+            <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
+              Featured Opportunity
+            </h2>
+            <OpportunityCreator
+              role="company"
+              ctaText="Create a featured job, event, or showcase that attracts the right talent."
+              authFetch={authFetch}
+              onSuccess={() => {
+                // optional hook for success events
+              }}
+            />
           </section>
 
           {/* Social Media */}

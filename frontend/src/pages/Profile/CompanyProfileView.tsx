@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { MapPin, X, Check } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
+import { FeaturedOpportunityCard, type FeaturedOpportunityItem } from "../../components/FeaturedOpportunityCard";
 import { useAuth } from "../../context/useAuth";
 import { Logo } from "../../components/Logo";
 import {
@@ -12,17 +13,23 @@ import {
 export function CompanyProfileView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { authFetch } = useAuth();
+  const { authFetch, isAuthenticated } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [company, setCompany] = useState<FullProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [featuredOpportunity, setFeaturedOpportunity] = useState<FeaturedOpportunityItem | null>(null);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [featuredError, setFeaturedError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
     try {
-      const { profile: p } = await discoverService.getProfile(id, authFetch);
+      const result = isAuthenticated
+        ? await discoverService.getProfile(id, authFetch)
+        : await discoverService.getPublicProfile(id);
+      const p = result.profile;
       setCompany(p);
     } catch (err) {
       console.error("Company load error:", err);
@@ -30,7 +37,7 @@ export function CompanyProfileView() {
     } finally {
       setLoading(false);
     }
-  }, [id, authFetch]);
+  }, [id, authFetch, isAuthenticated]);
 
   useEffect(() => {
     load();
@@ -46,7 +53,37 @@ export function CompanyProfileView() {
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
   }, [company]);
+  useEffect(() => {
+    let isMounted = true;
+    async function loadFeatured() {
+      if (!id) return;
+      try {
+        setFeaturedLoading(true);
+        setFeaturedError(null);
 
+        const res = await fetch(`/api/featured-opportunities/public/profile/${id}`);
+        if (!res.ok) {
+          throw new Error("Unable to load featured opportunity");
+        }
+
+        const data = await res.json();
+        if (!isMounted) return;
+        setFeaturedOpportunity(data.opportunity ?? null);
+      } catch (err: unknown) {
+        if (!isMounted) return;
+        setFeaturedError(err instanceof Error ? err.message : "Unable to load featured opportunity");
+        setFeaturedOpportunity(null);
+      } finally {
+        if (!isMounted) return;
+        setFeaturedLoading(false);
+      }
+    }
+
+    loadFeatured();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
   const handleSkip = async () => {
     if (!id) return;
     try {
@@ -208,6 +245,49 @@ export function CompanyProfileView() {
               </section>
             )}
 
+            <section className="my-12">
+              <h2 className="text-2xl font-light text-white mb-6 uppercase tracking-wider">
+                Featured Opportunity
+              </h2>
+              {featuredLoading ? (
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center text-white/70">
+                  Loading featured opportunity...
+                </div>
+              ) : featuredError ? (
+                <div className="rounded-3xl border border-red-500/20 bg-black/70 p-8 text-center text-red-300">
+                  {featuredError}
+                </div>
+              ) : featuredOpportunity ? (
+                <FeaturedOpportunityCard
+                  opportunity={featuredOpportunity}
+                  ctaLabel="View Profile"
+                  onClick={() =>
+                    navigate(
+                      featuredOpportunity.owner_role === "talent"
+                        ? `/talent/${featuredOpportunity.owner_id}`
+                        : `/company/${featuredOpportunity.owner_id}`,
+                    )
+                  }
+                />
+              ) : (
+                <div className="relative overflow-hidden rounded-3xl border border-white/10">
+                  <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="h-72 w-full object-cover grayscale"
+                  >
+                    <source src="/videos/HairdresserBlackWhite1.mp4" type="video/mp4" />
+                  </video>
+                  <div className="absolute inset-0 bg-black/50" />
+                  <div className="absolute inset-0 flex items-center justify-center p-8 text-center text-white/80">
+                    No featured opportunity is currently available.
+                  </div>
+                </div>
+              )}
+            </section>
+
             {values.length > 0 && (
               <section>
                 <h2 className="text-2xl font-light text-white mb-4 uppercase tracking-wider">
@@ -324,30 +404,34 @@ export function CompanyProfileView() {
       </div>
 
       {/* X und ✓ Buttons — runde Kreise */}
-      <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 flex items-center gap-6">
-        <button
-          onClick={handleSkip}
-          className="w-16 h-16 rounded-full bg-black border-2 border-white flex items-center justify-center hover:bg-white transition-all group"
-          aria-label="Pass"
-        >
-          <X
-            className="w-8 h-8 text-white group-hover:text-black"
-            strokeWidth={2}
-          />
-        </button>
-        <button
-          onClick={handleLike}
-          className="w-16 h-16 rounded-full bg-black border-2 border-white flex items-center justify-center hover:bg-white transition-all group"
-          aria-label="Like"
-        >
-          <Check
-            className="w-8 h-8 text-white group-hover:text-black"
-            strokeWidth={2}
-          />
-        </button>
-      </div>
+      {isAuthenticated ? (
+        <>
+          <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 flex items-center gap-6">
+            <button
+              onClick={handleSkip}
+              className="w-16 h-16 rounded-full bg-black border-2 border-white flex items-center justify-center hover:bg-white transition-all group"
+              aria-label="Pass"
+            >
+              <X
+                className="w-8 h-8 text-white group-hover:text-black"
+                strokeWidth={2}
+              />
+            </button>
+            <button
+              onClick={handleLike}
+              className="w-16 h-16 rounded-full bg-black border-2 border-white flex items-center justify-center hover:bg-white transition-all group"
+              aria-label="Like"
+            >
+              <Check
+                className="w-8 h-8 text-white group-hover:text-black"
+                strokeWidth={2}
+              />
+            </button>
+          </div>
 
-      <BottomNavigation />
+          <BottomNavigation />
+        </>
+      ) : null}
 
       <style>{`div::-webkit-scrollbar { display: none; }`}</style>
     </div>

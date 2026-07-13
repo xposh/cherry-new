@@ -9,6 +9,7 @@ import analyticsRoutes from "./routes/analytics";
 import { startCronJobs } from "./services/cronJobs";
 import discoverRoutes from "./routes/discover";
 import conversationsRoutes from "./routes/conversations"; // Ich importiere conversations hier, damit der Router registriert wird
+import featuredOpportunitiesRoutes from "./routes/featuredOpportunities";
 import { calculateMatchReadinessScore } from "./services/scoreCalculation"; // Ich berechne den Score direkt nach dem Speichern
 
 if (!process.env.JWT_SECRET) {
@@ -290,6 +291,7 @@ app.get("/profile", requireAuth, async (req, res) => {
 app.use("/analytics", analyticsRoutes);
 app.use("/discover", discoverRoutes);
 app.use("/conversations", conversationsRoutes); // Ich registriere conversations AUSSERHALB von app.listen() — drinnen würde die Route nie greifen
+app.use("/featured-opportunities", featuredOpportunitiesRoutes);
 
 app.listen(3000, () => {
   console.log("backend started on port 3000");

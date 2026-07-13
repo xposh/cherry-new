@@ -43,6 +43,8 @@ export const routes = createBrowserRouter([
       { path: "/welcome", element: <WelcomeSlides /> },
       { path: "/login", element: <LoginPage /> },
       { path: "/signup", element: <SignUpPage /> },
+      { path: "/talent/:id", element: <TalentProfileView /> },
+      { path: "/company/:id", element: <CompanyProfileView /> },
 
       // AUTHENTICATED ROUTES — login required
       {
@@ -83,10 +85,6 @@ export const routes = createBrowserRouter([
                   },
                   { path: "home", element: <HomePage /> },
                   { path: "discover", element: <DiscoverPage /> },
-
-                  // Profil-Detailseiten (von Discover aus)
-                  { path: "talent/:id", element: <TalentProfileView /> },
-                  { path: "company/:id", element: <CompanyProfileView /> },
 
                   // Ich habe die alte match/:targetType/:id Route entfernt —
                   // MatchScreen wird jetzt als globales Overlay aus dem MatchContext

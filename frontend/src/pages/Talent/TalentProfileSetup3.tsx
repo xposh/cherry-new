@@ -2,6 +2,7 @@ import { Upload, FileText, X, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
+import { OpportunityCreator } from "../../components/OpportunityCreator/OpportunityCreator";
 import { supabase } from "../../util/supabase";
 import { useAuth } from "../../context/useAuth"; // ✅ useAuth importieren
 
@@ -250,9 +251,7 @@ export function TalentProfileSetup3() {
 
   return (
     <div className="relative min-h-screen w-full bg-black overflow-auto pb-20">
-      <Link to="/">
-        <Logo />
-      </Link>
+      <Logo to="/" />
 
       <div className="fixed top-8 right-8 z-50 flex gap-2">
         <div className="w-12 h-1 bg-white rounded-full"></div>
@@ -409,6 +408,17 @@ export function TalentProfileSetup3() {
                 </div>
               ))}
             </div>
+          </section>
+
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
+              Featured Showcase
+            </h2>
+            <OpportunityCreator
+              role="talent"
+              ctaText="Showcase your latest project or career highlight with a public featured card."
+              authFetch={authFetch}
+            />
           </section>
         </div>
 

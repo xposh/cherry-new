@@ -7,8 +7,11 @@ import {
   Award,
   Clock,
 } from "lucide-react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
+import { FeaturedOpportunityCard, type FeaturedOpportunityItem } from "../../components/FeaturedOpportunityCard";
+import { OpportunityCreator } from "../../components/OpportunityCreator/OpportunityCreator";
+import { useAuth } from "../../context/useAuth";
 
 // 1. TYP-DEFINITIONEN (DOMÄNEN-INTERFACES)
 interface PortfolioItem {
@@ -79,7 +82,13 @@ interface CvFileStructure {
 
 export function TalentProfileSummary() {
   const navigate = useNavigate();
+  const { authFetch } = useAuth();
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [featuredOpportunity, setFeaturedOpportunity] = useState<FeaturedOpportunityItem | null>(null);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [featuredError, setFeaturedError] = useState<string | null>(null);
+  const [isEditingFeatured, setIsEditingFeatured] = useState(false);
+  const [isDeletingFeatured, setIsDeletingFeatured] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // 2. LAZY STATE INITIALIZATION
@@ -252,6 +261,52 @@ export function TalentProfileSummary() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  async function loadFeaturedOpportunity() {
+    try {
+      setFeaturedLoading(true);
+      setFeaturedError(null);
+
+      const res = await authFetch("/api/featured-opportunities/me");
+      if (!res.ok) {
+        throw new Error("Unable to load featured opportunity");
+      }
+
+      const data = await res.json();
+      setFeaturedOpportunity(data.opportunities?.[0] ?? null);
+    } catch (err: unknown) {
+      setFeaturedError(err instanceof Error ? err.message : "Unable to load featured opportunity");
+      setFeaturedOpportunity(null);
+    } finally {
+      setFeaturedLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadFeaturedOpportunity();
+  }, [authFetch]);
+
+  async function handleDeleteFeatured() {
+    if (!featuredOpportunity) return;
+    try {
+      setIsDeletingFeatured(true);
+      setFeaturedError(null);
+
+      const res = await authFetch(`/api/featured-opportunities/${featuredOpportunity.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        throw new Error("Could not delete featured opportunity");
+      }
+
+      setIsEditingFeatured(false);
+      await loadFeaturedOpportunity();
+    } catch (err: unknown) {
+      setFeaturedError(err instanceof Error ? err.message : "Could not delete featured opportunity");
+    } finally {
+      setIsDeletingFeatured(false);
+    }
+  }
+
   // 4. SCROLL-LOGIK EFFECT
   useEffect(() => {
     const handleScroll = () => {
@@ -390,9 +445,7 @@ export function TalentProfileSummary() {
 
   return (
     <div className="relative min-h-screen w-full bg-black overflow-hidden">
-      <Link to="/">
-        <Logo className="fixed" />
-      </Link>
+      <Logo className="fixed" to="/" />
 
       <div className="fixed top-8 right-8 z-50 flex gap-1">
         {[...portfolioItems, {}, {}].map((_, index) => (
@@ -482,6 +535,82 @@ export function TalentProfileSummary() {
                 </p>
               </section>
             )}
+
+            <section className="space-y-6">
+              <h2 className="text-2xl font-light text-white mb-4 uppercase tracking-[0.2em]">
+                Featured Showcase
+              </h2>
+              {featuredLoading ? (
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center text-white/70">
+                  Loading featured content...
+                </div>
+              ) : featuredError ? (
+                <div className="rounded-3xl border border-red-500/20 bg-black/70 p-8 text-center text-red-300">
+                  {featuredError}
+                </div>
+              ) : featuredOpportunity ? (
+                <>
+                  <FeaturedOpportunityCard
+                    opportunity={featuredOpportunity}
+                    className="w-full"
+                  />
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingFeatured((prev) => !prev)}
+                      className="px-5 py-2 border border-white/30 text-white rounded-xl hover:border-white transition-all"
+                    >
+                      {isEditingFeatured ? "Close Edit" : "Edit Featured"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteFeatured}
+                      disabled={isDeletingFeatured}
+                      className="px-5 py-2 border border-red-500/40 text-red-200 rounded-xl hover:border-red-400 transition-all disabled:opacity-60"
+                    >
+                      {isDeletingFeatured ? "Deleting..." : "Delete Featured"}
+                    </button>
+                  </div>
+                  {isEditingFeatured ? (
+                    <OpportunityCreator
+                      role="talent"
+                      ctaText="Update your featured public showcase."
+                      authFetch={authFetch}
+                      editMode
+                      opportunityId={featuredOpportunity.id}
+                      initialValues={{
+                        title: featuredOpportunity.title,
+                        description: featuredOpportunity.description ?? "",
+                        deadline: featuredOpportunity.deadline
+                          ? new Date(featuredOpportunity.deadline).toISOString().slice(0, 16)
+                          : "",
+                        image_url: featuredOpportunity.image_url,
+                        video_url: featuredOpportunity.video_url,
+                      }}
+                      onCancelEdit={() => setIsEditingFeatured(false)}
+                      onSuccess={() => {
+                        setIsEditingFeatured(false);
+                        loadFeaturedOpportunity();
+                      }}
+                    />
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center text-white/70">
+                    No public featured showcase is active yet.
+                  </div>
+                  <OpportunityCreator
+                    role="talent"
+                    ctaText="Create your first public featured showcase."
+                    authFetch={authFetch}
+                    onSuccess={() => {
+                      loadFeaturedOpportunity();
+                    }}
+                  />
+                </>
+              )}
+            </section>
 
             {/* REPARIERT / OPTIMIERT: Anzeige von CV und Availability in einer Zeile */}
             {(cvFile || availability) && (

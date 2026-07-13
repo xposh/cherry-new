@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Logo } from "../../components/Logo";
+import { FeaturedOpportunityCard } from "../../components/FeaturedOpportunityCard";
 import { useAuth } from "../../context/useAuth";
 import { useNavigate } from "react-router";
 import { MatchReadinessRing } from "./components/MatchReadinessRing";
@@ -49,13 +50,16 @@ interface Opportunity {
 }
 
 interface FeaturedOpportunity {
-  name: string;
-  city: string;
+  id: number;
+  owner_id: string;
+  owner_role: "talent" | "company";
+  title: string;
   description: string;
-  days_remaining: number;
+  image_url?: string;
   video_url?: string;
-  image_url: string;
+  time_remaining_seconds: number;
 }
+
 
 export function TalentHomePage() {
   const { authFetch } = useAuth();
@@ -88,8 +92,11 @@ export function TalentHomePage() {
     Array<{ date: string; isActive: boolean }>
   >([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [featuredOpportunity, setFeaturedOpportunity] =
-    useState<FeaturedOpportunity | null>(null);
+  const [featuredOpportunity, setFeaturedOpportunity] = useState<
+    FeaturedOpportunity | null
+  >(null);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [featuredError, setFeaturedError] = useState<string | null>(null);
 
   const sessionIdRef = useRef<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -238,15 +245,6 @@ export function TalentHomePage() {
           setOpportunities(data.opportunities);
         }
 
-        // 9. Featured Opportunity
-        const featuredRes = await authFetch(
-          "http://localhost:3000/analytics/featured-opportunity",
-        );
-        if (featuredRes.ok) {
-          const data = await featuredRes.json();
-          setFeaturedOpportunity(data);
-        }
-
         setLoading(false);
       } catch (error) {
         console.error("Error fetching homepage data:", error);
@@ -255,6 +253,43 @@ export function TalentHomePage() {
     }
 
     fetchHomePageData();
+  }, [authFetch]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadFeaturedOpportunity() {
+      try {
+        setFeaturedLoading(true);
+        setFeaturedError(null);
+
+        const res = await authFetch("/api/featured-opportunities/feed");
+        if (!res.ok) {
+          throw new Error("Failed to load featured opportunity");
+        }
+
+        const data = await res.json();
+        if (!isMounted) return;
+
+        setFeaturedOpportunity(data.opportunities?.[0] ?? null);
+      } catch (err: unknown) {
+        if (!isMounted) return;
+        setFeaturedError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load featured opportunity",
+        );
+        setFeaturedOpportunity(null);
+      } finally {
+        if (!isMounted) return;
+        setFeaturedLoading(false);
+      }
+    }
+
+    loadFeaturedOpportunity();
+    return () => {
+      isMounted = false;
+    };
   }, [authFetch]);
 
   // ========================================
@@ -425,73 +460,54 @@ export function TalentHomePage() {
       </section>
 
       {/* FEATURED OPPORTUNITY */}
-      {featuredOpportunity && (
-        <section className="relative h-screen w-full overflow-hidden">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover"
-          >
-            {featuredOpportunity.video_url && (
-              <source src={featuredOpportunity.video_url} type="video/mp4" />
-            )}
-            <img
-              src={featuredOpportunity.image_url}
-              alt="Featured"
-              className="w-full h-full object-cover"
-            />
-          </video>
-
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-
-          <div className="absolute inset-0 flex items-end">
-            <div className="p-16 max-w-3xl">
-              <div className="mb-6">
-                <span
-                  className="inline-block px-4 py-1 border text-xs uppercase tracking-[0.3em] mb-4"
-                  style={{
-                    borderColor: "#FF6F00",
-                    color: "#FF6F00",
-                    boxShadow: "0 0 15px rgba(255, 111, 0, 0.3)",
-                  }}
-                >
-                  Featured Opportunity
-                </span>
-              </div>
-              <h3
-                className="text-6xl font-light mb-4 tracking-tight"
-                style={{ color: "#FEF6EA", lineHeight: "1.1" }}
+      <section className="relative h-screen w-full overflow-hidden">
+        {featuredLoading ? (
+          <div className="relative h-full bg-black flex items-center justify-center">
+            <p className="text-white/40 text-sm tracking-[0.3em] uppercase">
+              Loading featured opportunity...
+            </p>
+          </div>
+        ) : featuredError ? (
+          <div className="relative h-full bg-black flex items-center justify-center px-8 text-center">
+            <div>
+              <p className="text-white/70 text-sm mb-4">{featuredError}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 border border-white/20 text-white uppercase tracking-[0.2em] text-sm hover:border-white/40 transition-all"
               >
-                {featuredOpportunity.name}
-                <br />
-                {featuredOpportunity.city}
-              </h3>
-              <p
-                className="text-xl font-light mb-2"
-                style={{ color: "rgba(254,246,234,0.8)" }}
-              >
-                {featuredOpportunity.description}
-              </p>
-              <p
-                className="text-sm mb-8"
-                style={{ color: "rgba(254,246,234,0.5)" }}
-              >
-                {featuredOpportunity.days_remaining} days remaining
-              </p>
-
-              <button className="group flex items-center gap-3 text-[#FEF6EA] uppercase tracking-[0.2em] text-sm font-medium hover:gap-4 transition-all">
-                Explore Details
-                <ArrowRight
-                  className="w-5 h-5 transition-transform group-hover:translate-x-1"
-                  strokeWidth={1}
-                />
+                Retry
               </button>
             </div>
           </div>
-        </section>
-      )}
+        ) : featuredOpportunity ? (
+          <FeaturedOpportunityCard
+            opportunity={featuredOpportunity}
+            ctaLabel="View Profile"
+            onClick={() =>
+              navigate(
+                featuredOpportunity.owner_role === "talent"
+                  ? `/talent/${featuredOpportunity.owner_id}`
+                  : `/company/${featuredOpportunity.owner_id}`,
+              )
+            }
+            className="h-full"
+          />
+        ) : (
+          <div className="relative h-full bg-black flex items-center justify-center px-8 text-center">
+            <div>
+              <p className="text-white/70 text-sm mb-4">
+                No featured opportunity is available right now.
+              </p>
+              <button
+                onClick={() => navigate("/account")}
+                className="px-6 py-3 border border-white/20 text-white uppercase tracking-[0.2em] text-sm hover:border-white/40 transition-all"
+              >
+                Create Opportunity
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* HANDPICKED OPPORTUNITIES */}
       <section className="relative bg-black h-screen w-full overflow-hidden">
