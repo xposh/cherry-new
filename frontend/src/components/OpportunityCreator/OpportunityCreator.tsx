@@ -17,7 +17,9 @@ import { supabase } from "../../util/supabase";
 const defaultValues: OpportunityCreatorValues = {
   title: "",
   description: "",
-  deadline: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString().slice(0, 16),
+  deadline: new Date(Date.now() + 1000 * 60 * 60 * 24)
+    .toISOString()
+    .slice(0, 16),
   image_url: "",
   video_url: "",
 };
@@ -49,7 +51,9 @@ export function OpportunityCreator({
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState(values.image_url ?? "");
   const [videoPreview, setVideoPreview] = useState(values.video_url ?? "");
-  const [errors, setErrors] = useState<Partial<Record<keyof OpportunityCreatorValues, string>>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof OpportunityCreatorValues, string>>
+  >({});
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,7 +82,11 @@ export function OpportunityCreator({
       setImageFile(null);
       return;
     }
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
+    if (
+      !ALLOWED_IMAGE_TYPES.includes(
+        file.type as (typeof ALLOWED_IMAGE_TYPES)[number],
+      )
+    ) {
       setUploadError("Please upload a JPG, PNG, or WebP image.");
       return;
     }
@@ -99,12 +107,18 @@ export function OpportunityCreator({
       setVideoFile(null);
       return;
     }
-    if (!ALLOWED_VIDEO_TYPES.includes(file.type as (typeof ALLOWED_VIDEO_TYPES)[number])) {
+    if (
+      !ALLOWED_VIDEO_TYPES.includes(
+        file.type as (typeof ALLOWED_VIDEO_TYPES)[number],
+      )
+    ) {
       setUploadError("Please upload an MP4, WebM, or MOV video.");
       return;
     }
     if (file.size > FEATURED_VIDEO_MAX_BYTES) {
-      setUploadError(`Video is too large. Max size is ${FEATURED_VIDEO_MAX_MB}MB.`);
+      setUploadError(
+        `Video is too large. Max size is ${FEATURED_VIDEO_MAX_MB}MB.`,
+      );
       return;
     }
 
@@ -144,7 +158,9 @@ export function OpportunityCreator({
     return data.publicUrl;
   }
 
-  function handleChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleChange(
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) {
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: undefined }));
@@ -159,10 +175,13 @@ export function OpportunityCreator({
 
     const result = opportunityCreatorSchema.safeParse(values);
     if (!result.success) {
-      const fieldErrors: Partial<Record<keyof OpportunityCreatorValues, string>> = {};
+      const fieldErrors: Partial<
+        Record<keyof OpportunityCreatorValues, string>
+      > = {};
       result.error.issues.forEach((issue) => {
         if (issue.path[0]) {
-          fieldErrors[issue.path[0] as keyof OpportunityCreatorValues] = issue.message;
+          fieldErrors[issue.path[0] as keyof OpportunityCreatorValues] =
+            issue.message;
         }
       });
       setErrors(fieldErrors);
@@ -189,9 +208,10 @@ export function OpportunityCreator({
         video_url: videoUrl || undefined,
       };
 
-      const endpoint = editMode && opportunityId
-        ? `/api/featured-opportunities/${opportunityId}`
-        : submitUrl;
+      const endpoint =
+        editMode && opportunityId
+          ? `/api/featured-opportunities/${opportunityId}`
+          : submitUrl;
 
       const response = await authFetch(endpoint, {
         method: editMode ? "PATCH" : "POST",
@@ -202,7 +222,9 @@ export function OpportunityCreator({
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
         const message =
-          payload?.error || payload?.message || "Unable to submit featured opportunity.";
+          payload?.error ||
+          payload?.message ||
+          "Unable to submit featured opportunity.";
         throw new Error(message);
       }
 
@@ -221,7 +243,9 @@ export function OpportunityCreator({
       setErrors({});
       if (onSuccess) onSuccess();
     } catch (error: unknown) {
-      setFormError(error instanceof Error ? error.message : "Unexpected error.");
+      setFormError(
+        error instanceof Error ? error.message : "Unexpected error.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -269,7 +293,10 @@ export function OpportunityCreator({
         </div>
 
         <div>
-          <label className="block text-sm text-white/80 mb-3" htmlFor="description">
+          <label
+            className="block text-sm text-white/80 mb-3"
+            htmlFor="description"
+          >
             Description
           </label>
           <textarea
@@ -293,7 +320,10 @@ export function OpportunityCreator({
 
         <div className="grid gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-sm text-white/80 mb-3" htmlFor="deadline">
+            <label
+              className="block text-sm text-white/80 mb-3"
+              htmlFor="deadline"
+            >
               Deadline
             </label>
             <input
@@ -311,7 +341,10 @@ export function OpportunityCreator({
           </div>
 
           <div>
-            <label className="block text-sm text-white/80 mb-3" htmlFor="image_file">
+            <label
+              className="block text-sm text-white/80 mb-3"
+              htmlFor="image_file"
+            >
               Featured Image (optional)
             </label>
             <input
@@ -333,7 +366,10 @@ export function OpportunityCreator({
         </div>
 
         <div>
-          <label className="block text-sm text-white/80 mb-3" htmlFor="video_file">
+          <label
+            className="block text-sm text-white/80 mb-3"
+            htmlFor="video_file"
+          >
             Featured Video (optional)
           </label>
           <input
@@ -378,7 +414,9 @@ export function OpportunityCreator({
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-white/60">Your featured item will be visible publicly across profiles.</p>
+            <p className="text-sm text-white/60">
+              Your featured item will be visible publicly across profiles.
+            </p>
           </div>
           <div className="flex gap-3">
             {editMode && onCancelEdit ? (

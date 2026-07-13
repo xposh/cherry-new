@@ -13,6 +13,7 @@ import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { useAuth } from "../../context/useAuth";
 import { useNavigate } from "react-router";
 import { useState, useEffect } from "react";
+import { mapCompanyProfileForSummary } from "../../util/profileMapping";
 
 interface ProfileData {
   user: {
@@ -20,6 +21,7 @@ interface ProfileData {
     role: "talent" | "company";
   };
   profile: {
+    name?: string;
     profileImage?: string;
     companyLogo?: string;
     firstName?: string;
@@ -52,14 +54,6 @@ export function AccountPage() {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const safeParse = (value: string | null) => {
-    try {
-      return value ? JSON.parse(value) : null;
-    } catch {
-      return null;
-    }
-  };
 
   // Lade Profil-Daten vom Backend
   useEffect(() => {
@@ -96,51 +90,9 @@ export function AccountPage() {
 
   const isTalent = profileData?.user?.role === "talent";
   const isCompany = profileData?.user?.role === "company";
-  const backendProfile = profileData?.profile || {};
-
-  // Lokale Datenstrukturen für Fallbacks auslesen
-  const localCompanySetup1 = safeParse(
-    localStorage.getItem("companySetup1") ?? "null",
-  );
-  const localCompanySetup2 = safeParse(
-    localStorage.getItem("companySetup2") ?? "null",
-  );
-  const localCompanySetup3 = safeParse(
-    localStorage.getItem("companySetup3") ?? "null",
-  );
-
-  const localTalentSetup1 = safeParse(
-    localStorage.getItem("talentSetup1") ?? "null",
-  );
-  const localTalentSetup2 = safeParse(
-    localStorage.getItem("talentSetup2") ?? "null",
-  );
-
-  // Dynamische Fallback-Generierung basierend auf der Benutzerrolle
-  const localFallbackProfile = isCompany
-    ? {
-        companyLogo: localCompanySetup1?.companyLogoUrl,
-        companyImages: localCompanySetup1?.uploadedImages,
-        companyName: localCompanySetup2?.companyInfo?.companyName,
-        location: localCompanySetup2?.companyInfo?.location,
-        industry: localCompanySetup2?.companyInfo?.industry,
-        claim: localCompanySetup2?.companyInfo?.claim,
-        website: localCompanySetup2?.companyInfo?.website,
-        phone: localCompanySetup3?.contactInfo?.contactPhone,
-        contactPhone: localCompanySetup3?.contactInfo?.contactPhone,
-        profileImage: localCompanySetup1?.companyLogoUrl,
-      }
-    : {
-        profileImage: localTalentSetup1?.profileImage,
-        firstName: localTalentSetup2?.formData?.firstName,
-        lastName: localTalentSetup2?.formData?.lastName,
-        location: localTalentSetup2?.formData?.location,
-        position: localTalentSetup2?.formData?.position,
-        specialty: localTalentSetup2?.formData?.specialty,
-        phone: localTalentSetup2?.formData?.phone,
-      };
-
-  const profile = { ...localFallbackProfile, ...backendProfile };
+  const profile: ProfileData["profile"] = isCompany
+    ? (mapCompanyProfileForSummary(profileData?.profile) as ProfileData["profile"])
+    : profileData?.profile || {};
 
   const profileImage =
     profile.profileImage ||
@@ -186,8 +138,9 @@ export function AccountPage() {
               <h2 className="text-2xl font-light text-white mb-1">
                 {isTalent
                   ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim() ||
+                    profile.name ||
                     "Talent"
-                  : profile.companyName || "Company"}
+                  : profile.companyName || profile.name || "Company"}
               </h2>
               <p className="text-gray-400">{isTalent ? "Talent" : "Company"}</p>
             </div>

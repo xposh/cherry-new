@@ -15,11 +15,13 @@ import { FeaturedOpportunityCard, type FeaturedOpportunityItem } from "../../com
 import { OpportunityCreator } from "../../components/OpportunityCreator/OpportunityCreator";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
 import { useAuth } from "../../context/useAuth";
+import { getSetupDraft } from "../../util/draftStorage";
+import { mapCompanyProfileForSummary } from "../../util/profileMapping";
 
 export function CompanyProfileSummary() {
   const navigate = useNavigate();
   const { companyProfile, updateCompanyProfile } = useCompanyProfile();
-  const { authFetch } = useAuth();
+  const { authFetch, user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [featuredOpportunity, setFeaturedOpportunity] = useState<FeaturedOpportunityItem | null>(null);
   const [featuredLoading, setFeaturedLoading] = useState(true);
@@ -27,6 +29,10 @@ export function CompanyProfileSummary() {
   const [isEditingFeatured, setIsEditingFeatured] = useState(false);
   const [isDeletingFeatured, setIsDeletingFeatured] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const hydratedUserRef = useRef<string | null>(null);
+
+  const toSafeText = (value: unknown) =>
+    typeof value === "string" ? value : "";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,19 +53,14 @@ export function CompanyProfileSummary() {
   }, [companyProfile.companyImages?.length]);
 
   useEffect(() => {
+    if (!user?.id) return;
+    if (hydratedUserRef.current === user.id) return;
+    hydratedUserRef.current = user.id;
+
     const loadCompanyProfile = async () => {
-      if (companyProfile.companyName || companyProfile.companyLogo) {
-        return;
-      }
-      const savedStep1 = JSON.parse(
-        localStorage.getItem("companySetup1") ?? "null",
-      );
-      const savedStep2 = JSON.parse(
-        localStorage.getItem("companySetup2") ?? "null",
-      );
-      const savedStep3 = JSON.parse(
-        localStorage.getItem("companySetup3") ?? "null",
-      );
+      const savedStep1 = getSetupDraft("companySetup1", user?.id);
+      const savedStep2 = getSetupDraft("companySetup2", user?.id);
+      const savedStep3 = getSetupDraft("companySetup3", user?.id);
 
       if (savedStep1 || savedStep2 || savedStep3) {
         updateCompanyProfile({
@@ -80,13 +81,13 @@ export function CompanyProfileSummary() {
           jobDescription: savedStep3?.jobInfo?.jobDescription,
           salary: savedStep3?.jobInfo?.salary,
           startDate: savedStep3?.jobInfo?.startDate,
-          contactPersonPhoto: savedStep3?.contactPersonPhoto?.preview,
-          contactPerson: savedStep3?.contactInfo?.contactPerson,
-          contactRole: savedStep3?.contactInfo?.contactRole,
-          contactMessage: savedStep3?.contactInfo?.contactMessage,
-          contactEmail: savedStep3?.contactInfo?.contactEmail,
-          contactPhone: savedStep3?.contactInfo?.contactPhone,
-          contactWebsite: savedStep3?.contactInfo?.contactWebsite,
+          contactPersonPhoto: toSafeText(savedStep3?.contactPersonPhoto?.preview),
+          contactPerson: toSafeText(savedStep3?.contactInfo?.contactPerson),
+          contactRole: toSafeText(savedStep3?.contactInfo?.contactRole),
+          contactMessage: toSafeText(savedStep3?.contactInfo?.contactMessage),
+          contactEmail: toSafeText(savedStep3?.contactInfo?.contactEmail),
+          contactPhone: toSafeText(savedStep3?.contactInfo?.contactPhone),
+          contactWebsite: toSafeText(savedStep3?.contactInfo?.contactWebsite),
           requirements: savedStep3?.requirements || [],
           socialLinks: savedStep3?.socialLinks || [],
         });
@@ -96,18 +97,17 @@ export function CompanyProfileSummary() {
         if (!response.ok) return;
         const data = await response.json();
         if (data?.profile) {
-          updateCompanyProfile(data.profile);
+          updateCompanyProfile(mapCompanyProfileForSummary(data.profile));
         }
       } catch (err) {
         console.error("Failed to load company profile for summary:", err);
       }
     };
 
-    loadCompanyProfile();
+    void loadCompanyProfile();
   }, [
     authFetch,
-    companyProfile.companyLogo,
-    companyProfile.companyName,
+    user?.id,
     updateCompanyProfile,
   ]);
 
@@ -212,6 +212,22 @@ export function CompanyProfileSummary() {
     companyProfile.industry === "Other"
       ? companyProfile.customIndustry || "Industry"
       : companyProfile.industry || "Industry";
+
+  const contactPersonText = toSafeText(companyProfile.contactPerson);
+  const contactRoleText = toSafeText(companyProfile.contactRole);
+  const contactMessageText = toSafeText(companyProfile.contactMessage);
+  const contactEmailText = toSafeText(companyProfile.contactEmail);
+  const contactPhoneText = toSafeText(companyProfile.contactPhone);
+  const contactWebsiteText = toSafeText(companyProfile.contactWebsite);
+  const contactPhotoText = toSafeText(companyProfile.contactPersonPhoto);
+
+  const formattedStartDate = (() => {
+    if (!companyProfile.startDate) return "";
+    const parsed = new Date(companyProfile.startDate);
+    return Number.isNaN(parsed.getTime())
+      ? companyProfile.startDate
+      : parsed.toLocaleDateString();
+  })();
 
   return (
     <div className="relative min-h-screen w-full bg-black overflow-hidden">
@@ -504,12 +520,7 @@ export function CompanyProfileSummary() {
                     {companyProfile.startDate && (
                       <div className="flex items-center gap-2 text-gray-400">
                         <Calendar className="w-4 h-4" />
-                        <span className="text-sm">
-                          Start:{" "}
-                          {new Date(
-                            companyProfile.startDate,
-                          ).toLocaleDateString()}
-                        </span>
+                        <span className="text-sm">Start: {formattedStartDate}</span>
                       </div>
                     )}
                   </div>
@@ -554,33 +565,33 @@ export function CompanyProfileSummary() {
             )}
 
             {/* Contact Person */}
-            {(companyProfile.contactPerson || companyProfile.contactEmail) && (
+            {(contactPersonText || contactEmailText) && (
               <section>
                 <h2 className="text-2xl font-light text-white mb-4 uppercase tracking-[0.2em]">
                   Ansprechpartnerin
                 </h2>
                 <div className="border border-white/30 rounded-xl overflow-hidden">
-                  {companyProfile.contactPersonPhoto && (
+                  {contactPhotoText && (
                     <img
-                      src={companyProfile.contactPersonPhoto}
-                      alt={companyProfile.contactPerson}
+                      src={contactPhotoText}
+                      alt={contactPersonText}
                       className="w-full h-64 object-cover"
                     />
                   )}
                   <div className="p-6">
-                    {companyProfile.contactPerson && (
+                    {contactPersonText && (
                       <h3 className="text-xl text-white font-light mb-1">
-                        {companyProfile.contactPerson}
+                        {contactPersonText}
                       </h3>
                     )}
-                    {companyProfile.contactRole && (
+                    {contactRoleText && (
                       <p className="text-gray-400 text-sm mb-4">
-                        {companyProfile.contactRole}
+                        {contactRoleText}
                       </p>
                     )}
-                    {companyProfile.contactMessage && (
+                    {contactMessageText && (
                       <p className="text-gray-300 italic mb-6 border-l-2 border-white/30 pl-4">
-                        "{companyProfile.contactMessage}"
+                        "{contactMessageText}"
                       </p>
                     )}
 
@@ -588,38 +599,38 @@ export function CompanyProfileSummary() {
                       <h4 className="text-white font-light text-sm uppercase tracking-wider mb-4">
                         Kontakt
                       </h4>
-                      {companyProfile.contactEmail && (
+                      {contactEmailText && (
                         <div className="flex items-center gap-3">
                           <Mail className="w-5 h-5 text-white/60" />
                           <a
-                            href={`mailto:${companyProfile.contactEmail}`}
+                            href={`mailto:${contactEmailText}`}
                             className="text-white hover:text-gray-300 transition-colors"
                           >
-                            {companyProfile.contactEmail}
+                            {contactEmailText}
                           </a>
                         </div>
                       )}
-                      {companyProfile.contactPhone && (
+                      {contactPhoneText && (
                         <div className="flex items-center gap-3">
                           <Phone className="w-5 h-5 text-white/60" />
                           <a
-                            href={`tel:${companyProfile.contactPhone}`}
+                            href={`tel:${contactPhoneText}`}
                             className="text-white hover:text-gray-300 transition-colors"
                           >
-                            {companyProfile.contactPhone}
+                            {contactPhoneText}
                           </a>
                         </div>
                       )}
-                      {companyProfile.contactWebsite && (
+                      {contactWebsiteText && (
                         <div className="flex items-center gap-3">
                           <Globe className="w-5 h-5 text-white/60" />
                           <a
-                            href={companyProfile.contactWebsite}
+                            href={contactWebsiteText}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-white hover:text-gray-300 transition-colors break-all"
                           >
-                            {companyProfile.contactWebsite}
+                            {contactWebsiteText}
                           </a>
                         </div>
                       )}

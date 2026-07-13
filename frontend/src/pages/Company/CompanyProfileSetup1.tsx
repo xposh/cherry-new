@@ -1,9 +1,12 @@
 import { Upload, X, Building2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
 import { supabase } from "../../util/supabase";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
+import { useAuth } from "../../context/useAuth";
+import { getSetupDraft, setSetupDraft } from "../../util/draftStorage";
+import { mapCompanyProfileToSetup1 } from "../../util/profileMapping";
 
 interface UploadedImage {
   id: string;
@@ -15,12 +18,12 @@ interface UploadedImage {
 export function CompanyProfileSetup1() {
   const navigate = useNavigate();
   const { updateCompanyProfile } = useCompanyProfile();
+  const { user, authFetch } = useAuth();
 
   // LocalStorage laden beim Start
   const getSavedData = () => {
     try {
-      const saved = localStorage.getItem("companySetup1");
-      return saved ? JSON.parse(saved) : null;
+      return getSetupDraft("companySetup1", user?.id);
     } catch (e) {
       console.error("Fehler beim Parsen von companySetup1:", e);
       return null;
@@ -38,6 +41,32 @@ export function CompanyProfileSetup1() {
   const [selectedCategory, setSelectedCategory] =
     useState<string>("Räume & Locations");
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    async function hydrateFromBackend() {
+      if (!user?.id) return;
+      if (getSetupDraft("companySetup1", user.id)) return;
+
+      try {
+        const res = await authFetch("http://localhost:3000/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data?.profile) return;
+
+        const mapped = mapCompanyProfileToSetup1(data.profile);
+        setCompanyLogoUrl(mapped.companyLogoUrl || "");
+        setUploadedImages(mapped.uploadedImages as UploadedImage[]);
+        updateCompanyProfile({
+          companyLogo: mapped.companyLogoUrl || "",
+          companyImages: mapped.uploadedImages as UploadedImage[],
+        });
+      } catch (err) {
+        console.error("Failed to hydrate company setup step 1 from backend:", err);
+      }
+    }
+
+    hydrateFromBackend();
+  }, [authFetch, updateCompanyProfile, user?.id]);
 
   const categories = [
     "Räume & Locations",
@@ -151,7 +180,7 @@ export function CompanyProfileSetup1() {
       companyLogoUrl,
       uploadedImages,
     };
-    localStorage.setItem("companySetup1", JSON.stringify(setup1Data));
+    setSetupDraft("companySetup1", user?.id, setup1Data);
     updateCompanyProfile({
       companyLogo: companyLogoUrl,
       companyImages: uploadedImages,

@@ -1,10 +1,12 @@
 import { Plus, X, Upload } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
 import { OpportunityCreator } from "../../components/OpportunityCreator/OpportunityCreator";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
 import { useAuth } from "../../context/useAuth"; //  NEU HINZUGEFÜGT
+import { getSetupDraft, setSetupDraft } from "../../util/draftStorage";
+import { mapCompanyProfileToSetup3 } from "../../util/profileMapping";
 
 interface SocialLink {
   id: string;
@@ -15,12 +17,11 @@ interface SocialLink {
 export function CompanyProfileSetup3() {
   const navigate = useNavigate();
   const { updateCompanyProfile, companyProfile } = useCompanyProfile();
-  const { authFetch, finishProfile } = useAuth(); // NEU HINZUGEFÜGT
+  const { authFetch, finishProfile, user } = useAuth(); // NEU HINZUGEFÜGT
 
   const getSavedData = () => {
     try {
-      const saved = localStorage.getItem("companySetup3");
-      return saved ? JSON.parse(saved) : null;
+      return getSetupDraft("companySetup3", user?.id);
     } catch (e) {
       console.error("Fehler beim Parsen von companySetup3:", e);
       return null;
@@ -28,13 +29,15 @@ export function CompanyProfileSetup3() {
   };
 
   const savedData = getSavedData();
+  const toSafeText = (value: unknown) =>
+    typeof value === "string" ? value : "";
 
   const [jobInfo, setJobInfo] = useState({
-    jobTitle: savedData?.jobInfo?.jobTitle || "",
-    jobLocation: savedData?.jobInfo?.jobLocation || "",
-    jobDescription: savedData?.jobInfo?.jobDescription || "",
-    salary: savedData?.jobInfo?.salary || "",
-    startDate: savedData?.jobInfo?.startDate || "",
+    jobTitle: toSafeText(savedData?.jobInfo?.jobTitle),
+    jobLocation: toSafeText(savedData?.jobInfo?.jobLocation),
+    jobDescription: toSafeText(savedData?.jobInfo?.jobDescription),
+    salary: toSafeText(savedData?.jobInfo?.salary),
+    startDate: toSafeText(savedData?.jobInfo?.startDate),
   });
 
   const [workModel, setWorkModel] = useState<string[]>(
@@ -49,16 +52,16 @@ export function CompanyProfileSetup3() {
 
   const [contactPersonPhoto, setContactPersonPhoto] = useState({
     file: null as File | null,
-    preview: savedData?.contactPersonPhoto?.preview || "",
+    preview: toSafeText(savedData?.contactPersonPhoto?.preview),
   });
 
   const [contactInfo, setContactInfo] = useState({
-    contactPerson: savedData?.contactInfo?.contactPerson || "",
-    contactRole: savedData?.contactInfo?.contactRole || "",
-    contactMessage: savedData?.contactInfo?.contactMessage || "",
-    contactEmail: savedData?.contactInfo?.contactEmail || "",
-    contactPhone: savedData?.contactInfo?.contactPhone || "",
-    contactWebsite: savedData?.contactInfo?.contactWebsite || "",
+    contactPerson: toSafeText(savedData?.contactInfo?.contactPerson),
+    contactRole: toSafeText(savedData?.contactInfo?.contactRole),
+    contactMessage: toSafeText(savedData?.contactInfo?.contactMessage),
+    contactEmail: toSafeText(savedData?.contactInfo?.contactEmail),
+    contactPhone: toSafeText(savedData?.contactInfo?.contactPhone),
+    contactWebsite: toSafeText(savedData?.contactInfo?.contactWebsite),
   });
 
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>(
@@ -70,6 +73,34 @@ export function CompanyProfileSetup3() {
   const [newSocialUrl, setNewSocialUrl] = useState(
     savedData?.newSocialUrl || "",
   );
+
+  useEffect(() => {
+    async function hydrateFromBackend() {
+      if (!user?.id) return;
+      if (getSetupDraft("companySetup3", user.id)) return;
+
+      try {
+        const res = await authFetch("http://localhost:3000/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data?.profile) return;
+
+        const mapped = mapCompanyProfileToSetup3(data.profile);
+        setJobInfo(mapped.jobInfo as typeof jobInfo);
+        setWorkModel(mapped.workModel as string[]);
+        setRequirements(mapped.requirements as string[]);
+        setContactPersonPhoto(mapped.contactPersonPhoto as typeof contactPersonPhoto);
+        setContactInfo(mapped.contactInfo as typeof contactInfo);
+        setSocialLinks(mapped.socialLinks as SocialLink[]);
+        setNewSocialPlatform(mapped.newSocialPlatform || "Instagram");
+        setNewSocialUrl(mapped.newSocialUrl || "");
+      } catch (err) {
+        console.error("Failed to hydrate company setup step 3 from backend:", err);
+      }
+    }
+
+    hydrateFromBackend();
+  }, [authFetch, user?.id]);
 
   const socialPlatforms = [
     "Instagram",
@@ -194,25 +225,30 @@ export function CompanyProfileSetup3() {
   };
 
   const handleFinish = async () => {
+    const sanitizedContactInfo = {
+      contactPerson: toSafeText(contactInfo.contactPerson),
+      contactRole: toSafeText(contactInfo.contactRole),
+      contactMessage: toSafeText(contactInfo.contactMessage),
+      contactEmail: toSafeText(contactInfo.contactEmail),
+      contactPhone: toSafeText(contactInfo.contactPhone),
+      contactWebsite: toSafeText(contactInfo.contactWebsite),
+    };
+
     const localPage3Data = {
       jobInfo,
       workModel,
       requirements,
       newRequirement,
       contactPersonPhoto: { preview: contactPersonPhoto.preview },
-      contactInfo,
+      contactInfo: sanitizedContactInfo,
       socialLinks,
       newSocialPlatform,
       newSocialUrl,
     };
-    localStorage.setItem("companySetup3", JSON.stringify(localPage3Data));
+    setSetupDraft("companySetup3", user?.id, localPage3Data);
     // 2. ✅ BACKEND-INTEGRATION: Sende alle Daten zum Backend
-    const savedStep1 = JSON.parse(
-      localStorage.getItem("companySetup1") ?? "null",
-    );
-    const savedStep2 = JSON.parse(
-      localStorage.getItem("companySetup2") ?? "null",
-    );
+    const savedStep1 = getSetupDraft("companySetup1", user?.id);
+    const savedStep2 = getSetupDraft("companySetup2", user?.id);
     const contextProfile = companyProfile || {};
     const fullPayload = {
       companyLogo:
@@ -234,7 +270,7 @@ export function CompanyProfileSetup3() {
       salary: jobInfo.salary,
       startDate: jobInfo.startDate,
       contactPersonPhoto: contactPersonPhoto.preview,
-      ...contactInfo,
+      ...sanitizedContactInfo,
       socialLinks: socialLinks.map(({ platform, url }) => ({ platform, url })),
     };
     const profileData = fullPayload;

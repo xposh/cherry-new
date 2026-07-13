@@ -12,6 +12,12 @@ import { Logo } from "../../components/Logo";
 import { FeaturedOpportunityCard, type FeaturedOpportunityItem } from "../../components/FeaturedOpportunityCard";
 import { OpportunityCreator } from "../../components/OpportunityCreator/OpportunityCreator";
 import { useAuth } from "../../context/useAuth";
+import { getSetupDraft } from "../../util/draftStorage";
+import {
+  mapTalentProfileToSetup1,
+  mapTalentProfileToSetup2,
+  mapTalentProfileToSetup3,
+} from "../../util/profileMapping";
 
 // 1. TYP-DEFINITIONEN (DOMÄNEN-INTERFACES)
 interface PortfolioItem {
@@ -82,7 +88,7 @@ interface CvFileStructure {
 
 export function TalentProfileSummary() {
   const navigate = useNavigate();
-  const { authFetch } = useAuth();
+  const { authFetch, user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [featuredOpportunity, setFeaturedOpportunity] = useState<FeaturedOpportunityItem | null>(null);
   const [featuredLoading, setFeaturedLoading] = useState(true);
@@ -95,7 +101,7 @@ export function TalentProfileSummary() {
   const [profileImage, setProfileImage] = useState<string>(() => {
     try {
       if (typeof window === "undefined") return "";
-      const setup1 = JSON.parse(localStorage.getItem("talentSetup1") ?? "null");
+      const setup1 = getSetupDraft("talentSetup1", user?.id);
       return setup1?.profileImage ?? "";
     } catch {
       return "";
@@ -105,7 +111,7 @@ export function TalentProfileSummary() {
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(() => {
     try {
       if (typeof window === "undefined") return [];
-      const setup1 = JSON.parse(localStorage.getItem("talentSetup1") ?? "null");
+      const setup1 = getSetupDraft("talentSetup1", user?.id);
       return setup1?.images ?? [];
     } catch {
       return [];
@@ -115,7 +121,7 @@ export function TalentProfileSummary() {
   const [formData, setFormData] = useState<FormDataStructure | null>(() => {
     try {
       if (typeof window === "undefined") return null;
-      const setup2 = JSON.parse(localStorage.getItem("talentSetup2") ?? "null");
+      const setup2 = getSetupDraft("talentSetup2", user?.id);
       return setup2?.formData ?? null;
     } catch {
       return null;
@@ -125,7 +131,7 @@ export function TalentProfileSummary() {
   const [education, setEducation] = useState<EducationStructure | null>(() => {
     try {
       if (typeof window === "undefined") return null;
-      const setup2 = JSON.parse(localStorage.getItem("talentSetup2") ?? "null");
+      const setup2 = getSetupDraft("talentSetup2", user?.id);
       return setup2?.education ?? null;
     } catch {
       return null;
@@ -135,7 +141,7 @@ export function TalentProfileSummary() {
   const [skills, setSkills] = useState<string[]>(() => {
     try {
       if (typeof window === "undefined") return [];
-      const setup2 = JSON.parse(localStorage.getItem("talentSetup2") ?? "null");
+      const setup2 = getSetupDraft("talentSetup2", user?.id);
       return setup2?.skills ?? [];
     } catch {
       return [];
@@ -145,7 +151,7 @@ export function TalentProfileSummary() {
   const [experiences, setExperiences] = useState<Experience[]>(() => {
     try {
       if (typeof window === "undefined") return [];
-      const setup2 = JSON.parse(localStorage.getItem("talentSetup2") ?? "null");
+      const setup2 = getSetupDraft("talentSetup2", user?.id);
       return setup2?.experiences ?? [];
     } catch {
       return [];
@@ -155,7 +161,7 @@ export function TalentProfileSummary() {
   const [otherExperiences, setOtherExperiences] = useState<Experience[]>(() => {
     try {
       if (typeof window === "undefined") return [];
-      const setup2 = JSON.parse(localStorage.getItem("talentSetup2") ?? "null");
+      const setup2 = getSetupDraft("talentSetup2", user?.id);
       return setup2?.otherExperiences ?? [];
     } catch {
       return [];
@@ -165,7 +171,7 @@ export function TalentProfileSummary() {
   const [languages, setLanguages] = useState<Language[]>(() => {
     try {
       if (typeof window === "undefined") return [];
-      const setup2 = JSON.parse(localStorage.getItem("talentSetup2") ?? "null");
+      const setup2 = getSetupDraft("talentSetup2", user?.id);
       return setup2?.languages ?? [];
     } catch {
       return [];
@@ -175,7 +181,7 @@ export function TalentProfileSummary() {
   const [recognitions, setRecognitions] = useState<Recognition[]>(() => {
     try {
       if (typeof window === "undefined") return [];
-      const setup2 = JSON.parse(localStorage.getItem("talentSetup2") ?? "null");
+      const setup2 = getSetupDraft("talentSetup2", user?.id);
       return setup2?.recognitions ?? [];
     } catch {
       return [];
@@ -186,9 +192,7 @@ export function TalentProfileSummary() {
     useState<JobPreferencesStructure | null>(() => {
       try {
         if (typeof window === "undefined") return null;
-        const setup2 = JSON.parse(
-          localStorage.getItem("talentSetup2") ?? "null",
-        );
+        const setup2 = getSetupDraft("talentSetup2", user?.id);
         return setup2?.jobPreferences ?? null;
       } catch {
         return null;
@@ -198,7 +202,7 @@ export function TalentProfileSummary() {
   const [cvFile, setCvFile] = useState<CvFileStructure | null>(() => {
     try {
       if (typeof window === "undefined") return null;
-      const setup3 = JSON.parse(localStorage.getItem("talentSetup3") ?? "null");
+      const setup3 = getSetupDraft("talentSetup3", user?.id);
       return setup3?.cvFile ?? null;
     } catch {
       return null;
@@ -209,7 +213,7 @@ export function TalentProfileSummary() {
   const [availability, setAvailability] = useState<string>(() => {
     try {
       if (typeof window === "undefined") return "";
-      const setup3 = JSON.parse(localStorage.getItem("talentSetup3") ?? "null");
+      const setup3 = getSetupDraft("talentSetup3", user?.id);
       return setup3?.availability ?? "";
     } catch {
       return "";
@@ -219,7 +223,7 @@ export function TalentProfileSummary() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>(() => {
     try {
       if (typeof window === "undefined") return [];
-      const setup3 = JSON.parse(localStorage.getItem("talentSetup3") ?? "null");
+      const setup3 = getSetupDraft("talentSetup3", user?.id);
       return setup3?.socialLinks ?? [];
     } catch {
       return [];
@@ -228,16 +232,20 @@ export function TalentProfileSummary() {
 
   // 3. STORAGE-LISTENER EFFECT
   useEffect(() => {
+    const setup1Key = user?.id ? `talentSetup1:${user.id}` : "";
+    const setup2Key = user?.id ? `talentSetup2:${user.id}` : "";
+    const setup3Key = user?.id ? `talentSetup3:${user.id}` : "";
+
     const onStorage = (e: StorageEvent) => {
       try {
         if (!e.newValue) return;
         const parsedData = JSON.parse(e.newValue);
 
-        if (e.key === "talentSetup1") {
+        if (e.key === setup1Key) {
           setProfileImage(parsedData.profileImage || "");
           setPortfolioItems(parsedData.images || []);
         }
-        if (e.key === "talentSetup2") {
+        if (e.key === setup2Key) {
           setFormData(parsedData.formData || null);
           setEducation(parsedData.education || null);
           setSkills(parsedData.skills || []);
@@ -247,7 +255,7 @@ export function TalentProfileSummary() {
           setRecognitions(parsedData.recognitions || []);
           setJobPreferences(parsedData.jobPreferences || null);
         }
-        if (e.key === "talentSetup3") {
+        if (e.key === setup3Key) {
           setCvFile(parsedData.cvFile || null);
           setAvailability(parsedData.availability || ""); // Synchronisiert Availability bei Änderungen
           setSocialLinks(parsedData.socialLinks || []);
@@ -259,7 +267,50 @@ export function TalentProfileSummary() {
 
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  }, [user?.id]);
+
+  useEffect(() => {
+    async function loadBackendProfileForSummary() {
+      if (!user?.id) return;
+
+      const setup1Draft = getSetupDraft("talentSetup1", user.id);
+      const setup2Draft = getSetupDraft("talentSetup2", user.id);
+      const setup3Draft = getSetupDraft("talentSetup3", user.id);
+      if (setup1Draft || setup2Draft || setup3Draft) return;
+
+      try {
+        const res = await authFetch("http://localhost:3000/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        const profile = data?.profile;
+        if (!profile) return;
+
+        const mapped1 = mapTalentProfileToSetup1(profile);
+        const mapped2 = mapTalentProfileToSetup2(profile);
+        const mapped3 = mapTalentProfileToSetup3(profile);
+
+        setProfileImage(mapped1.profileImage);
+        setPortfolioItems(mapped1.images as PortfolioItem[]);
+
+        setFormData(mapped2.formData as FormDataStructure);
+        setEducation(mapped2.education as EducationStructure);
+        setSkills(mapped2.skills as string[]);
+        setExperiences(mapped2.experiences as unknown as Experience[]);
+        setOtherExperiences(mapped2.otherExperiences as unknown as Experience[]);
+        setLanguages(mapped2.languages as unknown as Language[]);
+        setRecognitions(mapped2.recognitions as unknown as Recognition[]);
+        setJobPreferences(mapped2.jobPreferences as JobPreferencesStructure);
+
+        setCvFile(mapped3.cvFile as CvFileStructure | null);
+        setAvailability(mapped3.availability as string);
+        setSocialLinks(mapped3.socialLinks as SocialLink[]);
+      } catch (err) {
+        console.error("Failed to load backend talent profile for summary:", err);
+      }
+    }
+
+    loadBackendProfileForSummary();
+  }, [authFetch, user?.id]);
 
   async function loadFeaturedOpportunity() {
     try {

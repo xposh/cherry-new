@@ -1,17 +1,20 @@
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
+import { useAuth } from "../../context/useAuth";
+import { getSetupDraft, setSetupDraft } from "../../util/draftStorage";
+import { mapCompanyProfileToSetup2 } from "../../util/profileMapping";
 
 export function CompanyProfileSetup2() {
   const navigate = useNavigate();
   const { updateCompanyProfile } = useCompanyProfile();
+  const { user, authFetch } = useAuth();
 
   const getSavedData = () => {
     try {
-      const saved = localStorage.getItem("companySetup2");
-      return saved ? JSON.parse(saved) : null;
+      return getSetupDraft("companySetup2", user?.id);
     } catch (e) {
       console.error("Fehler beim Parsen von companySetup2:", e);
       return null;
@@ -116,6 +119,29 @@ export function CompanyProfileSetup2() {
     ],
   };
 
+  useEffect(() => {
+    async function hydrateFromBackend() {
+      if (!user?.id) return;
+      if (getSetupDraft("companySetup2", user.id)) return;
+
+      try {
+        const res = await authFetch("http://localhost:3000/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data?.profile) return;
+
+        const mapped = mapCompanyProfileToSetup2(data.profile);
+        setCompanyInfo(mapped.companyInfo as typeof companyInfo);
+        setSelectedValues(mapped.selectedValues as string[]);
+        setBenefits(mapped.benefits as typeof benefits);
+      } catch (err) {
+        console.error("Failed to hydrate company setup step 2 from backend:", err);
+      }
+    }
+
+    hydrateFromBackend();
+  }, [authFetch, user?.id]);
+
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -168,7 +194,7 @@ export function CompanyProfileSetup2() {
       benefits,
       customValue,
     };
-    localStorage.setItem("companySetup2", JSON.stringify(setup2Data));
+    setSetupDraft("companySetup2", user?.id, setup2Data);
 
     updateCompanyProfile({
       ...companyInfo,

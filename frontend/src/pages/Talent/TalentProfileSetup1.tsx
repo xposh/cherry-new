@@ -1,9 +1,11 @@
 import { Upload, X, User } from "lucide-react";
-// REPARATUR: 'useEffect' wurde restlos aus dem Import entfernt, um den Compiler-Fehler zu beheben.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
 import { supabase } from "../../util/supabase";
+import { useAuth } from "../../context/useAuth";
+import { getSetupDraft, setSetupDraft } from "../../util/draftStorage";
+import { mapTalentProfileToSetup1 } from "../../util/profileMapping";
 
 interface UploadedImage {
   id: string;
@@ -20,13 +22,14 @@ interface ProfileImage {
 
 export function TalentProfileSetup1() {
   const navigate = useNavigate();
+  const { user, authFetch } = useAuth();
 
   // Zustands-Initialisierung aus dem localStorage (Re-Hydration)
   const [profileImage, setProfileImage] = useState<ProfileImage>(() => {
     try {
-      const saved = localStorage.getItem("talentSetup1");
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const saved = getSetupDraft("talentSetup1", user?.id);
+      if (saved && typeof saved === "object") {
+        const parsed = saved as { profileImage?: string };
         if (parsed.profileImage) {
           return { file: null, preview: parsed.profileImage };
         }
@@ -39,9 +42,9 @@ export function TalentProfileSetup1() {
 
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>(() => {
     try {
-      const saved = localStorage.getItem("talentSetup1");
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const saved = getSetupDraft("talentSetup1", user?.id);
+      if (saved && typeof saved === "object") {
+        const parsed = saved as { images?: UploadedImage[] };
         if (parsed.images) {
           return parsed.images;
         }
@@ -56,6 +59,28 @@ export function TalentProfileSetup1() {
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const [tempCaption, setTempCaption] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    async function hydrateFromBackend() {
+      if (!user?.id) return;
+      if (getSetupDraft("talentSetup1", user.id)) return;
+
+      try {
+        const res = await authFetch("http://localhost:3000/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data?.profile) return;
+
+        const mapped = mapTalentProfileToSetup1(data.profile);
+        setProfileImage({ file: null, preview: mapped.profileImage || "" });
+        setUploadedImages(mapped.images as UploadedImage[]);
+      } catch (err) {
+        console.error("Failed to hydrate talent setup step 1 from backend:", err);
+      }
+    }
+
+    hydrateFromBackend();
+  }, [authFetch, user?.id]);
 
   const categories = [
     "Portfolio",
@@ -172,13 +197,10 @@ export function TalentProfileSetup1() {
         });
       }
 
-      localStorage.setItem(
-        "talentSetup1",
-        JSON.stringify({
-          profileImage: finalProfileImageUrl,
-          images: uploadedImagesUrls,
-        }),
-      );
+      setSetupDraft("talentSetup1", user?.id, {
+        profileImage: finalProfileImageUrl,
+        images: uploadedImagesUrls,
+      });
 
       navigate("/talent-profile-setup-2");
     } catch (err) {

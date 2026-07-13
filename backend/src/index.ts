@@ -22,6 +22,67 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+type JsonRecord = Record<string, unknown>;
+
+function isPlainObject(value: unknown): value is JsonRecord {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function mergeProfileData(current: JsonRecord, incoming: JsonRecord): JsonRecord {
+  const merged: JsonRecord = { ...current };
+
+  for (const [key, incomingValue] of Object.entries(incoming)) {
+    const currentValue = merged[key];
+
+    if (incomingValue === undefined || incomingValue === null) {
+      continue;
+    }
+
+    if (typeof incomingValue === "string") {
+      if (incomingValue.trim() === "" && typeof currentValue === "string" && currentValue.trim() !== "") {
+        continue;
+      }
+      merged[key] = incomingValue;
+      continue;
+    }
+
+    if (Array.isArray(incomingValue)) {
+      if (
+        incomingValue.length === 0 &&
+        Array.isArray(currentValue) &&
+        currentValue.length > 0
+      ) {
+        continue;
+      }
+      merged[key] = incomingValue;
+      continue;
+    }
+
+    if (isPlainObject(incomingValue)) {
+      if (typeof currentValue === "string" && currentValue.trim() !== "") {
+        continue;
+      }
+
+      if (
+        Object.keys(incomingValue).length === 0 &&
+        isPlainObject(currentValue) &&
+        Object.keys(currentValue).length > 0
+      ) {
+        continue;
+      }
+
+      merged[key] = isPlainObject(currentValue)
+        ? mergeProfileData(currentValue, incomingValue)
+        : incomingValue;
+      continue;
+    }
+
+    merged[key] = incomingValue;
+  }
+
+  return merged;
+}
+
 app.get("/", (req, res) => {
   return res.json({ message: "Hallo Welt" });
 });
@@ -153,7 +214,10 @@ app.post("/profile", requireAuth, async (req, res) => {
     const userRole = req.auth!.role!;
 
     // Alle Formular-Daten kommen aus dem Body (OHNE user_id!)
-    const formData = req.body;
+    const formData =
+      req.body && typeof req.body === "object" && !Array.isArray(req.body)
+        ? (req.body as JsonRecord)
+        : {};
 
     console.log(`Speichere Profil für User ${userId} mit Role ${userRole}`);
 
@@ -168,16 +232,16 @@ app.post("/profile", requireAuth, async (req, res) => {
           !Array.isArray(existing.profile_data)
             ? existing.profile_data
             : {};
-        const merged = { ...current, ...formData };
+        const merged = mergeProfileData(current as JsonRecord, formData);
         await sql`
           UPDATE talent_profiles
-          SET profile_data = ${sql.json(merged)}
+          SET profile_data = ${sql.json(merged as any)}
           WHERE user_id = ${userId}
         `;
       } else {
         await sql`
           INSERT INTO talent_profiles (user_id, profile_data)
-          VALUES (${userId}, ${sql.json(formData)})
+          VALUES (${userId}, ${sql.json(formData as any)})
         `;
       }
 
@@ -204,16 +268,16 @@ app.post("/profile", requireAuth, async (req, res) => {
           !Array.isArray(existing.profile_data)
             ? existing.profile_data
             : {};
-        const merged = { ...current, ...formData };
+        const merged = mergeProfileData(current as JsonRecord, formData);
         await sql`
           UPDATE company_profiles
-          SET profile_data = ${sql.json(merged)}
+          SET profile_data = ${sql.json(merged as any)}
           WHERE user_id = ${userId}
         `;
       } else {
         await sql`
           INSERT INTO company_profiles (user_id, profile_data)
-          VALUES (${userId}, ${sql.json(formData)})
+          VALUES (${userId}, ${sql.json(formData as any)})
         `;
       }
 

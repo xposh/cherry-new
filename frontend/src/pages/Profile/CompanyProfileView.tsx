@@ -2,7 +2,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { MapPin, X, Check } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
-import { FeaturedOpportunityCard, type FeaturedOpportunityItem } from "../../components/FeaturedOpportunityCard";
+import {
+  FeaturedOpportunityCard,
+  type FeaturedOpportunityItem,
+} from "../../components/FeaturedOpportunityCard";
 import { useAuth } from "../../context/useAuth";
 import { Logo } from "../../components/Logo";
 import {
@@ -19,7 +22,8 @@ export function CompanyProfileView() {
   const [company, setCompany] = useState<FullProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [featuredOpportunity, setFeaturedOpportunity] = useState<FeaturedOpportunityItem | null>(null);
+  const [featuredOpportunity, setFeaturedOpportunity] =
+    useState<FeaturedOpportunityItem | null>(null);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [featuredError, setFeaturedError] = useState<string | null>(null);
 
@@ -61,7 +65,9 @@ export function CompanyProfileView() {
         setFeaturedLoading(true);
         setFeaturedError(null);
 
-        const res = await fetch(`/api/featured-opportunities/public/profile/${id}`);
+        const res = await fetch(
+          `/api/featured-opportunities/public/profile/${id}`,
+        );
         if (!res.ok) {
           throw new Error("Unable to load featured opportunity");
         }
@@ -71,11 +77,16 @@ export function CompanyProfileView() {
         setFeaturedOpportunity(data.opportunity ?? null);
       } catch (err: unknown) {
         if (!isMounted) return;
-        setFeaturedError(err instanceof Error ? err.message : "Unable to load featured opportunity");
+        setFeaturedError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load featured opportunity",
+        );
         setFeaturedOpportunity(null);
       } finally {
-        if (!isMounted) return;
-        setFeaturedLoading(false);
+        if (isMounted) {
+          setFeaturedLoading(false);
+        }
       }
     }
 
@@ -167,7 +178,7 @@ export function CompanyProfileView() {
               alt={img.caption}
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
             {img.caption && (
               <div className="relative z-10 p-8 pb-32">
                 <p className="text-white text-lg font-light leading-relaxed max-w-2xl">
@@ -187,7 +198,7 @@ export function CompanyProfileView() {
               className="absolute inset-0 w-full h-full object-cover"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent" />
 
           {company.companyLogo && gallery.length > 0 && (
             <div className="absolute top-8 right-8 z-10">
@@ -278,7 +289,10 @@ export function CompanyProfileView() {
                     playsInline
                     className="h-72 w-full object-cover grayscale"
                   >
-                    <source src="/videos/HairdresserBlackWhite1.mp4" type="video/mp4" />
+                    <source
+                      src="/videos/HairdresserBlackWhite1.mp4"
+                      type="video/mp4"
+                    />
                   </video>
                   <div className="absolute inset-0 bg-black/50" />
                   <div className="absolute inset-0 flex items-center justify-center p-8 text-center text-white/80">

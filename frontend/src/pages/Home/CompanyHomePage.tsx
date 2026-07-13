@@ -4,6 +4,7 @@ import { Logo } from "../../components/Logo";
 import { FeaturedOpportunityCard } from "../../components/FeaturedOpportunityCard";
 import { useAuth } from "../../context/useAuth";
 import { useNavigate } from "react-router";
+import { getSetupDraft } from "../../util/draftStorage";
 import { MatchReadinessRing } from "./components/MatchReadinessRing";
 import { ScreenTimeBalance } from "./components/ScreenTimeBalance";
 import { ProfileViewsStats } from "./components/ProfileViewsStats";
@@ -65,9 +66,8 @@ interface FeaturedOpportunity {
   time_remaining_seconds: number;
 }
 
-
 export function CompanyHomePage() {
-  const { authFetch } = useAuth();
+  const { authFetch, user } = useAuth();
   const navigate = useNavigate();
 
   // State
@@ -96,9 +96,8 @@ export function CompanyHomePage() {
   const [heatmap, setHeatmap] = useState<
     Array<{ date: string; isActive: boolean }>
   >([]);
-  const [featuredOpportunity, setFeaturedOpportunity] = useState<
-    FeaturedOpportunity | null
-  >(null);
+  const [featuredOpportunity, setFeaturedOpportunity] =
+    useState<FeaturedOpportunity | null>(null);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [featuredError, setFeaturedError] = useState<string | null>(null);
 
@@ -187,12 +186,13 @@ export function CompanyHomePage() {
       } catch (err: unknown) {
         if (!isMounted) return;
         setFeaturedError(
-          err instanceof Error ? err.message : "Unable to load featured opportunity",
+          err instanceof Error
+            ? err.message
+            : "Unable to load featured opportunity",
         );
         setFeaturedOpportunity(null);
       } finally {
-        if (!isMounted) return;
-        setFeaturedLoading(false);
+        if (!isMounted) setFeaturedLoading(false);
       }
     }
 
@@ -200,7 +200,7 @@ export function CompanyHomePage() {
     return () => {
       isMounted = false;
     };
-  }, [authFetch]);
+  }, [authFetch, user?.id]);
 
   // ========================================
   // FETCH DATA FROM BACKEND
@@ -219,15 +219,8 @@ export function CompanyHomePage() {
 
           // If not found, check localStorage for setup2 data
           if (!companyName) {
-            const companySetup2 = localStorage.getItem("companySetup2");
-            if (companySetup2) {
-              try {
-                const setupData = JSON.parse(companySetup2);
-                companyName = setupData.companyInfo?.companyName;
-              } catch (e) {
-                console.error("Error parsing companySetup2:", e);
-              }
-            }
+            const setupData = getSetupDraft("companySetup2", user?.id);
+            companyName = setupData?.companyInfo?.companyName;
           }
 
           // Final fallback to email
@@ -312,7 +305,7 @@ export function CompanyHomePage() {
     }
 
     fetchHomePageData();
-  }, [authFetch]);
+  }, [authFetch, user?.id]);
 
   // ========================================
   // SCREEN TIME TRACKING
@@ -492,9 +485,7 @@ export function CompanyHomePage() {
         ) : featuredError ? (
           <div className="relative h-full bg-black flex items-center justify-center px-8 text-center">
             <div>
-              <p className="text-white/70 text-sm mb-4">
-                {featuredError}
-              </p>
+              <p className="text-white/70 text-sm mb-4">{featuredError}</p>
               <button
                 onClick={() => window.location.reload()}
                 className="px-6 py-3 border border-white/20 text-white uppercase tracking-[0.2em] text-sm hover:border-white/40 transition-all"

@@ -4,6 +4,7 @@ import { Logo } from "../../components/Logo";
 import { FeaturedOpportunityCard } from "../../components/FeaturedOpportunityCard";
 import { useAuth } from "../../context/useAuth";
 import { useNavigate } from "react-router";
+import { getSetupDraft } from "../../util/draftStorage";
 import { MatchReadinessRing } from "./components/MatchReadinessRing";
 import { ScreenTimeBalance } from "./components/ScreenTimeBalance";
 import { ProfileViewsStats } from "./components/ProfileViewsStats";
@@ -62,7 +63,7 @@ interface FeaturedOpportunity {
 
 
 export function TalentHomePage() {
-  const { authFetch } = useAuth();
+  const { authFetch, user } = useAuth();
   const navigate = useNavigate();
 
   // State
@@ -154,15 +155,8 @@ export function TalentHomePage() {
 
           // If not found, check localStorage for setup2 data
           if (!firstName) {
-            const talentSetup2 = localStorage.getItem("talentSetup2");
-            if (talentSetup2) {
-              try {
-                const setupData = JSON.parse(talentSetup2);
-                firstName = setupData.formData?.firstName;
-              } catch (e) {
-                console.error("Error parsing talentSetup2:", e);
-              }
-            }
+            const setupData = getSetupDraft("talentSetup2", user?.id);
+            firstName = setupData?.formData?.firstName;
           }
 
           // Final fallback to email
@@ -253,7 +247,7 @@ export function TalentHomePage() {
     }
 
     fetchHomePageData();
-  }, [authFetch]);
+  }, [authFetch, user?.id]);
 
   useEffect(() => {
     let isMounted = true;

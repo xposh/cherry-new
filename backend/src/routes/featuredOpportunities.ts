@@ -272,7 +272,8 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
     if (description !== undefined) fields.description = description;
     if (image_url !== undefined) fields.image_url = image_url;
     if (video_url !== undefined) fields.video_url = video_url;
-    if (deadline !== undefined) fields.deadline = new Date(deadline).toISOString();
+    if (deadline !== undefined)
+      fields.deadline = new Date(deadline).toISOString();
     if (is_active !== undefined) fields.is_active = is_active;
 
     if (Object.keys(fields).length === 0) {

@@ -1,10 +1,12 @@
 import { Upload, FileText, X, Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
 import { OpportunityCreator } from "../../components/OpportunityCreator/OpportunityCreator";
 import { supabase } from "../../util/supabase";
 import { useAuth } from "../../context/useAuth"; // ✅ useAuth importieren
+import { getSetupDraft, setSetupDraft } from "../../util/draftStorage";
+import { mapTalentProfileToSetup3 } from "../../util/profileMapping";
 
 interface SocialLink {
   id: string;
@@ -20,8 +22,7 @@ export function TalentProfileSetup3() {
   // Helper-Funktion zur sicheren Extraktion von verschachtelten localStorage-Daten (Re-Hydration)
   const getSavedData = () => {
     try {
-      const saved = localStorage.getItem("talentSetup3");
-      return saved ? JSON.parse(saved) : null;
+      return getSetupDraft("talentSetup3", user?.id);
     } catch (e) {
       console.error("Fehler beim Parsen von talentSetup3:", e);
       return null;
@@ -44,6 +45,30 @@ export function TalentProfileSetup3() {
   const [newSocialPlatform, setNewSocialPlatform] = useState("Instagram");
   const [newSocialUrl, setNewSocialUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    async function hydrateFromBackend() {
+      if (!user?.id) return;
+      if (getSetupDraft("talentSetup3", user.id)) return;
+
+      try {
+        const res = await authFetch("http://localhost:3000/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data?.profile) return;
+
+        const mapped = mapTalentProfileToSetup3(data.profile);
+        setCvUrl(mapped.cvUrl || null);
+        setCvFile(mapped.cvFile as { name: string; size: number } | null);
+        setAvailability(mapped.availability || "");
+        setSocialLinks(mapped.socialLinks as SocialLink[]);
+      } catch (err) {
+        console.error("Failed to hydrate talent setup step 3 from backend:", err);
+      }
+    }
+
+    hydrateFromBackend();
+  }, [authFetch, user?.id]);
 
   const socialPlatforms = [
     "Instagram",
@@ -182,11 +207,11 @@ export function TalentProfileSetup3() {
     }
 
     const localPage3Data = { cvUrl, cvFile, availability, socialLinks };
-    localStorage.setItem("talentSetup3", JSON.stringify(localPage3Data));
+    setSetupDraft("talentSetup3", user?.id, localPage3Data);
 
     // ✅ FIX: Setup 1 und Setup 2 Daten einsammeln — vorher fehlten sie komplett
-    const setup1 = JSON.parse(localStorage.getItem("talentSetup1") ?? "null");
-    const setup2 = JSON.parse(localStorage.getItem("talentSetup2") ?? "null");
+    const setup1 = getSetupDraft("talentSetup1", user.id);
+    const setup2 = getSetupDraft("talentSetup2", user.id);
 
     const structuredSocialLinks = socialLinks.reduce(
       (acc, curr) => {

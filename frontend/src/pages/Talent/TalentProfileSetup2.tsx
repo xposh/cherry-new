@@ -1,7 +1,10 @@
 import { Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
+import { useAuth } from "../../context/useAuth";
+import { getSetupDraft, setSetupDraft } from "../../util/draftStorage";
+import { mapTalentProfileToSetup2 } from "../../util/profileMapping";
 
 interface Language {
   language: string;
@@ -26,12 +29,12 @@ interface Recognition {
 
 export function TalentProfileSetup2() {
   const navigate = useNavigate();
+  const { user, authFetch } = useAuth();
 
   // Helper-Funktion zur sicheren Extraktion von verschachtelten localStorage-Daten
   const getSavedData = () => {
     try {
-      const saved = localStorage.getItem("talentSetup2");
-      return saved ? JSON.parse(saved) : null;
+      return getSetupDraft("talentSetup2", user?.id);
     } catch (e) {
       console.error("Fehler beim Parsen von talentSetup2:", e);
       return null;
@@ -92,6 +95,34 @@ export function TalentProfileSetup2() {
   });
 
   const [newPosition, setNewPosition] = useState("");
+
+  useEffect(() => {
+    async function hydrateFromBackend() {
+      if (!user?.id) return;
+      if (getSetupDraft("talentSetup2", user.id)) return;
+
+      try {
+        const res = await authFetch("http://localhost:3000/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data?.profile) return;
+
+        const mapped = mapTalentProfileToSetup2(data.profile);
+        setFormData(mapped.formData);
+        setEducation(mapped.education as typeof education);
+        setExperiences(mapped.experiences as unknown as Experience[]);
+        setOtherExperiences(mapped.otherExperiences as unknown as Experience[]);
+        setSkills(mapped.skills as string[]);
+        setLanguages(mapped.languages as unknown as Language[]);
+        setRecognitions(mapped.recognitions as unknown as Recognition[]);
+        setJobPreferences(mapped.jobPreferences as typeof jobPreferences);
+      } catch (err) {
+        console.error("Failed to hydrate talent setup step 2 from backend:", err);
+      }
+    }
+
+    hydrateFromBackend();
+  }, [authFetch, user?.id]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -278,7 +309,7 @@ export function TalentProfileSetup2() {
     };
 
     // Schreibt das komplette Paket in den Speicher, die Summary zieht sich genau dieses Objekt.
-    localStorage.setItem("talentSetup2", JSON.stringify(setupData));
+    setSetupDraft("talentSetup2", user?.id, setupData);
 
     console.log({
       firstName: formData.firstName,

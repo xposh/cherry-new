@@ -24,6 +24,50 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
+function isPlainObject(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+function mergeProfileData(current, incoming) {
+    const merged = { ...current };
+    for (const [key, incomingValue] of Object.entries(incoming)) {
+        const currentValue = merged[key];
+        if (incomingValue === undefined || incomingValue === null) {
+            continue;
+        }
+        if (typeof incomingValue === "string") {
+            if (incomingValue.trim() === "" && typeof currentValue === "string" && currentValue.trim() !== "") {
+                continue;
+            }
+            merged[key] = incomingValue;
+            continue;
+        }
+        if (Array.isArray(incomingValue)) {
+            if (incomingValue.length === 0 &&
+                Array.isArray(currentValue) &&
+                currentValue.length > 0) {
+                continue;
+            }
+            merged[key] = incomingValue;
+            continue;
+        }
+        if (isPlainObject(incomingValue)) {
+            if (typeof currentValue === "string" && currentValue.trim() !== "") {
+                continue;
+            }
+            if (Object.keys(incomingValue).length === 0 &&
+                isPlainObject(currentValue) &&
+                Object.keys(currentValue).length > 0) {
+                continue;
+            }
+            merged[key] = isPlainObject(currentValue)
+                ? mergeProfileData(currentValue, incomingValue)
+                : incomingValue;
+            continue;
+        }
+        merged[key] = incomingValue;
+    }
+    return merged;
+}
 app.get("/", (req, res) => {
     return res.json({ message: "Hallo Welt" });
 });
@@ -135,7 +179,9 @@ app.post("/profile", authMiddleware_1.requireAuth, async (req, res) => {
         const userId = req.auth.userId;
         const userRole = req.auth.role;
         // Alle Formular-Daten kommen aus dem Body (OHNE user_id!)
-        const formData = req.body;
+        const formData = req.body && typeof req.body === "object" && !Array.isArray(req.body)
+            ? req.body
+            : {};
         console.log(`Speichere Profil für User ${userId} mit Role ${userRole}`);
         // Role-Check: Speichere in der richtigen Tabelle
         if (userRole === "talent") {
@@ -147,7 +193,7 @@ app.post("/profile", authMiddleware_1.requireAuth, async (req, res) => {
                     !Array.isArray(existing.profile_data)
                     ? existing.profile_data
                     : {};
-                const merged = { ...current, ...formData };
+                const merged = mergeProfileData(current, formData);
                 await (0, db_1.default) `
           UPDATE talent_profiles
           SET profile_data = ${db_1.default.json(merged)}
@@ -180,7 +226,7 @@ app.post("/profile", authMiddleware_1.requireAuth, async (req, res) => {
                     !Array.isArray(existing.profile_data)
                     ? existing.profile_data
                     : {};
-                const merged = { ...current, ...formData };
+                const merged = mergeProfileData(current, formData);
                 await (0, db_1.default) `
           UPDATE company_profiles
           SET profile_data = ${db_1.default.json(merged)}

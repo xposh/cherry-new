@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  type ReactNode,
+} from "react";
 
 // Interface für Company Profile Daten
 interface CompanyProfileData {
@@ -76,9 +82,9 @@ export function CompanyProfileProvider({ children }: { children: ReactNode }) {
     socialLinks: [],
   });
 
-  const updateCompanyProfile = (newData: Partial<CompanyProfileData>) => {
+  const updateCompanyProfile = useCallback((newData: Partial<CompanyProfileData>) => {
     setCompanyProfile((prev) => ({ ...prev, ...newData }));
-  };
+  }, []);
 
   return (
     <CompanyProfileContext.Provider

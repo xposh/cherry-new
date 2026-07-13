@@ -96,7 +96,7 @@ export function LoginPage() {
           {/* FORGOT PASSWORD */}
           <Link
             to="/forgot-password"
-            className="hover:text-primary transition-colors text-[9px] text-[#ffffffc7] uppercase tracking-widest"
+            className="hover:text-[#fcf4e6] transition-colors text-[9px] text-[#ffffffc7] uppercase tracking-widest"
           >
             Forgot Password?
           </Link>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import useLocalStorageState from "use-local-storage-state";
 import { AuthContext, type User, type UserRole } from "./AuthContext";
+import { clearAllKnownSetupDraftsForUser, clearLegacySetupDrafts } from "../util/draftStorage";
 
 /*Speichert:
 - currentUser (Talent oder Company)
@@ -67,16 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const { user, accessToken } = await response.json();
 
-      // ✅ FIX 2: Alte Onboarding-Daten löschen, damit neue Accounts
-      // nicht versehentlich Daten von vorherigen Registrierungen erben.
-      [
-        "talentSetup1",
-        "talentSetup2",
-        "talentSetup3",
-        "companySetup1",
-        "companySetup2",
-        "companySetup3",
-      ].forEach((key) => localStorage.removeItem(key));
+      // Reset setup drafts after registration to avoid any stale local data.
+      clearAllKnownSetupDraftsForUser(user?.id);
 
       setToken(accessToken);
       setUser(user);
@@ -97,6 +90,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error((await response.json()).message ?? "Login failed");
       }
       const { user, accessToken } = await response.json();
+      // Remove legacy and scoped setup drafts on login so backend-seeded
+      // profile data can hydrate without stale local draft interference.
+      clearLegacySetupDrafts();
+      clearAllKnownSetupDraftsForUser(user?.id);
       setToken(accessToken);
       setUser(user);
     } catch (err) {
@@ -119,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    clearAllKnownSetupDraftsForUser(user?.id);
     setToken(null);
     setUser(null);
     setIsProfileComplete(false);
