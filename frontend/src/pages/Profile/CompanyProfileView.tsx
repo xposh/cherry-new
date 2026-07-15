@@ -7,6 +7,7 @@ import {
   type FeaturedOpportunityItem,
 } from "../../components/FeaturedOpportunityCard";
 import { useAuth } from "../../context/useAuth";
+import { useMatch } from "../../context/MatchContext";
 import { Logo } from "../../components/Logo";
 import {
   discoverService,
@@ -17,6 +18,7 @@ export function CompanyProfileView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { authFetch, isAuthenticated } = useAuth();
+  const { likeProfile, skipProfile } = useMatch();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [company, setCompany] = useState<FullProfile | null>(null);
@@ -98,7 +100,7 @@ export function CompanyProfileView() {
   const handleSkip = async () => {
     if (!id) return;
     try {
-      await discoverService.interact(id, "skip", authFetch);
+      await skipProfile(id, "company");
     } catch (err) {
       console.error("Skip interaction failed:", err);
     }
@@ -108,10 +110,8 @@ export function CompanyProfileView() {
   const handleLike = async () => {
     if (!id) return;
     try {
-      const result = await discoverService.interact(id, "like", authFetch);
-      if (result.status === "match") {
-        navigate(`/match-details/company/${id}`);
-      } else {
+      const isMatch = await likeProfile(id, "company");
+      if (!isMatch) {
         navigate("/discover");
       }
     } catch {

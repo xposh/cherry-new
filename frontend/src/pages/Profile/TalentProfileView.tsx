@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
 import { FeaturedOpportunityCard, type FeaturedOpportunityItem } from "../../components/FeaturedOpportunityCard";
 import { useAuth } from "../../context/useAuth";
+import { useMatch } from "../../context/MatchContext";
 import { Logo } from "../../components/Logo";
 import {
   discoverService,
@@ -14,6 +15,7 @@ export function TalentProfileView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { authFetch, isAuthenticated } = useAuth();
+  const { likeProfile, skipProfile } = useMatch();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [profile, setProfile] = useState<FullProfile | null>(null);
@@ -91,7 +93,7 @@ export function TalentProfileView() {
   const handleSkip = async () => {
     if (!id) return;
     try {
-      await discoverService.interact(id, "skip", authFetch);
+      await skipProfile(id, "talent");
     } catch {}
     navigate("/discover");
   };
@@ -99,10 +101,8 @@ export function TalentProfileView() {
   const handleLike = async () => {
     if (!id) return;
     try {
-      const result = await discoverService.interact(id, "like", authFetch);
-      if (result.status === "match") {
-        navigate(`/match-details/talent/${id}`);
-      } else {
+      const isMatch = await likeProfile(id, "talent");
+      if (!isMatch) {
         navigate("/discover");
       }
     } catch {

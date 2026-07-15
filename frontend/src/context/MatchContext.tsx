@@ -26,7 +26,7 @@ interface MatchContextType {
   likeProfile: (
     profileId: string,
     profileType: "talent" | "company",
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   skipProfile: (
     profileId: string,
     profileType?: "talent" | "company",
@@ -98,9 +98,12 @@ export function MatchProvider({ children }: { children: ReactNode }) {
         };
         setMatches((prev) => [newMatch, ...prev]);
         setPendingCelebration(newMatch);
+        return true;
       }
+      return false;
     } catch (err) {
       console.error("Like fehlgeschlagen:", err);
+      return false;
     }
   };
 
