@@ -61,7 +61,10 @@ export function CompanyProfileSetup1() {
           companyImages: mapped.uploadedImages as UploadedImage[],
         });
       } catch (err) {
-        console.error("Failed to hydrate company setup step 1 from backend:", err);
+        console.error(
+          "Failed to hydrate company setup step 1 from backend:",
+          err,
+        );
       }
     }
 

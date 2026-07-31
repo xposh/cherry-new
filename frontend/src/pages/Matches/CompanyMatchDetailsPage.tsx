@@ -6,6 +6,10 @@ import {
   Mail,
   Phone,
   Globe,
+  Calendar,
+  Users,
+  Briefcase,
+  Heart,
   ArrowLeft,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
@@ -61,7 +65,25 @@ export function CompanyMatchDetailsPage() {
   }
 
   const gallery = company.galleryImages ?? [];
-  const contact = company.contactPerson;
+  const values = company.cultureValues ?? [];
+  const benefits = company.benefits ?? {};
+  const contact =
+    company.contactPerson && typeof company.contactPerson === "object"
+      ? company.contactPerson
+      : null;
+  const companyLinks = company.socialLinks ?? [];
+
+  const categoryLabels: Record<string, string> = {
+    arbeitsmodell: "Work Model",
+    finanziell: "Financial",
+    lifestyle: "Lifestyle",
+    mobilitat: "Mobility",
+    entwicklung: "Development",
+  };
+
+  const hasBenefits = Object.values(benefits).some(
+    (items) => Array.isArray(items) && items.length > 0,
+  );
 
   return (
     <div className="relative min-h-screen w-full bg-black pb-24">
@@ -122,6 +144,11 @@ export function CompanyMatchDetailsPage() {
           >
             {company.companyName}
           </h1>
+          {company.claim && (
+            <p className="text-white/85 text-xl font-light italic mb-4">
+              "{company.claim}"
+            </p>
+          )}
           <div className="flex items-center gap-6 text-white/70 flex-wrap">
             {company.industry && (
               <div className="flex items-center gap-2">
@@ -150,6 +177,85 @@ export function CompanyMatchDetailsPage() {
           Start the Conversation
         </button>
 
+        {company.description && (
+          <section className="border border-white/10 p-6">
+            <h2 className="text-xs font-light text-white/40 mb-5 uppercase tracking-[0.3em]">
+              About Company
+            </h2>
+            <p className="text-white/80 font-light leading-relaxed">
+              {company.description}
+            </p>
+          </section>
+        )}
+
+        <section className="grid md:grid-cols-2 gap-4">
+          {company.companySize && (
+            <div className="border border-white/10 p-4">
+              <p className="text-gray-400 text-sm mb-1 uppercase tracking-wider">
+                Company Size
+              </p>
+              <div className="flex items-center gap-2 text-white text-lg">
+                <Users className="w-4 h-4" strokeWidth={1.5} />
+                <span>{company.companySize}</span>
+              </div>
+            </div>
+          )}
+          {company.location && (
+            <div className="border border-white/10 p-4">
+              <p className="text-gray-400 text-sm mb-1 uppercase tracking-wider">
+                Location
+              </p>
+              <div className="flex items-center gap-2 text-white text-lg">
+                <MapPin className="w-4 h-4" strokeWidth={1.5} />
+                <span>{company.location}</span>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {values.length > 0 && (
+          <section className="border border-white/10 p-6">
+            <h2 className="text-xs font-light text-white/40 mb-5 uppercase tracking-[0.3em]">
+              Culture Values
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {values.map((value) => (
+                <span
+                  key={value}
+                  className="px-4 py-2 border border-white/20 text-white/85 text-sm"
+                >
+                  {value}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {hasBenefits && (
+          <section className="border border-white/10 p-6">
+            <h2 className="text-xs font-light text-white/40 mb-5 uppercase tracking-[0.3em]">
+              Benefits
+            </h2>
+            <div className="grid md:grid-cols-2 gap-5">
+              {Object.entries(benefits).map(([key, items]) => {
+                if (!Array.isArray(items) || items.length === 0) return null;
+                return (
+                  <div key={key}>
+                    <h3 className="text-white text-sm uppercase tracking-wider mb-2">
+                      {categoryLabels[key] ?? key}
+                    </h3>
+                    <ul className="space-y-1 text-white/70 text-sm">
+                      {items.map((item) => (
+                        <li key={item}>• {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {company.jobTitle && (
           <section className="border border-white/10 p-6">
             <h2 className="text-xs font-light text-white/40 mb-5 uppercase tracking-[0.3em]">
@@ -158,11 +264,31 @@ export function CompanyMatchDetailsPage() {
             <h3 className="text-white text-3xl font-light mb-4">
               {company.jobTitle}
             </h3>
-            {company.description && (
+            {company.jobDescription && (
               <p className="text-white/70 mb-4 font-light leading-relaxed">
-                {company.description}
+                {company.jobDescription}
               </p>
             )}
+            <div className="grid md:grid-cols-2 gap-3 mb-4">
+              {company.jobLocation && (
+                <div className="flex items-center gap-2 text-white/70 text-sm">
+                  <MapPin className="w-4 h-4" strokeWidth={1.5} />
+                  {company.jobLocation}
+                </div>
+              )}
+              {company.startDate && (
+                <div className="flex items-center gap-2 text-white/70 text-sm">
+                  <Calendar className="w-4 h-4" strokeWidth={1.5} />
+                  Start: {company.startDate}
+                </div>
+              )}
+              {company.salary && (
+                <div className="flex items-center gap-2 text-white/70 text-sm">
+                  <Briefcase className="w-4 h-4" strokeWidth={1.5} />
+                  {company.salary}
+                </div>
+              )}
+            </div>
             {(company.workModel ?? []).length > 0 && (
               <div className="flex gap-2 flex-wrap">
                 {(company.workModel ?? []).map((m) => (
@@ -175,6 +301,35 @@ export function CompanyMatchDetailsPage() {
                 ))}
               </div>
             )}
+          </section>
+        )}
+
+        {companyLinks.length > 0 && (
+          <section className="border border-white/10 p-6">
+            <h2 className="text-xs font-light text-white/40 mb-5 uppercase tracking-[0.3em]">
+              Company Links
+            </h2>
+            <div className="space-y-2">
+              {companyLinks.map((link, index) => (
+                <a
+                  key={`${link.platform}-${index}`}
+                  href={
+                    link.url.startsWith("http")
+                      ? link.url
+                      : `https://${link.url}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-white/70 hover:text-white transition-colors"
+                >
+                  <Globe className="w-4 h-4" strokeWidth={1.5} />
+                  <span className="text-sm uppercase tracking-wider text-white/50 min-w-24">
+                    {link.platform}
+                  </span>
+                  <span className="text-sm break-all">{link.url}</span>
+                </a>
+              ))}
+            </div>
           </section>
         )}
 
@@ -243,6 +398,31 @@ export function CompanyMatchDetailsPage() {
                   )}
                 </div>
               </div>
+            </div>
+          </section>
+        )}
+
+        {gallery.length > 1 && (
+          <section className="border border-white/10 p-6">
+            <h2 className="text-xs font-light text-white/40 mb-5 uppercase tracking-[0.3em] flex items-center gap-2">
+              <Heart className="w-4 h-4" strokeWidth={1.5} />
+              Company Gallery
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {gallery.slice(1).map((image, index) => (
+                <div key={`${image.url}-${index}`} className="space-y-2">
+                  <img
+                    src={image.url}
+                    alt={image.caption || company.companyName}
+                    className="w-full aspect-square object-cover border border-white/10"
+                  />
+                  {image.caption && (
+                    <p className="text-white/60 text-xs font-light">
+                      {image.caption}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           </section>
         )}

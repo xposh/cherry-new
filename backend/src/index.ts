@@ -28,7 +28,10 @@ function isPlainObject(value: unknown): value is JsonRecord {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function mergeProfileData(current: JsonRecord, incoming: JsonRecord): JsonRecord {
+function mergeProfileData(
+  current: JsonRecord,
+  incoming: JsonRecord,
+): JsonRecord {
   const merged: JsonRecord = { ...current };
 
   for (const [key, incomingValue] of Object.entries(incoming)) {
@@ -39,7 +42,11 @@ function mergeProfileData(current: JsonRecord, incoming: JsonRecord): JsonRecord
     }
 
     if (typeof incomingValue === "string") {
-      if (incomingValue.trim() === "" && typeof currentValue === "string" && currentValue.trim() !== "") {
+      if (
+        incomingValue.trim() === "" &&
+        typeof currentValue === "string" &&
+        currentValue.trim() !== ""
+      ) {
         continue;
       }
       merged[key] = incomingValue;

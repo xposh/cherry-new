@@ -61,7 +61,6 @@ interface FeaturedOpportunity {
   time_remaining_seconds: number;
 }
 
-
 export function TalentHomePage() {
   const { authFetch, user } = useAuth();
   const navigate = useNavigate();
@@ -93,9 +92,8 @@ export function TalentHomePage() {
     Array<{ date: string; isActive: boolean }>
   >([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [featuredOpportunity, setFeaturedOpportunity] = useState<
-    FeaturedOpportunity | null
-  >(null);
+  const [featuredOpportunity, setFeaturedOpportunity] =
+    useState<FeaturedOpportunity | null>(null);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [featuredError, setFeaturedError] = useState<string | null>(null);
 
@@ -275,8 +273,7 @@ export function TalentHomePage() {
         );
         setFeaturedOpportunity(null);
       } finally {
-        if (!isMounted) return;
-        setFeaturedLoading(false);
+        if (!isMounted) setFeaturedLoading(false);
       }
     }
 

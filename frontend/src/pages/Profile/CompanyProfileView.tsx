@@ -14,6 +14,13 @@ import {
   type FullProfile,
 } from "../../services/discoverService";
 
+type CompanyGalleryItem = {
+  id?: string;
+  url?: string;
+  preview?: string;
+  caption?: string;
+};
+
 export function CompanyProfileView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -137,10 +144,66 @@ export function CompanyProfileView() {
     );
   }
 
-  const gallery = company.galleryImages ?? [];
+  const rawGallery: CompanyGalleryItem[] = [
+    ...(company.galleryImages ?? []).map((img) => ({
+      url: img.url,
+      caption: img.caption,
+    })),
+    ...((company as FullProfile & { companyImages?: CompanyGalleryItem[] })
+      .companyImages ?? []),
+  ];
+
+  const gallery = rawGallery
+    .map((img, index) => ({
+      id: img.id ?? `gallery-${index}`,
+      url: img.url ?? img.preview ?? "",
+      caption: img.caption ?? "",
+    }))
+    .filter((img) => img.url);
+
   const values = company.cultureValues ?? [];
   const benefits = company.benefits ?? {};
-  const contact = company.contactPerson;
+  const nestedContact =
+    typeof company.contactPerson === "object" && company.contactPerson !== null
+      ? company.contactPerson
+      : null;
+
+  const contact = {
+    name:
+      nestedContact?.name ??
+      (typeof company.contactPerson === "string" ? company.contactPerson : ""),
+    role:
+      nestedContact?.role ??
+      (company as FullProfile & { contactRole?: string }).contactRole ??
+      "",
+    email:
+      nestedContact?.email ??
+      (company as FullProfile & { contactEmail?: string }).contactEmail ??
+      "",
+    phone:
+      nestedContact?.phone ??
+      (company as FullProfile & { contactPhone?: string }).contactPhone ??
+      "",
+    website:
+      nestedContact?.website ??
+      (company as FullProfile & { contactWebsite?: string }).contactWebsite ??
+      "",
+    message:
+      nestedContact?.message ??
+      (company as FullProfile & { contactMessage?: string }).contactMessage ??
+      "",
+    photo:
+      nestedContact?.photo ??
+      (company as FullProfile & { contactPersonPhoto?: string })
+        .contactPersonPhoto ??
+      "",
+  };
+
+  const hasContact =
+    Boolean(contact.name) ||
+    Boolean(contact.email) ||
+    Boolean(contact.phone) ||
+    Boolean(contact.website);
   const totalSlides = gallery.length + 2;
 
   return (
@@ -170,7 +233,7 @@ export function CompanyProfileView() {
         {/* Gallery Slides */}
         {gallery.map((img, i) => (
           <div
-            key={i}
+            key={img.id ?? i}
             className="h-screen w-full snap-start relative flex flex-col justify-end"
           >
             <img
@@ -288,12 +351,8 @@ export function CompanyProfileView() {
                     muted
                     playsInline
                     className="h-72 w-full object-cover grayscale"
-                  >
-                    <source
-                      src="/videos/HairdresserBlackWhite1.mp4"
-                      type="video/mp4"
-                    />
-                  </video>
+                    src="/videos/HairdresserBlackWhite1.mp4"
+                  ></video>
                   <div className="absolute inset-0 bg-black/50" />
                   <div className="absolute inset-0 flex items-center justify-center p-8 text-center text-white/80">
                     No featured opportunity is currently available.
@@ -379,7 +438,7 @@ export function CompanyProfileView() {
               </section>
             )}
 
-            {contact && (
+            {hasContact && (
               <section>
                 <h2 className="text-2xl font-light text-white mb-4 uppercase tracking-wider">
                   Contact Person

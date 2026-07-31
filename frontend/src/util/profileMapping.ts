@@ -77,14 +77,12 @@ export function mapTalentProfileToSetup3(profile: unknown) {
 
   return {
     cvUrl: (p.cvUrl as string) || "",
-    cvFile:
-      (toRecord(p.cvMetadata) as { name?: string; size?: number })?.name
-        ? (p.cvMetadata as { name: string; size: number })
-        : null,
-    availability:
-      ((p.availability as string) ||
-        (toRecord(p.jobPreferences).availableFrom as string) ||
-        "") as string,
+    cvFile: (toRecord(p.cvMetadata) as { name?: string; size?: number })?.name
+      ? (p.cvMetadata as { name: string; size: number })
+      : null,
+    availability: ((p.availability as string) ||
+      (toRecord(p.jobPreferences).availableFrom as string) ||
+      "") as string,
     socialLinks,
   };
 }
@@ -151,14 +149,21 @@ export function mapCompanyProfileToSetup3(profile: unknown) {
     requirements: toArray<string>(p.requirements),
     newRequirement: "",
     contactPersonPhoto: {
-      preview: toStringValue(p.contactPersonPhoto) || toStringValue(nestedContact.photo),
+      preview:
+        toStringValue(p.contactPersonPhoto) ||
+        toStringValue(nestedContact.photo),
     },
     contactInfo: {
-      contactPerson: toStringValue(p.contactPerson) || toStringValue(nestedContact.name),
-      contactRole: toStringValue(p.contactRole) || toStringValue(nestedContact.role),
-      contactMessage: toStringValue(p.contactMessage) || toStringValue(nestedContact.message),
-      contactEmail: toStringValue(p.contactEmail) || toStringValue(nestedContact.email),
-      contactPhone: toStringValue(p.contactPhone) || toStringValue(nestedContact.phone),
+      contactPerson:
+        toStringValue(p.contactPerson) || toStringValue(nestedContact.name),
+      contactRole:
+        toStringValue(p.contactRole) || toStringValue(nestedContact.role),
+      contactMessage:
+        toStringValue(p.contactMessage) || toStringValue(nestedContact.message),
+      contactEmail:
+        toStringValue(p.contactEmail) || toStringValue(nestedContact.email),
+      contactPhone:
+        toStringValue(p.contactPhone) || toStringValue(nestedContact.phone),
       contactWebsite:
         toStringValue(p.contactWebsite) || toStringValue(nestedContact.website),
     },

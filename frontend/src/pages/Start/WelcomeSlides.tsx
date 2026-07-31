@@ -12,20 +12,26 @@ import { Logo } from "../../components/Logo";
 // Jedes Objekt {} in der Liste repräsentiert eine Seite.
 const SLIDES = [
   {
-    image: "/architect/architect-painting.png", // Pfad zum Bild im public-Ordner.
+    image: "/barkeeper-sommelier/premium_photo-1767883340209-3a36bc6bf4cc.avif", // Pfad zum Bild im public-Ordner.
     heading: ["Pick", "your", "Cherry"], // Array für die Überschrift, um Wörter einzeln zu stylen.
     subheading: '"Finde den perfekten Jobpartner"',
     overlay: "bg-black/45", // Tailwind-Klasse für die Verdunklung (45% Schwarz).
   },
   {
-    image: "/architect/architect-drawing.png",
+    image: "/beauty/IMG_8382.jpg",
     heading: ["Finde", "deinen", "Traumjob"],
     subheading: '"Pick your cherry"',
     overlay: "bg-black/70",
   },
   {
-    image: "/architect/man-in-black.png",
-    heading: ["Finde", "deinen", "Traumjob"],
+    image: "/bakers/IMG_8426.jpg",
+    heading: ["We solve", "premium Problems..."],
+    subheading: '"... Find your cherry"',
+    overlay: "bg-black/40",
+  },
+  {
+    image: "/beauty/IMG_8376.jpg",
+    heading: ["... not", "everyone's", "Problem"],
     subheading: '"Pick your cherry"',
     overlay: "bg-black/40",
   },

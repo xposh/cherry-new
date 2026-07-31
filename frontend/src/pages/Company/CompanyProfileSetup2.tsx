@@ -135,7 +135,10 @@ export function CompanyProfileSetup2() {
         setSelectedValues(mapped.selectedValues as string[]);
         setBenefits(mapped.benefits as typeof benefits);
       } catch (err) {
-        console.error("Failed to hydrate company setup step 2 from backend:", err);
+        console.error(
+          "Failed to hydrate company setup step 2 from backend:",
+          err,
+        );
       }
     }
 

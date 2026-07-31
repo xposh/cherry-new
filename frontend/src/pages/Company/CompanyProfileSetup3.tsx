@@ -7,6 +7,7 @@ import { useCompanyProfile } from "../../context/CompanyProfileContext";
 import { useAuth } from "../../context/useAuth"; //  NEU HINZUGEFÜGT
 import { getSetupDraft, setSetupDraft } from "../../util/draftStorage";
 import { mapCompanyProfileToSetup3 } from "../../util/profileMapping";
+import { supabase } from "../../util/supabase";
 
 interface SocialLink {
   id: string;
@@ -31,6 +32,10 @@ export function CompanyProfileSetup3() {
   const savedData = getSavedData();
   const toSafeText = (value: unknown) =>
     typeof value === "string" ? value : "";
+  const isBlobUrl = (value: string) => value.startsWith("blob:");
+
+  const savedContactPhotoPreview = toSafeText(savedData?.contactPersonPhoto?.preview);
+  const needsSavedContactPhotoReupload = isBlobUrl(savedContactPhotoPreview);
 
   const [jobInfo, setJobInfo] = useState({
     jobTitle: toSafeText(savedData?.jobInfo?.jobTitle),
@@ -52,8 +57,11 @@ export function CompanyProfileSetup3() {
 
   const [contactPersonPhoto, setContactPersonPhoto] = useState({
     file: null as File | null,
-    preview: toSafeText(savedData?.contactPersonPhoto?.preview),
+    preview: needsSavedContactPhotoReupload ? "" : savedContactPhotoPreview,
   });
+  const [needsContactPhotoReupload, setNeedsContactPhotoReupload] = useState(
+    needsSavedContactPhotoReupload,
+  );
 
   const [contactInfo, setContactInfo] = useState({
     contactPerson: toSafeText(savedData?.contactInfo?.contactPerson),
@@ -75,6 +83,16 @@ export function CompanyProfileSetup3() {
   );
 
   useEffect(() => {
+    if (!needsSavedContactPhotoReupload) return;
+
+    const sanitizedDraft = {
+      ...(savedData || {}),
+      contactPersonPhoto: { preview: "" },
+    };
+    setSetupDraft("companySetup3", user?.id, sanitizedDraft);
+  }, [needsSavedContactPhotoReupload, savedData, user?.id]);
+
+  useEffect(() => {
     async function hydrateFromBackend() {
       if (!user?.id) return;
       if (getSetupDraft("companySetup3", user.id)) return;
@@ -89,13 +107,23 @@ export function CompanyProfileSetup3() {
         setJobInfo(mapped.jobInfo as typeof jobInfo);
         setWorkModel(mapped.workModel as string[]);
         setRequirements(mapped.requirements as string[]);
-        setContactPersonPhoto(mapped.contactPersonPhoto as typeof contactPersonPhoto);
+        setContactPersonPhoto(
+          isBlobUrl(toSafeText(mapped.contactPersonPhoto?.preview))
+            ? { file: null, preview: "" }
+            : (mapped.contactPersonPhoto as typeof contactPersonPhoto),
+        );
+        setNeedsContactPhotoReupload(
+          isBlobUrl(toSafeText(mapped.contactPersonPhoto?.preview)),
+        );
         setContactInfo(mapped.contactInfo as typeof contactInfo);
         setSocialLinks(mapped.socialLinks as SocialLink[]);
         setNewSocialPlatform(mapped.newSocialPlatform || "Instagram");
         setNewSocialUrl(mapped.newSocialUrl || "");
       } catch (err) {
-        console.error("Failed to hydrate company setup step 3 from backend:", err);
+        console.error(
+          "Failed to hydrate company setup step 3 from backend:",
+          err,
+        );
       }
     }
 
@@ -131,6 +159,7 @@ export function CompanyProfileSetup3() {
         file,
         preview: URL.createObjectURL(file),
       });
+      setNeedsContactPhotoReupload(false);
     }
   };
 
@@ -225,6 +254,45 @@ export function CompanyProfileSetup3() {
   };
 
   const handleFinish = async () => {
+    let persistedContactPhoto = contactPersonPhoto.preview;
+
+    if (isBlobUrl(persistedContactPhoto) && !contactPersonPhoto.file) {
+      setNeedsContactPhotoReupload(true);
+      setContactPersonPhoto({ file: null, preview: "" });
+      alert("Please re-upload the contact person photo before saving.");
+      return;
+    }
+
+    // Convert local blob preview into a durable public URL before persisting.
+    if (contactPersonPhoto.file) {
+      try {
+        const extension = contactPersonPhoto.file.name.split(".").pop() || "jpg";
+        const uniqueFileName = `contact_${Date.now()}_${Math.random().toString(36).slice(2, 11)}.${extension}`;
+
+        const uploadResponse = await supabase.storage
+          .from("companies")
+          .upload(uniqueFileName, contactPersonPhoto.file, {
+            cacheControl: "3600",
+            contentType: contactPersonPhoto.file.type,
+            upsert: false,
+          });
+
+        if (uploadResponse.error) {
+          throw uploadResponse.error;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from("companies")
+          .getPublicUrl(uniqueFileName);
+
+        persistedContactPhoto = publicUrlData.publicUrl;
+      } catch (uploadErr) {
+        console.error("Contact person photo upload failed:", uploadErr);
+        alert("Contact person image upload failed. Please try again.");
+        return;
+      }
+    }
+
     const sanitizedContactInfo = {
       contactPerson: toSafeText(contactInfo.contactPerson),
       contactRole: toSafeText(contactInfo.contactRole),
@@ -239,7 +307,7 @@ export function CompanyProfileSetup3() {
       workModel,
       requirements,
       newRequirement,
-      contactPersonPhoto: { preview: contactPersonPhoto.preview },
+      contactPersonPhoto: { preview: persistedContactPhoto },
       contactInfo: sanitizedContactInfo,
       socialLinks,
       newSocialPlatform,
@@ -269,7 +337,7 @@ export function CompanyProfileSetup3() {
       requirements,
       salary: jobInfo.salary,
       startDate: jobInfo.startDate,
-      contactPersonPhoto: contactPersonPhoto.preview,
+      contactPersonPhoto: persistedContactPhoto,
       ...sanitizedContactInfo,
       socialLinks: socialLinks.map(({ platform, url }) => ({ platform, url })),
     };
@@ -454,6 +522,12 @@ export function CompanyProfileSetup3() {
               <p className="text-gray-400 text-xs mb-4">
                 Ein Gesicht der Ansprechpartner:in macht das Ganze persönlicher
               </p>
+              {needsContactPhotoReupload && (
+                <p className="text-amber-300 text-xs mb-4">
+                  Your previously saved contact image could not be restored.
+                  Please upload it again.
+                </p>
+              )}
               {!contactPersonPhoto.preview ? (
                 <div className="border-2 border-dashed border-white/30 rounded-xl p-8 text-center hover:border-white/60 transition-colors cursor-pointer max-w-xs">
                   <input

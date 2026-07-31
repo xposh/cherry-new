@@ -75,7 +75,10 @@ export function TalentProfileSetup1() {
         setProfileImage({ file: null, preview: mapped.profileImage || "" });
         setUploadedImages(mapped.images as UploadedImage[]);
       } catch (err) {
-        console.error("Failed to hydrate talent setup step 1 from backend:", err);
+        console.error(
+          "Failed to hydrate talent setup step 1 from backend:",
+          err,
+        );
       }
     }
 

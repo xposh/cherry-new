@@ -1,15 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  MapPin,
-  Edit,
-  ExternalLink,
-  FileText,
-  Award,
-  Clock,
-} from "lucide-react";
+import { MapPin, ExternalLink, FileText, Award, Clock } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
-import { FeaturedOpportunityCard, type FeaturedOpportunityItem } from "../../components/FeaturedOpportunityCard";
+import {
+  FeaturedOpportunityCard,
+  type FeaturedOpportunityItem,
+} from "../../components/FeaturedOpportunityCard";
 import { OpportunityCreator } from "../../components/OpportunityCreator/OpportunityCreator";
 import { useAuth } from "../../context/useAuth";
 import { getSetupDraft } from "../../util/draftStorage";
@@ -90,7 +86,8 @@ export function TalentProfileSummary() {
   const navigate = useNavigate();
   const { authFetch, user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [featuredOpportunity, setFeaturedOpportunity] = useState<FeaturedOpportunityItem | null>(null);
+  const [featuredOpportunity, setFeaturedOpportunity] =
+    useState<FeaturedOpportunityItem | null>(null);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [featuredError, setFeaturedError] = useState<string | null>(null);
   const [isEditingFeatured, setIsEditingFeatured] = useState(false);
@@ -296,7 +293,9 @@ export function TalentProfileSummary() {
         setEducation(mapped2.education as EducationStructure);
         setSkills(mapped2.skills as string[]);
         setExperiences(mapped2.experiences as unknown as Experience[]);
-        setOtherExperiences(mapped2.otherExperiences as unknown as Experience[]);
+        setOtherExperiences(
+          mapped2.otherExperiences as unknown as Experience[],
+        );
         setLanguages(mapped2.languages as unknown as Language[]);
         setRecognitions(mapped2.recognitions as unknown as Recognition[]);
         setJobPreferences(mapped2.jobPreferences as JobPreferencesStructure);
@@ -305,7 +304,10 @@ export function TalentProfileSummary() {
         setAvailability(mapped3.availability as string);
         setSocialLinks(mapped3.socialLinks as SocialLink[]);
       } catch (err) {
-        console.error("Failed to load backend talent profile for summary:", err);
+        console.error(
+          "Failed to load backend talent profile for summary:",
+          err,
+        );
       }
     }
 
@@ -325,7 +327,11 @@ export function TalentProfileSummary() {
       const data = await res.json();
       setFeaturedOpportunity(data.opportunities?.[0] ?? null);
     } catch (err: unknown) {
-      setFeaturedError(err instanceof Error ? err.message : "Unable to load featured opportunity");
+      setFeaturedError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load featured opportunity",
+      );
       setFeaturedOpportunity(null);
     } finally {
       setFeaturedLoading(false);
@@ -342,9 +348,12 @@ export function TalentProfileSummary() {
       setIsDeletingFeatured(true);
       setFeaturedError(null);
 
-      const res = await authFetch(`/api/featured-opportunities/${featuredOpportunity.id}`, {
-        method: "DELETE",
-      });
+      const res = await authFetch(
+        `/api/featured-opportunities/${featuredOpportunity.id}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!res.ok) {
         throw new Error("Could not delete featured opportunity");
       }
@@ -352,7 +361,11 @@ export function TalentProfileSummary() {
       setIsEditingFeatured(false);
       await loadFeaturedOpportunity();
     } catch (err: unknown) {
-      setFeaturedError(err instanceof Error ? err.message : "Could not delete featured opportunity");
+      setFeaturedError(
+        err instanceof Error
+          ? err.message
+          : "Could not delete featured opportunity",
+      );
     } finally {
       setIsDeletingFeatured(false);
     }
@@ -633,7 +646,9 @@ export function TalentProfileSummary() {
                         title: featuredOpportunity.title,
                         description: featuredOpportunity.description ?? "",
                         deadline: featuredOpportunity.deadline
-                          ? new Date(featuredOpportunity.deadline).toISOString().slice(0, 16)
+                          ? new Date(featuredOpportunity.deadline)
+                              .toISOString()
+                              .slice(0, 16)
                           : "",
                         image_url: featuredOpportunity.image_url,
                         video_url: featuredOpportunity.video_url,
@@ -981,7 +996,6 @@ export function TalentProfileSummary() {
           onClick={handleEditProfile}
           className="flex items-center gap-3 px-8 py-4 bg-gray-500/20 text-white/50 hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-xl shadow-2xl"
         >
-          <Edit className="w-5 h-5" />
           Edit Profile
         </button>
       </div>

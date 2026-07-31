@@ -38,7 +38,7 @@ export function BottomNavigation() {
               <Icon
                 className="w-6 h-6"
                 style={{
-                  color: active ? "#ffffff" : "#6f6f6f",
+                  color: active ? "#ffc8dd" : "#6f6f6f",
                   strokeWidth: 1,
                 }}
               />

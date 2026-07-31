@@ -63,7 +63,10 @@ export function TalentProfileSetup3() {
         setAvailability(mapped.availability || "");
         setSocialLinks(mapped.socialLinks as SocialLink[]);
       } catch (err) {
-        console.error("Failed to hydrate talent setup step 3 from backend:", err);
+        console.error(
+          "Failed to hydrate talent setup step 3 from backend:",
+          err,
+        );
       }
     }
 

@@ -1,4 +1,4 @@
-import { Search, SlidersHorizontal, MapPin, Sparkles, X } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, Cherry, X } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useState, useEffect, useCallback } from "react";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
@@ -124,10 +124,30 @@ export function DiscoverPage() {
   }
 
   return (
-    <main className="relative min-h-screen bg-black text-white font-['Helvetica_Neue',sans-serif]">
+    <main className="relative min-h-screen bg-black text-white font-['Helvetica_Neue',sans-serif] overflow-x-hidden">
       {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-30 px-4 pt-20">
-        <div className="mx-auto max-w-[640px]">
+      <header className="fixed left-0 right-0 z-30 top-22 px-16 md:top-20 md:px-4">
+        <div className="flex h-10 items-center md:hidden">
+          <div className="w-36 shrink-0" aria-hidden="true" />
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={`Search for ${targetType === "talent" ? "talents" : "companies"}...`}
+              className="w-full h-12 border border-white/30 bg-transparent pl-12 pr-14 outline-none placeholder:text-white/50 text-white text-base leading-none backdrop-blur-sm"
+            />
+            <button
+              onClick={() => setShowFilter(true)}
+              className="absolute right-4 top-1/2 -translate-y-1/2"
+            >
+              <SlidersHorizontal className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+
+        <div className="hidden md:mx-auto md:block md:w-full md:max-w-3xl">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
             <input
@@ -135,7 +155,7 @@ export function DiscoverPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search for ${targetType === "talent" ? "talents" : "companies"}...`}
-              className="w-full h-14 border border-white/30 bg-transparent pl-12 pr-14 outline-none placeholder:text-white/50 text-white backdrop-blur-sm"
+              className="w-full h-14 border border-white/30 bg-transparent pl-12 pr-14 outline-none placeholder:text-white/50 text-white text-base backdrop-blur-sm"
             />
             <button
               onClick={() => setShowFilter(true)}
@@ -147,7 +167,7 @@ export function DiscoverPage() {
         </div>
       </header>
 
-      <Logo className="fixed" />
+      <Logo />
 
       {/* GRID */}
       {profiles.length === 0 ? (
@@ -157,7 +177,7 @@ export function DiscoverPage() {
           </p>
         </div>
       ) : (
-        <section className="columns-2 md:columns-3 lg:columns-4 gap-0 pt-36 pb-24">
+        <section className="columns-2 md:columns-3 lg:columns-4 gap-0 pt-0 pb-24">
           {profiles.map((profile) => {
             const imageSrc = resolveImageUrl(profile.main_image_url || "");
             const isActive = activeProfileId === profile.id;
@@ -224,7 +244,7 @@ export function DiscoverPage() {
                 {/* MATCH BADGE */}
                 {profile.is_match_preview && (
                   <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 backdrop-blur-sm text-[10px] tracking-wider uppercase flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-[#2A6087]" />
+                    <Cherry className="w-3 h-3 text-[#bde0fe]" />
                     Match
                   </div>
                 )}

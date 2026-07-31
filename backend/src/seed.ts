@@ -489,13 +489,13 @@ async function run() {
         industry: "Food & Beverage",
         companySize: "10–25 Mitarbeiter",
         location: "Köln",
-        companyLogo: "/barista/brent-gorwin-vhQUnmnOLys-unsplash.jpg",
-        galleryImages: [
+        /*companyLogo: "/barista/brent-gorwin-vhQUnmnOLys-unsplash.jpg",
+        /*galleryImages: [
           {
             url: "/barista/brent-gorwin-vhQUnmnOLys-unsplash.jpg",
             caption: "Our bar setup",
           },
-        ],
+        ],*/
         cultureValues: [
           "Qualität",
           "Nachhaltigkeit",

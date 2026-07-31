@@ -82,6 +82,8 @@ export interface FullProfile {
   jobLocation?: string;
   workModel?: string[];
   startDate?: string;
+  jobDescription?: string;
+  salary?: string;
   contactPerson?: {
     name: string;
     role: string;

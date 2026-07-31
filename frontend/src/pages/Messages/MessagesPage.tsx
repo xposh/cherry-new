@@ -61,15 +61,12 @@ export function MessagesPage() {
     <div className="relative min-h-screen w-full bg-black pb-24">
       <Logo />
 
-      <div className="max-w-2xl mx-auto px-6 pt-36 pb-8">
-        <h1 className="text-4xl font-light tracking-tight text-white mb-2">
-          Messages
-        </h1>
-        <p className="text-white/40 text-sm mb-12 tracking-wide">
-          {conversations.length > 0
-            ? `${conversations.length} conversation${conversations.length !== 1 ? "s" : ""}`
-            : "No conversations yet"}
-        </p>
+      <div className="max-w-2xl mx-auto px-6 pt-30 md:pt-40 pb-8">
+        {conversations.length > 0 && (
+          <p className="text-white/40 text-sm mb-12 mt-12 tracking-wide text-center md:text-left">
+            {`${conversations.length} conversation${conversations.length !== 1 ? "s" : ""}`}
+          </p>
+        )}
 
         {loading ? (
           <div className="space-y-4">

@@ -1,6 +1,5 @@
 import {
   MapPin,
-  Edit,
   Users,
   DollarSign,
   Mail,
@@ -11,7 +10,10 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
-import { FeaturedOpportunityCard, type FeaturedOpportunityItem } from "../../components/FeaturedOpportunityCard";
+import {
+  FeaturedOpportunityCard,
+  type FeaturedOpportunityItem,
+} from "../../components/FeaturedOpportunityCard";
 import { OpportunityCreator } from "../../components/OpportunityCreator/OpportunityCreator";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
 import { useAuth } from "../../context/useAuth";
@@ -23,7 +25,8 @@ export function CompanyProfileSummary() {
   const { companyProfile, updateCompanyProfile } = useCompanyProfile();
   const { authFetch, user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [featuredOpportunity, setFeaturedOpportunity] = useState<FeaturedOpportunityItem | null>(null);
+  const [featuredOpportunity, setFeaturedOpportunity] =
+    useState<FeaturedOpportunityItem | null>(null);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [featuredError, setFeaturedError] = useState<string | null>(null);
   const [isEditingFeatured, setIsEditingFeatured] = useState(false);
@@ -81,7 +84,9 @@ export function CompanyProfileSummary() {
           jobDescription: savedStep3?.jobInfo?.jobDescription,
           salary: savedStep3?.jobInfo?.salary,
           startDate: savedStep3?.jobInfo?.startDate,
-          contactPersonPhoto: toSafeText(savedStep3?.contactPersonPhoto?.preview),
+          contactPersonPhoto: toSafeText(
+            savedStep3?.contactPersonPhoto?.preview,
+          ),
           contactPerson: toSafeText(savedStep3?.contactInfo?.contactPerson),
           contactRole: toSafeText(savedStep3?.contactInfo?.contactRole),
           contactMessage: toSafeText(savedStep3?.contactInfo?.contactMessage),
@@ -105,11 +110,7 @@ export function CompanyProfileSummary() {
     };
 
     void loadCompanyProfile();
-  }, [
-    authFetch,
-    user?.id,
-    updateCompanyProfile,
-  ]);
+  }, [authFetch, user?.id, updateCompanyProfile]);
 
   async function loadFeatured() {
     try {
@@ -123,7 +124,9 @@ export function CompanyProfileSummary() {
       const data = await res.json();
       setFeaturedOpportunity(data.opportunities?.[0] ?? null);
     } catch (err: unknown) {
-      setFeaturedError(err instanceof Error ? err.message : "Could not load featured item");
+      setFeaturedError(
+        err instanceof Error ? err.message : "Could not load featured item",
+      );
       setFeaturedOpportunity(null);
     } finally {
       setFeaturedLoading(false);
@@ -139,16 +142,21 @@ export function CompanyProfileSummary() {
     try {
       setIsDeletingFeatured(true);
       setFeaturedError(null);
-      const res = await authFetch(`/api/featured-opportunities/${featuredOpportunity.id}`, {
-        method: "DELETE",
-      });
+      const res = await authFetch(
+        `/api/featured-opportunities/${featuredOpportunity.id}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!res.ok) {
         throw new Error("Could not delete featured item");
       }
       setIsEditingFeatured(false);
       await loadFeatured();
     } catch (err: unknown) {
-      setFeaturedError(err instanceof Error ? err.message : "Could not delete featured item");
+      setFeaturedError(
+        err instanceof Error ? err.message : "Could not delete featured item",
+      );
     } finally {
       setIsDeletingFeatured(false);
     }
@@ -520,7 +528,9 @@ export function CompanyProfileSummary() {
                     {companyProfile.startDate && (
                       <div className="flex items-center gap-2 text-gray-400">
                         <Calendar className="w-4 h-4" />
-                        <span className="text-sm">Start: {formattedStartDate}</span>
+                        <span className="text-sm">
+                          Start: {formattedStartDate}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -674,7 +684,7 @@ export function CompanyProfileSummary() {
                   </div>
                 </section>
               )}
-                {featuredLoading ? (
+            {featuredLoading ? (
               <section className="pt-12">
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-white/70">
                   Loading featured opportunity...
@@ -721,7 +731,9 @@ export function CompanyProfileSummary() {
                         title: featuredOpportunity.title,
                         description: featuredOpportunity.description ?? "",
                         deadline: featuredOpportunity.deadline
-                          ? new Date(featuredOpportunity.deadline).toISOString().slice(0, 16)
+                          ? new Date(featuredOpportunity.deadline)
+                              .toISOString()
+                              .slice(0, 16)
                           : "",
                         image_url: featuredOpportunity.image_url,
                         video_url: featuredOpportunity.video_url,
@@ -760,10 +772,12 @@ export function CompanyProfileSummary() {
       <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50">
         <button
           onClick={handleEditProfile}
-          className="flex items-center gap-3 px-8 py-4 bg-gray-500/20 text-white/50 hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-xl shadow-2xl"
+          className="group flex items-center gap-3 px-8 py-4 bg-gray-500/20 text-white/50 hover:text_black hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-xl shadow-2xl"
         >
-          <Edit className="w-5 h-5" />
-          Edit Profile
+          <span className="text-white/50 group-hover:text-black transition-colors duration-300">
+            {/*<Edit className="w-5 h-5" /> */}
+            Edit Profile
+          </span>
         </button>
       </div>
 

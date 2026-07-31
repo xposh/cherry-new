@@ -38,6 +38,14 @@ export function FeaturedOpportunityCard({
   className,
 }: FeaturedOpportunityCardProps) {
   const [videoFailed, setVideoFailed] = useState(false);
+  const safeImageUrl =
+    opportunity.image_url && !opportunity.image_url.startsWith("blob:")
+      ? opportunity.image_url
+      : undefined;
+  const safeVideoUrl =
+    opportunity.video_url && !opportunity.video_url.startsWith("blob:")
+      ? opportunity.video_url
+      : undefined;
 
   return (
     <div
@@ -52,16 +60,16 @@ export function FeaturedOpportunityCard({
       }}
     >
       <div className="absolute inset-0">
-        {opportunity.image_url ? (
+        {safeImageUrl ? (
           <img
-            src={opportunity.image_url}
+            src={safeImageUrl}
             alt={opportunity.title}
             className="absolute inset-0 w-full h-full object-cover filter grayscale"
           />
         ) : (
           <div className="absolute inset-0 bg-neutral-900" />
         )}
-        {opportunity.video_url && !videoFailed ? (
+        {safeVideoUrl && !videoFailed ? (
           <video
             autoPlay
             loop
@@ -69,9 +77,8 @@ export function FeaturedOpportunityCard({
             playsInline
             className="absolute inset-0 w-full h-full object-cover"
             onError={() => setVideoFailed(true)}
-          >
-            <source src={opportunity.video_url} type="video/mp4" />
-          </video>
+            src={safeVideoUrl}
+          />
         ) : null}
       </div>
 

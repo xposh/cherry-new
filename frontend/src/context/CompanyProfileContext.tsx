@@ -82,9 +82,12 @@ export function CompanyProfileProvider({ children }: { children: ReactNode }) {
     socialLinks: [],
   });
 
-  const updateCompanyProfile = useCallback((newData: Partial<CompanyProfileData>) => {
-    setCompanyProfile((prev) => ({ ...prev, ...newData }));
-  }, []);
+  const updateCompanyProfile = useCallback(
+    (newData: Partial<CompanyProfileData>) => {
+      setCompanyProfile((prev) => ({ ...prev, ...newData }));
+    },
+    [],
+  );
 
   return (
     <CompanyProfileContext.Provider

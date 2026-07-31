@@ -69,7 +69,7 @@ export function PrivacySecurityPage() {
     <div className="relative min-h-screen w-full bg-black pb-24 text-white">
       <Logo />
 
-      <div className="max-w-4xl mx-auto px-8 pt-40 pb-8">
+      <div className="max-w-4xl mx-auto pl-16 pr-4 sm:pr-6 md:pr-8 lg:px-8 pt-40 pb-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-12">
           <button

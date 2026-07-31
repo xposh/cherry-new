@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import useLocalStorageState from "use-local-storage-state";
 import { AuthContext, type User, type UserRole } from "./AuthContext";
-import { clearAllKnownSetupDraftsForUser, clearLegacySetupDrafts } from "../util/draftStorage";
+import {
+  clearAllKnownSetupDraftsForUser,
+  clearLegacySetupDrafts,
+} from "../util/draftStorage";
 
 /*Speichert:
 - currentUser (Talent oder Company)

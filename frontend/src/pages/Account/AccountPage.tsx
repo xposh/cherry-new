@@ -91,7 +91,9 @@ export function AccountPage() {
   const isTalent = profileData?.user?.role === "talent";
   const isCompany = profileData?.user?.role === "company";
   const profile: ProfileData["profile"] = isCompany
-    ? (mapCompanyProfileForSummary(profileData?.profile) as ProfileData["profile"])
+    ? (mapCompanyProfileForSummary(
+        profileData?.profile,
+      ) as ProfileData["profile"])
     : profileData?.profile || {};
 
   const profileImage =
@@ -107,19 +109,12 @@ export function AccountPage() {
       <Logo />
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-8 pt-40 pb-8">
+      <div className="max-w-4xl mx-auto px-8 pt-38 md:pt-44 pb-8">
         {error && (
           <div className="mb-6 rounded-xl border border-red-500/50 bg-red-500/10 p-4 text-red-200">
             {error}
           </div>
         )}
-        <div className="flex items-center gap-4 mb-8">
-          <User className="w-8 h-8 text-white" />
-          <h1 className="text-3xl font-light text-white uppercase tracking-widest">
-            Account
-          </h1>
-        </div>
-
         {/* Profile Section */}
         <section className="mb-8">
           <div className="flex items-center gap-6 p-6 border border-white/30">

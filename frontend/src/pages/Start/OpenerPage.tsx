@@ -12,7 +12,7 @@ export function OpenerPage() {
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
       >
-        <source src="/videos/opener-background-final.mp4" type="video/mp4" />
+        <source src="/videos/final-opener.mp4" type="video/mp4" />
         <div className="absolute inset-0 bg-black" />
       </video>
 

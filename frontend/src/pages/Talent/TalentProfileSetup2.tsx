@@ -117,7 +117,10 @@ export function TalentProfileSetup2() {
         setRecognitions(mapped.recognitions as unknown as Recognition[]);
         setJobPreferences(mapped.jobPreferences as typeof jobPreferences);
       } catch (err) {
-        console.error("Failed to hydrate talent setup step 2 from backend:", err);
+        console.error(
+          "Failed to hydrate talent setup step 2 from backend:",
+          err,
+        );
       }
     }
 
