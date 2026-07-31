@@ -73,13 +73,13 @@ export function CherryPicksPage() {
 
                   {/* Name + Location */}
                   <div className="absolute bottom-3 left-0 right-0 p-6 pb-16">
-                    <h3 className="text-[25px] font-light text-[#ff3a85] mb-3 leading-tight">
+                    <h3 className="text-[18px] uppercase tracking-[2px] font-light text-[#f7fdf4] mb-2 leading-tight">
                       {match.name}
                     </h3>
                     {match.location && (
                       <div className="flex items-center gap-1.5 text-white/50 mb-7">
                         <MapPin className="w-3.5 h-3.5" strokeWidth={1.5} />
-                        <span className="text-sm">{match.location}</span>
+                        <span className="text-[9px]">{match.location}</span>
                       </div>
                     )}
                   </div>
@@ -93,7 +93,7 @@ export function CherryPicksPage() {
                       e.preventDefault();
                       navigate(`/messages/start/${match.partnerId}`);
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-1.5 text-sm uppercase tracking-[0.2em] transition-all bg-black/50 text-white/50"
+                    className="w-full flex items-center justify-center gap-2 py-3 text-sm uppercase tracking-[0.2em] transition-all bg-transparent border border-amber-50 text-white/50"
                   >
                     <MessageCircle className="w-4 h-4" strokeWidth={2} />
                     Message

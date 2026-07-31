@@ -243,8 +243,8 @@ export function DiscoverPage() {
 
                 {/* MATCH BADGE */}
                 {profile.is_match_preview && (
-                  <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 backdrop-blur-sm text-[10px] tracking-wider uppercase flex items-center gap-1">
-                    <Cherry className="w-3 h-3 text-[#bde0fe]" />
+                  <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 backdrop-blur-sm text-[8px] tracking-[1.5px] uppercase flex items-center gap-2">
+                    <Cherry className="w-3 h-3 text-[#9e0000]" />
                     Match
                   </div>
                 )}
