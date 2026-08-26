@@ -136,6 +136,12 @@ export function TalentHomePage() {
   const todayInsightIndex = new Date().getDate() % careerInsights.length;
   const todayInsight = careerInsights[todayInsightIndex];
 
+  const handleHandpickedWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    e.currentTarget.scrollLeft += e.deltaY;
+    e.preventDefault();
+  };
+
   // ========================================
   // FETCH DATA FROM BACKEND
   // ========================================
@@ -521,8 +527,17 @@ export function TalentHomePage() {
           </div>
         </div>
 
+        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 z-40">
+          <div className="slide-hint-dots" aria-hidden="true">
+            <span className="slide-hint-dot slide-hint-dot-1" />
+            <span className="slide-hint-dot slide-hint-dot-2" />
+            <span className="slide-hint-dot slide-hint-dot-3" />
+          </div>
+        </div>
+
         <div
-          className="h-full overflow-y-scroll snap-y snap-mandatory"
+          onWheel={handleHandpickedWheel}
+          className="flex h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {opportunities.length > 0 ? (
@@ -532,7 +547,7 @@ export function TalentHomePage() {
                 ref={(el) => {
                   handpickedRefs.current[i] = el;
                 }}
-                className="h-screen w-full relative snap-start group cursor-pointer"
+                className="h-full min-w-full shrink-0 relative snap-start group cursor-pointer"
               >
                 <div className="absolute inset-0 w-full h-full overflow-hidden">
                   <img

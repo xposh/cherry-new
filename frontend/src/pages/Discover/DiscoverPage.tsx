@@ -126,17 +126,19 @@ export function DiscoverPage() {
   return (
     <main className="relative min-h-screen bg-black text-white font-['Helvetica_Neue',sans-serif] overflow-x-hidden">
       {/* HEADER */}
-      <header className="fixed left-0 right-0 z-30 top-22 px-16 md:top-20 md:px-4">
-        <div className="flex h-10 items-center md:hidden">
-          <div className="w-36 shrink-0" aria-hidden="true" />
-          <div className="relative flex-1">
+      <header className="discover-search-header fixed left-0 right-0 z-30 px-4">
+        <div className="discover-search-mobile h-10 -translate-y-0.5">
+          <div
+            className="relative"
+            style={{ marginLeft: "10.5rem", width: "calc(100% - 10.5rem)" }}
+          >
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search for ${targetType === "talent" ? "talents" : "companies"}...`}
-              className="w-full h-12 border border-white/30 bg-transparent pl-12 pr-14 outline-none placeholder:text-white/50 text-white text-base leading-none backdrop-blur-sm"
+              className="w-full h-10 border border-white/30 bg-transparent pl-12 pr-14 outline-none placeholder:text-white/50 text-white text-base leading-none backdrop-blur-sm"
             />
             <button
               onClick={() => setShowFilter(true)}
@@ -147,7 +149,7 @@ export function DiscoverPage() {
           </div>
         </div>
 
-        <div className="hidden md:mx-auto md:block md:w-full md:max-w-3xl">
+        <div className="discover-search-desktop">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
             <input
@@ -177,7 +179,7 @@ export function DiscoverPage() {
           </p>
         </div>
       ) : (
-        <section className="columns-2 md:columns-3 lg:columns-4 gap-0 pt-0 pb-24">
+        <section className="columns-2 md:columns-3 lg:columns-4 gap-0 pt-0 mt-0 pb-24">
           {profiles.map((profile) => {
             const imageSrc = resolveImageUrl(profile.main_image_url || "");
             const isActive = activeProfileId === profile.id;

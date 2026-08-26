@@ -82,7 +82,7 @@ export function FeaturedOpportunityCard({
         ) : null}
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+      <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent" />
       <div className="absolute inset-0 flex items-end">
         <div className="p-16 max-w-3xl">
           <div className="mb-6">

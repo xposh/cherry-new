@@ -61,9 +61,9 @@ export function MessagesPage() {
     <div className="relative min-h-screen w-full bg-black pb-24">
       <Logo />
 
-      <div className="max-w-2xl mx-auto px-6 pt-30 md:pt-40 pb-8">
+      <div className="max-w-2xl mx-auto px-8 pt-30 md:px-6 md:pt-40 pb-8">
         {conversations.length > 0 && (
-          <p className="text-white/40 text-sm mb-12 mt-12 tracking-wide text-center md:text-left">
+          <p className="text-white/40 text-sm mb-12 mt-12 tracking-wide text-left">
             {`${conversations.length} conversation${conversations.length !== 1 ? "s" : ""}`}
           </p>
         )}
@@ -89,7 +89,7 @@ export function MessagesPage() {
               <button
                 key={conv.conversation_id}
                 onClick={() => navigate(`/messages/${conv.conversation_id}`)}
-                className="w-full flex items-center gap-5 py-5 hover:bg-white/[0.03] transition-colors text-left -mx-3 px-3 rounded-lg"
+                className="w-full flex items-center gap-5 py-5 hover:bg-white/[0.03] transition-colors text-left rounded-lg"
               >
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">

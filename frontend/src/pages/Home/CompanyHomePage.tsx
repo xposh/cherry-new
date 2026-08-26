@@ -100,12 +100,16 @@ export function CompanyHomePage() {
     useState<FeaturedOpportunity | null>(null);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [featuredError, setFeaturedError] = useState<string | null>(null);
+  const [isHandpickedHeaderActive, setIsHandpickedHeaderActive] =
+    useState(false);
 
   const [loading, setLoading] = useState(true);
   const sessionIdRef = useRef<number | null>(null); // Keep only one declaration
 
   // Refs
   const handpickedRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const handpickedSectionRef = useRef<HTMLElement | null>(null);
+  const pageScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Greeting
   const hour = new Date().getHours();
@@ -162,6 +166,12 @@ export function CompanyHomePage() {
 
   const todayInsightIndex = new Date().getDate() % careerInsights.length;
   const todayInsight = careerInsights[todayInsightIndex];
+
+  const handleHandpickedWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    e.currentTarget.scrollLeft += e.deltaY;
+    e.preventDefault();
+  };
 
   // ========================================
   // FETCH FEATURED OPPORTUNITY
@@ -347,6 +357,8 @@ export function CompanyHomePage() {
   // INTERSECTION OBSERVER FOR VIDEOS
   // ========================================
   useEffect(() => {
+    if (loading) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -366,7 +378,28 @@ export function CompanyHomePage() {
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [loading]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const rootEl = pageScrollRef.current;
+    const sectionEl = handpickedSectionRef.current;
+    if (!rootEl || !sectionEl) return;
+
+    const updateHeaderState = () => {
+      const triggerPoint = rootEl.scrollTop + rootEl.clientHeight * 0.65;
+      const sectionTop = sectionEl.offsetTop;
+      setIsHandpickedHeaderActive(triggerPoint >= sectionTop);
+    };
+
+    updateHeaderState();
+    rootEl.addEventListener("scroll", updateHeaderState, { passive: true });
+
+    return () => {
+      rootEl.removeEventListener("scroll", updateHeaderState);
+    };
+  }, [loading]);
 
   if (loading) {
     return (
@@ -377,7 +410,10 @@ export function CompanyHomePage() {
   }
 
   return (
-    <div className="relative min-h-screen w-full bg-black overflow-auto pb-24">
+    <div
+      ref={pageScrollRef}
+      className="relative min-h-screen w-full bg-black overflow-auto pb-24"
+    >
       <Logo />
 
       {/* HERO VIDEO SECTION */}
@@ -525,18 +561,25 @@ export function CompanyHomePage() {
       </section>
 
       {/* HANDPICKED TALENTS */}
-      <section className="relative bg-black h-screen w-full overflow-hidden">
+      <section
+        ref={handpickedSectionRef}
+        className="relative bg-black h-screen w-full overflow-hidden"
+      >
         <div className="absolute top-0 left-0 w-full z-30 pointer-events-none">
           <div className="absolute inset-0 h-64 bg-gradient-to-b from-black/90 via-black/40 to-transparent" />
 
           <div className="relative max-w-7xl mx-auto p-8 md:px-12 pt-14 flex items-end justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] mb-3 text-[#FEF6EA]/50">
-                Curated For You
+              <p
+                className="text-xs uppercase tracking-[0.3em] mb-0 transition-colors duration-700 ease-out"
+                style={{
+                  color: isHandpickedHeaderActive
+                    ? "#ffc8dd"
+                    : "rgba(254,246,234,0.5)",
+                }}
+              >
+                Handpicked Talent - Curated For You
               </p>
-              <h2 className="text-5xl font-light tracking-tight text-[#FEF6EA]">
-                Handpicked Talent
-              </h2>
             </div>
             <button className="pointer-events-auto flex items-center gap-2 text-[#FEF6EA]/60 hover:text-[#FEF6EA] transition-colors uppercase tracking-[0.2em] text-sm">
               View All
@@ -545,8 +588,17 @@ export function CompanyHomePage() {
           </div>
         </div>
 
+        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 z-40">
+          <div className="slide-hint-dots" aria-hidden="true">
+            <span className="slide-hint-dot slide-hint-dot-1" />
+            <span className="slide-hint-dot slide-hint-dot-2" />
+            <span className="slide-hint-dot slide-hint-dot-3" />
+          </div>
+        </div>
+
         <div
-          className="h-full overflow-y-scroll snap-y snap-mandatory"
+          onWheel={handleHandpickedWheel}
+          className="flex h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {mockTalents.map((talent, i) => (
@@ -555,7 +607,7 @@ export function CompanyHomePage() {
               ref={(el) => {
                 handpickedRefs.current[i] = el;
               }}
-              className="h-screen w-full relative snap-start group cursor-pointer"
+              className="h-full min-w-full shrink-0 relative snap-start group cursor-pointer"
             >
               <div className="absolute inset-0 w-full h-full overflow-hidden">
                 <img

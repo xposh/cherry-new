@@ -41,7 +41,15 @@ export function CherryPicksPage() {
     <div className="relative min-h-screen w-full bg-black pb-24">
       <Logo />
 
-      <div className="max-w-2xl mx-auto px-6 pt-30 md:pt-40 pb-8">
+      <div className="max-w-2xl mx-auto px-8 pt-32 md:px-6 md:pt-44 pb-8">
+        <div className="mb-8 md:mb-10">
+          <h3 className="text-[12px] tracking-[2px] font-light text-[#f7fdf4] leading-tight">
+            {
+              "I want the MatchCards on the Cherry Picks Page to be displayed in one line and like a carousel. So the Main picture currently viewed is full size and then you can swipe to the next card which will transition into a full size when its on main display. <so the other cards that is not on. main display is on the left or right side of the main cards and not shown fully till person swipes to main view. Can you do that ut make sure my credits are enough to finish the task because my ai credits are empty."
+            }
+          </h3>
+        </div>
+
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
@@ -56,7 +64,7 @@ export function CherryPicksPage() {
               <div key={match.matchId} className="relative group">
                 <Link
                   to={`/match-details/${match.partnerType}/${match.partnerId}`}
-                  className=" relative overflow-hidden aspect-full bg-white/5 "
+                  className="block relative overflow-hidden aspect-[3/4] bg-white/5"
                 >
                   {match.image ? (
                     <img
@@ -72,14 +80,14 @@ export function CherryPicksPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
                   {/* Name + Location */}
-                  <div className="absolute bottom-3 left-0 right-0 p-6 pb-16">
-                    <h3 className="text-[18px] uppercase tracking-[2px] font-light text-[#f7fdf4] mb-2 leading-tight">
+                  <div className="absolute bottom-0 left-0 right-0 p-6 pb-16">
+                    <h3 className="text-2xl font-light text-white mb-1 leading-tight">
                       {match.name}
                     </h3>
                     {match.location && (
-                      <div className="flex items-center gap-1.5 text-white/50 mb-7">
+                      <div className="flex items-center gap-1.5 text-white/60">
                         <MapPin className="w-3.5 h-3.5" strokeWidth={1.5} />
-                        <span className="text-[9px]">{match.location}</span>
+                        <span className="text-sm">{match.location}</span>
                       </div>
                     )}
                   </div>
@@ -87,13 +95,17 @@ export function CherryPicksPage() {
 
                 {/* Ich setze den Chat-Button unten über die Karte, damit man
                     direkt aus der Liste heraus eine Konversation starten kann */}
-                <div className="absolute bottom-3 left-0 right-0 p-4">
+                <div className="absolute bottom-0 left-0 right-0 p-4">
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       navigate(`/messages/start/${match.partnerId}`);
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-3 text-sm uppercase tracking-[0.2em] transition-all bg-transparent border border-amber-50 text-white/50"
+                    className="w-full flex items-center justify-center gap-2 py-3 text-sm uppercase tracking-[0.2em] transition-all"
+                    style={{
+                      backgroundColor: "rgba(255,111,0,0.9)",
+                      color: "#000",
+                    }}
                   >
                     <MessageCircle className="w-4 h-4" strokeWidth={2} />
                     Message
@@ -101,8 +113,8 @@ export function CherryPicksPage() {
                 </div>
 
                 {/* Match-Datum */}
-                <div className="absolute top-7 left-7">
-                  <span className="text-[10px] uppercase tracking-widest text-white bg-black/50 px-2 py-1">
+                <div className="absolute top-3 left-3">
+                  <span className="text-[10px] uppercase tracking-widest text-white/40 bg-black/50 px-2 py-1">
                     {new Date(match.matchedAt).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",

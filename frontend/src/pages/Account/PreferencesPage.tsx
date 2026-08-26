@@ -184,7 +184,7 @@ export function PreferencesPage() {
             {/* Feld 5: Push Notifications */}
             <div className="flex items-center justify-between p-6 border border-white/30 bg-transparent">
               <div className="flex items-start gap-4">
-                <Bell className="w-5 h-5 text-white mt-1 flex-shrink-0" />
+                <Bell className="w-5 h-5 text-white mt-1 shrink-0" />
                 <div>
                   <p className="font-normal text-lg tracking-wide text-white">
                     Push Notifications
