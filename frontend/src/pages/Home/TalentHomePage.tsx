@@ -76,7 +76,7 @@ export function TalentHomePage() {
   const [screenTime, setScreenTime] = useState<ScreenTime>({
     totalMinutes: 0,
     status: "Perfect Balance",
-    color: "#FF6F00", // ✅ FARB-FIX: war #00FF88, jetzt Marken-Akzentfarbe als Initialwert vor dem Laden
+    color: "#D2C4AA",
     remainingHealthyMinutes: 60,
   });
   const [profileViews, setProfileViews] = useState<ProfileViewsData>({
@@ -96,12 +96,17 @@ export function TalentHomePage() {
     useState<FeaturedOpportunity | null>(null);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [featuredError, setFeaturedError] = useState<string | null>(null);
+  const [isHandpickedHeaderActive, setIsHandpickedHeaderActive] =
+    useState(false);
 
   const sessionIdRef = useRef<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Refs
   const handpickedRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const handpickedSectionRef = useRef<HTMLElement | null>(null);
+  const handpickedScrollRef = useRef<HTMLDivElement | null>(null);
+  const pageScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Greeting
   const hour = new Date().getHours();
@@ -136,10 +141,33 @@ export function TalentHomePage() {
   const todayInsightIndex = new Date().getDate() % careerInsights.length;
   const todayInsight = careerInsights[todayInsightIndex];
 
+  const pickFeaturedForViewer = (
+    opportunities: FeaturedOpportunity[],
+    viewerRole: "talent" | "company",
+  ): FeaturedOpportunity | null => {
+    if (!Array.isArray(opportunities) || opportunities.length === 0) return null;
+
+    const targetOwnerRole = viewerRole === "talent" ? "company" : "talent";
+    const roleFiltered = opportunities.filter(
+      (opp) => opp.owner_role === targetOwnerRole,
+    );
+
+    if (roleFiltered.length === 0) return null;
+
+    const idx = Math.floor(Math.random() * roleFiltered.length);
+    return roleFiltered[idx] ?? null;
+  };
+
   const handleHandpickedWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
     e.currentTarget.scrollLeft += e.deltaY;
     e.preventDefault();
+  };
+
+  const scrollHandpickedNext = () => {
+    const el = handpickedScrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: el.clientWidth, behavior: "smooth" });
   };
 
   // ========================================
@@ -258,18 +286,47 @@ export function TalentHomePage() {
 
     async function loadFeaturedOpportunity() {
       try {
+        if (!user?.id) {
+          setFeaturedOpportunity(null);
+          setFeaturedError(null);
+          setFeaturedLoading(false);
+          return;
+        }
+
         setFeaturedLoading(true);
         setFeaturedError(null);
 
-        const res = await authFetch("/api/featured-opportunities/feed");
+        let res = await authFetch("/api/featured-opportunities/feed");
+        if (res.status === 404) {
+          // Fallback when Vite /api proxy is not active.
+          res = await authFetch("http://localhost:3000/featured-opportunities/feed");
+        }
         if (!res.ok) {
-          throw new Error("Failed to load featured opportunity");
+          let errorMessage = "Failed to load featured opportunity";
+          try {
+            const payload = await res.json();
+            if (typeof payload?.detail === "string" && payload.detail.trim()) {
+              errorMessage = payload.detail;
+            } else if (
+              typeof payload?.error === "string" &&
+              payload.error.trim()
+            ) {
+              errorMessage = payload.error;
+            } else if (typeof payload?.msg === "string" && payload.msg.trim()) {
+              errorMessage = payload.msg;
+            }
+          } catch {
+            // Ignore JSON parse errors and keep default message.
+          }
+          throw new Error(errorMessage);
         }
 
         const data = await res.json();
         if (!isMounted) return;
 
-        setFeaturedOpportunity(data.opportunities?.[0] ?? null);
+        const viewerRole = user?.role === "talent" ? "talent" : "company";
+        const picked = pickFeaturedForViewer(data.opportunities ?? [], viewerRole);
+        setFeaturedOpportunity(picked);
       } catch (err: unknown) {
         if (!isMounted) return;
         setFeaturedError(
@@ -279,7 +336,7 @@ export function TalentHomePage() {
         );
         setFeaturedOpportunity(null);
       } finally {
-        if (!isMounted) setFeaturedLoading(false);
+        if (isMounted) setFeaturedLoading(false);
       }
     }
 
@@ -287,7 +344,7 @@ export function TalentHomePage() {
     return () => {
       isMounted = false;
     };
-  }, [authFetch]);
+  }, [authFetch, user?.id, user?.role]);
 
   // ========================================
   // SCREEN TIME TRACKING
@@ -350,6 +407,27 @@ export function TalentHomePage() {
     return () => observer.disconnect();
   }, [opportunities]);
 
+  useEffect(() => {
+    if (loading) return;
+
+    const rootEl = pageScrollRef.current;
+    const sectionEl = handpickedSectionRef.current;
+    if (!rootEl || !sectionEl) return;
+
+    const updateHeaderState = () => {
+      const triggerPoint = rootEl.scrollTop + rootEl.clientHeight * 0.65;
+      const sectionTop = sectionEl.offsetTop;
+      setIsHandpickedHeaderActive(triggerPoint >= sectionTop);
+    };
+
+    updateHeaderState();
+    rootEl.addEventListener("scroll", updateHeaderState, { passive: true });
+
+    return () => {
+      rootEl.removeEventListener("scroll", updateHeaderState);
+    };
+  }, [loading]);
+
   if (loading) {
     return (
       <div className="min-h-screen w-full bg-black flex items-center justify-center">
@@ -359,7 +437,10 @@ export function TalentHomePage() {
   }
 
   return (
-    <div className="relative min-h-screen w-full bg-black overflow-auto pb-24">
+    <div
+      ref={pageScrollRef}
+      className="relative min-h-screen w-full bg-black overflow-auto pb-24"
+    >
       <Logo />
 
       {/* HERO VIDEO SECTION */}
@@ -507,35 +588,41 @@ export function TalentHomePage() {
       </section>
 
       {/* HANDPICKED OPPORTUNITIES */}
-      <section className="relative bg-black h-screen w-full overflow-hidden">
+      <section
+        ref={handpickedSectionRef}
+        className="relative bg-black h-screen w-full overflow-hidden"
+      >
         <div className="absolute top-0 left-0 w-full z-30 pointer-events-none">
           <div className="absolute inset-0 h-64 bg-gradient-to-b from-black/90 via-black/40 to-transparent" />
 
-          <div className="relative max-w-7xl mx-auto p-8 md:px-12 pt-14 flex items-end justify-between">
+          <div className="relative max-w-7xl mx-auto p-8 md:px-12 pt-14 flex items-end">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] mb-3 text-[#FEF6EA]/50">
-                Curated For You
+              <p
+                className="text-xs uppercase tracking-[0.3em] mb-0 transition-colors duration-700 ease-out"
+                style={{
+                  color: isHandpickedHeaderActive
+                    ? "#ffc8dd"
+                    : "rgba(254,246,234,0.5)",
+                }}
+              >
+                Handpicked Opportunities - Curated For You
               </p>
-              <h2 className="text-5xl font-light tracking-tight text-[#FEF6EA]">
-                Handpicked Opportunities
-              </h2>
             </div>
-            <button className="pointer-events-auto flex items-center gap-2 text-[#FEF6EA]/60 hover:text-[#FEF6EA] transition-colors uppercase tracking-[0.2em] text-sm">
-              View All
-              <ArrowRight className="w-4 h-4" strokeWidth={1} />
-            </button>
           </div>
         </div>
 
-        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 z-40">
-          <div className="slide-hint-dots" aria-hidden="true">
-            <span className="slide-hint-dot slide-hint-dot-1" />
-            <span className="slide-hint-dot slide-hint-dot-2" />
-            <span className="slide-hint-dot slide-hint-dot-3" />
-          </div>
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 z-40 pointer-events-none">
+          <button
+            onClick={scrollHandpickedNext}
+            className="pointer-events-auto flex items-center gap-2 text-[#ffc8dd] hover:text-[#ffe3ef] transition-colors uppercase tracking-[0.2em] text-sm"
+          >
+            View More
+            <ArrowRight className="w-4 h-4" strokeWidth={1} />
+          </button>
         </div>
 
         <div
+          ref={handpickedScrollRef}
           onWheel={handleHandpickedWheel}
           className="flex h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
@@ -571,18 +658,18 @@ export function TalentHomePage() {
                     </video>
                   )}
 
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-black/55 group-hover:bg-black/70 transition-all duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent pointer-events-none" />
                 </div>
 
                 <div className="relative z-10 h-full flex flex-col justify-end p-8 pb-32 max-w-7xl mx-auto w-full">
-                  <h3 className="text-2xl font-light mb-2 tracking-tight text-[#FEF6EA]">
+                  <h3 className="text-2xl font-light mb-2 tracking-tight text-[#ffc8dd]">
                     {opp.company_name}
                   </h3>
-                  <p className="text-sm mb-1 text-[#FEF6EA]/60">
+                  <p className="text-sm mb-1 text-[#ffc8dd]/80">
                     {opp.company_city}, {opp.company_country}
                   </p>
-                  <p className="text-xs uppercase tracking-[0.2em] text-[#FEF6EA]/40">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#ffc8dd]/65">
                     {opp.job_role}
                   </p>
                 </div>
@@ -590,7 +677,7 @@ export function TalentHomePage() {
             ))
           ) : (
             <div className="h-screen flex items-center justify-center">
-              <p className="text-[#FEF6EA]/50">
+              <p className="text-[#ffc8dd]/70">
                 No opportunities available yet
               </p>
             </div>
@@ -610,48 +697,47 @@ export function TalentHomePage() {
       />
 
       {/* AI CAREER SUGGESTIONS */}
-      <section className="py-20 px-8 relative overflow-hidden border-t border-white/5">
+      <section className="py-20 px-8 relative overflow-hidden border-t border-black/10 bg-white">
         <div
           className="absolute inset-0"
           style={{
-            background:
-              "linear-gradient(135deg, rgba(255, 111, 0, 0.15) 0%, rgba(184, 107, 25, 0.08) 100%)",
+            background: "#FFFFFF",
           }}
         />
         <div className="max-w-4xl mx-auto relative z-10">
           <div className="flex items-start gap-6">
             <div
-              className="text-5xl flex-shrink-0"
+              className="text-5xl shrink-0"
               style={{
-                filter: "drop-shadow(0 0 10px rgba(255, 111, 0, 0.5))",
+                filter: "drop-shadow(0 0 10px rgba(11, 31, 58, 0.18))",
               }}
             >
               {todayInsight.icon}
             </div>
-            <div className="flex-grow">
+            <div className="grow">
               <p
                 className="text-xs uppercase tracking-[0.3em] mb-3"
-                style={{ color: "rgba(254,246,234,0.5)" }}
+                style={{ color: "rgba(0,0,0,0.55)" }}
               >
                 AI Career Insight
               </p>
               <h3
                 className="text-3xl font-light mb-4"
-                style={{ color: "#FEF6EA" }}
+                style={{ color: "#0A0A0A" }}
               >
                 {todayInsight.title}
               </h3>
               <p
                 className="text-lg font-light mb-6"
-                style={{ color: "rgba(254,246,234,0.7)" }}
+                style={{ color: "rgba(0,0,0,0.72)" }}
               >
                 {todayInsight.description}
               </p>
               <button
                 className="group flex items-center gap-3 uppercase tracking-[0.2em] text-sm font-medium hover:gap-4 transition-all"
                 style={{
-                  color: "#FF6F00",
-                  textShadow: "0 0 10px rgba(255, 111, 0, 0.3)",
+                  color: "#0B1F3A",
+                  textShadow: "0 0 10px rgba(11, 31, 58, 0.18)",
                 }}
               >
                 {todayInsight.action}

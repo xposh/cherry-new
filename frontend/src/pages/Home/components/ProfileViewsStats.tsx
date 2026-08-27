@@ -31,8 +31,8 @@ export function ProfileViewsStats({
           <p
             className="text-sm mt-1"
             style={{
-              color: "#BC4E4E",
-              textShadow: "0 0 10px rgba(188, 78, 78, 0.3)",
+              color: "#B89C72",
+              textShadow: "0 0 10px rgba(184, 156, 114, 0.3)",
             }}
           >
             ↗ +{increase} this week

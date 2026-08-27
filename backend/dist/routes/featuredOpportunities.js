@@ -11,28 +11,41 @@ const router = (0, express_1.Router)();
 // Curator feed: active opportunities from OTHER users (not the authenticated user).
 router.get("/feed", authMiddleware_1.requireAuth, async (req, res) => {
     const ownerId = req.auth.userId;
+    const viewerRole = req.auth.role;
+    const targetOwnerRole = viewerRole === "talent"
+        ? "company"
+        : viewerRole === "company"
+            ? "talent"
+            : null;
+    if (!targetOwnerRole) {
+        return res.json({ opportunities: [] });
+    }
     try {
         const opportunities = await (0, db_1.default) `
       SELECT
-        id,
-        owner_id,
-        owner_role,
-        title,
-        description,
-        image_url,
-        video_url,
-        deadline,
-        is_active,
-        deleted_at,
-        created_at,
-        updated_at,
-        EXTRACT(EPOCH FROM deadline - now())::int AS time_remaining_seconds
+        featured_opportunities.id,
+        featured_opportunities.owner_id,
+        COALESCE(featured_opportunities.owner_role::text, u.role::text) AS owner_role,
+        featured_opportunities.title,
+        featured_opportunities.description,
+        featured_opportunities.image_url,
+        featured_opportunities.video_url,
+        featured_opportunities.deadline,
+        featured_opportunities.is_active,
+        featured_opportunities.deleted_at,
+        featured_opportunities.created_at,
+        featured_opportunities.updated_at,
+        EXTRACT(EPOCH FROM featured_opportunities.deadline - now())::int AS time_remaining_seconds
       FROM featured_opportunities
-      WHERE owner_id <> ${ownerId}::uuid
-        AND is_active = true
-        AND deleted_at IS NULL
-        AND deadline > now()
-      ORDER BY deadline ASC, updated_at DESC
+      JOIN users u ON u.id = featured_opportunities.owner_id
+      WHERE featured_opportunities.owner_id <> ${ownerId}::uuid
+        AND featured_opportunities.is_active = true
+        AND featured_opportunities.deleted_at IS NULL
+        AND COALESCE(featured_opportunities.owner_role::text, u.role::text) = ${targetOwnerRole}
+      ORDER BY
+        CASE WHEN featured_opportunities.deadline > now() THEN 0 ELSE 1 END,
+        featured_opportunities.updated_at DESC,
+        featured_opportunities.deadline ASC
       LIMIT 20
     `;
         return res.json({ opportunities });

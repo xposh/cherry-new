@@ -109,7 +109,7 @@ export function MessagesPage() {
                   {conv.unread_count > 0 && (
                     <div
                       className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium text-black"
-                      style={{ backgroundColor: "#FF6F00" }}
+                      style={{ backgroundColor: "#D8CBB3" }}
                     >
                       {conv.unread_count > 9 ? "9+" : conv.unread_count}
                     </div>

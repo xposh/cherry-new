@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cherry Tech Stack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #000;
+        --card: #0a0a0a;
+        --line: #252525;
+        --text: #f4f4f4;
+        --muted: #b9b9b9;
+        --brand: #ffc8dd;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Manrope", sans-serif;
+      }
+
+      .canvas {
+        width: 1920px;
+        height: 1080px;
+        margin: 0 auto;
+        padding: 52px 64px;
+        background: #000;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .logo {
+        position: absolute;
+        top: 56px;
+        left: 64px;
+        color: var(--brand);
+        font-weight: 800;
+        letter-spacing: 0.3em;
+        font-size: 34px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .logo .cherry {
+        font-size: 30px;
+        transform: translateY(-2px);
+      }
+
+      .title {
+        margin: 20px 0 40px;
+        text-align: center;
+        font-size: 72px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 26px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 26px;
+        min-height: 820px;
+      }
+
+      .card h2 {
+        margin: 0;
+        font-size: 44px;
+        font-weight: 700;
+      }
+
+      .rule {
+        margin: 12px 0 22px;
+        border-top: 2px dashed #6d4b57;
+      }
+
+      .item {
+        display: grid;
+        grid-template-columns: 42px 1fr;
+        gap: 14px;
+        margin-bottom: 20px;
+        align-items: start;
+      }
+
+      .item img {
+        width: 32px;
+        height: 32px;
+        margin-top: 2px;
+      }
+
+      .name {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.15;
+      }
+
+      .use {
+        margin-top: 4px;
+        font-size: 20px;
+        color: var(--muted);
+        line-height: 1.32;
+      }
+
+      .source {
+        position: absolute;
+        left: 64px;
+        bottom: 24px;
+        color: #7f7f7f;
+        font-size: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="canvas">
+      <div class="logo">CHE <span class="cherry">🍒</span> Y</div>
+      <h1 class="title">Tech Stack</h1>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Frontend</h2>
+          <div class="rule"></div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/react/61DAFB" alt="React" />
+            <div>
+              <div class="name">React</div>
+              <div class="use">Builds all app UI components and page structure.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/typescript/3178C6" alt="TypeScript" />
+            <div>
+              <div class="name">TypeScript</div>
+              <div class="use">Strong typing across frontend and backend code.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/tailwindcss/06B6D4" alt="Tailwind CSS" />
+            <div>
+              <div class="name">Tailwind CSS</div>
+              <div class="use">Utility classes for styling and layout.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/reactrouter/CA4245" alt="React Router" />
+            <div>
+              <div class="name">React Router</div>
+              <div class="use">Client-side navigation and protected routes.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/vite/646CFF" alt="Vite" />
+            <div>
+              <div class="name">Vite</div>
+              <div class="use">Dev server and production build tool.</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Backend API</h2>
+          <div class="rule"></div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/nodedotjs/5FA04E" alt="Node.js" />
+            <div>
+              <div class="name">Node.js</div>
+              <div class="use">Runs server-side business logic.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/express/ffffff" alt="Express" />
+            <div>
+              <div class="name">Express</div>
+              <div class="use">REST endpoints, middleware and routing.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/jsonwebtokens/ffffff" alt="JWT" />
+            <div>
+              <div class="name">JWT</div>
+              <div class="use">Authentication tokens for protected API calls.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/nodedotjs/5FA04E" alt="bcrypt" />
+            <div>
+              <div class="name">bcrypt</div>
+              <div class="use">Secure password hashing for user accounts.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/nodedotjs/5FA04E" alt="node-cron" />
+            <div>
+              <div class="name">node-cron</div>
+              <div class="use">Scheduled hourly analytics and scoring jobs.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/dotenv/ECD53F" alt="dotenv" />
+            <div>
+              <div class="name">dotenv</div>
+              <div class="use">Loads JWT, DB and service environment variables.</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Data & Cloud</h2>
+          <div class="rule"></div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/postgresql/4169E1" alt="PostgreSQL" />
+            <div>
+              <div class="name">PostgreSQL</div>
+              <div class="use">Main relational database for app data.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/postgresql/4169E1" alt="postgres.js" />
+            <div>
+              <div class="name">postgres.js</div>
+              <div class="use">SQL client used in backend DB layer.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/supabase/3ECF8E" alt="Supabase" />
+            <div>
+              <div class="name">Supabase Storage</div>
+              <div class="use">Uploads and serves profile/media files.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/postgresql/336791" alt="pgAdmin 4" />
+            <div>
+              <div class="name">pgAdmin 4</div>
+              <div class="use">Manual SQL execution and DB administration.</div>
+            </div>
+          </div>
+
+          <div class="item">
+            <img src="https://cdn.simpleicons.org/npm/CB3837" alt="npm" />
+            <div>
+              <div class="name">npm</div>
+              <div class="use">Runs all build/dev scripts in the project.</div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <div class="source">
+        Source: cherry-new package.json, Vite config, routes, DB util and SQL scripts
+      </div>
+    </main>
+  </body>
+</html>

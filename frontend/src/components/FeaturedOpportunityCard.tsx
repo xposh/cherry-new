@@ -89,9 +89,9 @@ export function FeaturedOpportunityCard({
             <span
               className="inline-block px-4 py-1 border text-xs uppercase tracking-[0.3em] mb-4"
               style={{
-                borderColor: "#FF6F00",
-                color: "#FF6F00",
-                boxShadow: "0 0 15px rgba(255, 111, 0, 0.3)",
+                borderColor: "#D2C4AA",
+                color: "#D2C4AA",
+                boxShadow: "0 0 15px rgba(210, 196, 170, 0.35)",
               }}
             >
               Featured Opportunity

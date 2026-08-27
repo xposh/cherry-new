@@ -221,6 +221,7 @@ router.post(
   requireAuth,
   async (req: Request, res: Response) => {
     const userId = req.auth!.userId!;
+    const role = req.auth!.role!;
     const conversationId = req.params.id as string;
     const { content } = req.body as { content: string };
 
@@ -230,7 +231,7 @@ router.post(
 
     try {
       const [conv] = await sql`
-        SELECT c.id FROM conversations c
+        SELECT c.id, m.id AS match_id, m.created_at AS match_created_at FROM conversations c
         JOIN matches m ON m.id = c.match_id
         WHERE c.id = ${conversationId}::uuid
           AND (m.talent_id = ${userId}::uuid OR m.company_id = ${userId}::uuid)
@@ -246,6 +247,27 @@ router.post(
         INSERT INTO messages (conversation_id, sender_id, message_text)
         VALUES (${conversationId}::uuid, ${userId}::uuid, ${content.trim()})
         RETURNING id, sender_id, message_text AS content, (read_at IS NOT NULL) AS is_read, created_at
+      `;
+
+      const respondedField = role === "talent" ? "talent_responded" : "company_responded";
+      const responseTimeField =
+        role === "talent" ? "talent_response_time_hours" : "company_response_time_hours";
+
+      await sql`
+        UPDATE matches
+        SET
+          ${sql(respondedField)} = TRUE,
+          ${sql(responseTimeField)} = COALESCE(
+            ${sql(responseTimeField)},
+            GREATEST(
+              0,
+              FLOOR(EXTRACT(EPOCH FROM (NOW() - ${conv.match_created_at})) / 3600)::int
+            )
+          ),
+          last_message_from = ${userId}::uuid,
+          last_message_at = NOW(),
+          updated_at = NOW()
+        WHERE id = ${conv.match_id}
       `;
 
       return res.status(201).json({ message: { ...message, is_own: true } });

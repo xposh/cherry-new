@@ -105,7 +105,7 @@ export function SignUpPage() {
             >
               <div>
                 <h3 className="text-base text-white">Ich suche einen Job</h3>
-                <p className="text-xs text-[#6f6f6f]">Arbeitnehmer</p>
+                <p className="text-xs text-[#6f6f6f]">Talent</p>
               </div>
               <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
                 {selectedRole === "talent" && (
@@ -121,7 +121,7 @@ export function SignUpPage() {
             >
               <div>
                 <h3 className="text-base text-white">Ich möchte einstellen</h3>
-                <p className="text-xs text-[#6f6f6f]">Arbeitgeber</p>
+                <p className="text-xs text-[#6f6f6f]">Company</p>
               </div>
               <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
                 {selectedRole === "company" && (

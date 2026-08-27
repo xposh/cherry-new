@@ -6,6 +6,8 @@ export type User = {
   id: string;
   email: string;
   role: UserRole;
+  isPremium?: boolean;
+  membershipTier?: "free" | "premium" | string;
 };
 
 interface AuthContextType {

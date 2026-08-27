@@ -35,7 +35,9 @@ function mergeProfileData(current, incoming) {
             continue;
         }
         if (typeof incomingValue === "string") {
-            if (incomingValue.trim() === "" && typeof currentValue === "string" && currentValue.trim() !== "") {
+            if (incomingValue.trim() === "" &&
+                typeof currentValue === "string" &&
+                currentValue.trim() !== "") {
                 continue;
             }
             merged[key] = incomingValue;

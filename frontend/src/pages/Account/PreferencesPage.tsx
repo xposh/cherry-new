@@ -24,6 +24,17 @@ export function PreferencesPage() {
   const [showEvents, setShowEvents] = useState(true);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [travelMode, setTravelMode] = useState(false);
+  const [isPremiumMember, setIsPremiumMember] = useState(
+    localStorage.getItem("isPremium") === "true" ||
+      localStorage.getItem("membershipTier") === "premium",
+  );
+
+  const toggleMembership = () => {
+    const next = !isPremiumMember;
+    setIsPremiumMember(next);
+    localStorage.setItem("isPremium", String(next));
+    localStorage.setItem("membershipTier", next ? "premium" : "free");
+  };
 
   return (
     <div className="relative min-h-screen w-full bg-black pb-24 text-white">
@@ -211,23 +222,41 @@ export function PreferencesPage() {
               </button>
             </div>
 
-            {/* Feld 6: Zahlungen */}
-            <button className="w-full flex items-center justify-between p-6 border border-white/30 bg-transparent hover:border-white transition-all text-left">
-              <div className="flex items-start gap-4">
-                <CreditCard className="w-5 h-5 text-white mt-1 flex-shrink-0" />
-                <div>
-                  <p className="font-normal text-lg tracking-wide text-white">
-                    Payment & Membership
-                  </p>
-                  <p className="text-sm text-gray-400 font-light mt-1">
-                    Manage your premium features, billing history, and invoices.
-                  </p>
+            {/* Feld 6: Membership (payment later) */}
+            <div className="w-full p-6 border border-white/30 bg-transparent">
+              <div className="flex items-center justify-between gap-6">
+                <div className="flex items-start gap-4">
+                  <CreditCard className="w-5 h-5 text-white mt-1 shrink-0" />
+                  <div>
+                    <p className="font-normal text-lg tracking-wide text-white">
+                      Payment & Membership
+                    </p>
+                    <p className="text-sm text-gray-400 font-light mt-1">
+                      Membership can already be switched here. Payment flow will
+                      be connected later.
+                    </p>
+                    <p className="text-xs uppercase tracking-[0.2em] mt-3 text-[#ffc8dd]">
+                      Plan: {isPremiumMember ? "Premium" : "Free"}
+                    </p>
+                  </div>
                 </div>
+
+                <button
+                  onClick={toggleMembership}
+                  className={`w-14 h-8 rounded-full border border-white/20 p-1 transition-all duration-300 ease-in-out ${
+                    isPremiumMember
+                      ? "bg-[#ffc8dd] border-[#ffc8dd]"
+                      : "bg-neutral-800"
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full bg-white shadow-md transition-all duration-300 ease-in-out ${
+                      isPremiumMember ? "translate-x-6" : "translate-x-0"
+                    }`}
+                  />
+                </button>
               </div>
-              <span className="text-white font-normal text-sm tracking-wider">
-                Manage →
-              </span>
-            </button>
+            </div>
           </div>
         </section>
       </div>

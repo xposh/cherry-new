@@ -19,10 +19,10 @@ export function EngagementHeatmap({ heatmap }: EngagementHeatmapProps) {
               className="aspect-square rounded transition-all hover:scale-110"
               style={{
                 backgroundColor: day.isActive
-                  ? "#FF6F00"
+                  ? "#B89C72"
                   : "rgba(209, 180, 140, 0.12)",
                 boxShadow: day.isActive
-                  ? "0 0 8px rgba(255, 111, 0, 0.3)"
+                  ? "0 0 8px rgba(184, 156, 114, 0.38)"
                   : "none",
               }}
               title={day.date}

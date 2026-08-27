@@ -59,15 +59,28 @@ export async function calculateMatchReadinessScore(
     let engagementScore = 0;
 
     const matchField = userRole === "talent" ? "talent_id" : "company_id";
-    const respondedField =
-      userRole === "talent" ? "talent_responded" : "company_responded";
-
     const responseResult = await sql`
       SELECT
-        COUNT(*) FILTER (WHERE ${sql(respondedField)} = TRUE) as responded,
+        COUNT(*) FILTER (
+          WHERE (
+            EXISTS (
+              SELECT 1
+              FROM conversations c
+              JOIN messages msg ON msg.conversation_id = c.id
+              WHERE c.match_id = m.id
+              AND msg.sender_id = ${userId}::uuid
+            )
+            OR (
+              CASE
+                WHEN ${userRole} = 'talent' THEN m.talent_responded
+                ELSE m.company_responded
+              END
+            ) = TRUE
+          )
+        ) as responded,
         COUNT(*) as total
-      FROM matches
-      WHERE ${sql(matchField)} = ${userId} AND status = 'accepted'
+      FROM matches m
+      WHERE m.${sql(matchField)} = ${userId} AND m.status = 'accepted'
     `;
 
     const responded = parseInt(responseResult[0].responded);

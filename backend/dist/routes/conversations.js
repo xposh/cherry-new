@@ -200,6 +200,7 @@ router.get("/:id/messages", authMiddleware_1.requireAuth, async (req, res) => {
 // ─── POST /conversations/:id/messages ────────────────────────────────────────
 router.post("/:id/messages", authMiddleware_1.requireAuth, async (req, res) => {
     const userId = req.auth.userId;
+    const role = req.auth.role;
     const conversationId = req.params.id;
     const { content } = req.body;
     if (!content?.trim()) {
@@ -207,7 +208,7 @@ router.post("/:id/messages", authMiddleware_1.requireAuth, async (req, res) => {
     }
     try {
         const [conv] = await (0, db_1.default) `
-        SELECT c.id FROM conversations c
+        SELECT c.id, m.id AS match_id, m.created_at AS match_created_at FROM conversations c
         JOIN matches m ON m.id = c.match_id
         WHERE c.id = ${conversationId}::uuid
           AND (m.talent_id = ${userId}::uuid OR m.company_id = ${userId}::uuid)
@@ -221,6 +222,24 @@ router.post("/:id/messages", authMiddleware_1.requireAuth, async (req, res) => {
         INSERT INTO messages (conversation_id, sender_id, message_text)
         VALUES (${conversationId}::uuid, ${userId}::uuid, ${content.trim()})
         RETURNING id, sender_id, message_text AS content, (read_at IS NOT NULL) AS is_read, created_at
+      `;
+        const respondedField = role === "talent" ? "talent_responded" : "company_responded";
+        const responseTimeField = role === "talent" ? "talent_response_time_hours" : "company_response_time_hours";
+        await (0, db_1.default) `
+        UPDATE matches
+        SET
+          ${(0, db_1.default)(respondedField)} = TRUE,
+          ${(0, db_1.default)(responseTimeField)} = COALESCE(
+            ${(0, db_1.default)(responseTimeField)},
+            GREATEST(
+              0,
+              FLOOR(EXTRACT(EPOCH FROM (NOW() - ${conv.match_created_at})) / 3600)::int
+            )
+          ),
+          last_message_from = ${userId}::uuid,
+          last_message_at = NOW(),
+          updated_at = NOW()
+        WHERE id = ${conv.match_id}
       `;
         return res.status(201).json({ message: { ...message, is_own: true } });
     }

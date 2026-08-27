@@ -1,19 +1,133 @@
-# 21.05.26
+# Handpicked Activation Plan (Live, nicht mehr Mock)
 
-## Fix: POST /profile soll userId aus token nutzen und NICHT aus body
+## Zielbild
+- Handpicked ist ein kuratierter Feed mit Match-Logik (nicht nur Discover-Liste).
+- Talent sieht Companies, Company sieht Talente.
+- Nur Vorschlaege mit Match Score > 85% kommen in Handpicked.
+- Discover bleibt breite Exploration, Handpicked bleibt Premium-Ranking.
 
-- POST /profile kann momentan von jedem aufgerufen werden, es kann ein Profil mit einer beliebigen userId gespeichert werden.
-- Verwende die Middleware `requireAuth`, damit die Route nur von eingeloggten Usern aufgerufen werden kann
-- Verwende dann statt `user_id` aus dem Body, die userId, die `requireAuth` in den Request schreibt!
-- Das Frontend verwendet momentan `fetch` (in `TalentProfileSetup3.tsx`) um den Request zu schicken, hierbei wird aber kein Token mitgeschickt! Verwende stattdessen `authFetch` aus dem AuthContext. Es kann genauso wie fetch verwendet werden, schickt aber im Hintergrund automatisch das Token mit.
-- Wenn das funktioniert, solltest Du `user_id` auch im Frontend komplett aus dem Body rausnehmen.
+## Aktueller Stand (Ist)
+- Talent Home zieht Handpicked derzeit aus `/analytics/handpicked-opportunities`.
+- Company Home nutzt jetzt ebenfalls den Live-Endpoint.
+- Route liefert maximal 3 Vorschlaege fuer beide Rollen (Go-Live Modus).
 
-## Registration Flow für Companies
+## Produkt-Logik (MVP jetzt)
+- Score setzt sich aus regelbasierten Signalen zusammen:
+	- Profil-Fit (Skills/Role Ueberschneidung)
+	- Location-Fit
+	- Readiness/Freshness (aus `user_analytics`)
+	- Aktivitaet/Response-Zuverlaessigkeit
+- Aktuell: fuer Go-Live wird bei zu wenig Daten ein Fallback genutzt, damit nie leer bleibt.
+- Zielzustand: nur Kandidaten mit `score >= 85` (strict mode).
+- Sortierung: `score DESC`, dann `freshness DESC`.
 
-- company_profiles Tabelle erstellen (Vorher in create-db.sql das entsprechende CREATE TABLE statement erstellen und dann das create-db.sql script ausführen (z.B. in pgadmin) um zu testen, ob die Tabelle korrekt erstellt wurde!)
+## Future Adjustments fuer echtes 85% Handpicked
+- [ ] Strict 85 Mode als Feature Flag (`HANDPICKED_STRICT_85=true`) einfuehren.
+- [ ] Fallback komplett entfernen, sobald genug Daten vorhanden sind.
+- [ ] Mindest-Profilkriterien definieren (z. B. Skills + Location + Rolle), bevor Kandidaten gerankt werden.
+- [ ] Score-Breakdown persistieren (`score_breakdown`) fuer Transparenz/Debugging.
+- [ ] Quality Gate: Wenn weniger als 3 Kandidaten >=85 vorhanden sind, kontrollierten Empty-State zeigen statt niedrigere Scores.
+- [ ] Monitoring-Alarm, wenn Anteil `>=85` dauerhaft unter Zielwert liegt.
+- [ ] Explainability-Gruende je Karte im UI anzeigen (warum dieser Match >85 ist).
 
-- POST /profile anpassen: Wenn ich als `company` angemeldet bin, muss das INSERT statement in `company_profiles` erfolgen, ansonsten wie bisher in `talent_profiles`
+## Datenmodell / DB Tasks
+- Neue Tabelle: `handpicked_recommendations`
+	- `id`
+	- `viewer_user_id` (wer sieht die Empfehlung)
+	- `candidate_user_id` (wer wird empfohlen)
+	- `viewer_role` / `candidate_role`
+	- `score` (0-100)
+	- `score_breakdown` (JSONB mit Teilwerten)
+	- `reason_tags` (TEXT[] fuer UI: z. B. `skill_fit`, `nearby`, `high_readiness`)
+	- `generated_at`, `expires_at`, `is_active`
+	- Unique Index: `(viewer_user_id, candidate_user_id)`
+	- Indexe: `(viewer_user_id, score DESC)`, `(expires_at)`, `(is_active)`
+- Optional spaeter: `embedding vector` Felder fuer AI Nuancen (Phase 2).
 
-- Die Dateien `CompanyProfileSetup[1-3].tsx` müssen analog zu den Talent-Profilen so angepasst werden, dass "Zwischenstände" im LocalStorage gespeichert werden und Bilder/Medien bei Supabase.
+## Backend Tasks
+- Neue Service-Datei: `backend/src/services/handpickedScoring.ts`
+	- `computeHandpickedScore(viewer, candidate)`
+	- `buildReasonTags(...)`
+- Neue Route (oder Umbau bestehender):
+	- `GET /analytics/handpicked-feed`
+	- Liefert role-aware Ergebnisse fuer Talent und Company
+	- Filter: Gegenrolle only, `score >= 85`, `is_active = true`, `expires_at > now()`
+- Bestehende Route `GET /analytics/handpicked-opportunities` deprecaten oder intern auf neuen Feed umleiten.
+- Refresh-Mechanik:
+	- Cron Job (z. B. alle 15-30 min) fuer Batch-Recompute
+	- On-demand Recompute bei Profil-Update / Opportunity-Update
 
-- Dann muss auf `CompanyProfileSetup3.tsx` das eigentliche Speichern in der Datenbank erfolgen, analog zu dem, was wir in `TalentProfileSetup3.tsx` gemacht haben. (Achtung! Vorher den Fix oben durchführen!)
+## Frontend Tasks
+- Talent Home:
+	- Weg von statischer Handpicked-Opportunity-Logik auf neuen Feed-Response
+	- Kartenmodell auf einheitliches DTO umstellen
+- Company Home:
+	- `mockTalents` komplett entfernen
+	- Live-Feed aus gleichem Endpoint nutzen
+- Gemeinsame UI Regeln:
+	- Empty State: "Noch keine kuratierten Matches >85%"
+	- Optional Score-Badge nur intern debugbar (Feature-Flag)
+
+## API Contract (Vorschlag)
+- `GET /analytics/handpicked-feed`
+- Response:
+	- `items[]`
+		- `candidateUserId`
+		- `candidateRole`
+		- `displayName`
+		- `headline`
+		- `location`
+		- `imageUrl`
+		- `videoUrl`
+		- `score`
+		- `reasonTags[]`
+		- `generatedAt`
+
+## Acceptance Criteria (Definition of Done)
+- Talent bekommt nur Companies im Handpicked Feed.
+- Company bekommt nur Talente im Handpicked Feed.
+- Nur Eintraege mit Score >= 85 werden ausgeliefert.
+- Feed ist fuer beide Rollen live (keine Mockdaten mehr).
+- Response-Zeit fuer Feed < 400ms im Warm Cache.
+- Fallback bei fehlenden Daten: stabile Empty State, kein Frontend-Crash.
+
+## Tests
+- Unit:
+	- Scoring-Funktion mit festen Fixtures
+	- Threshold-Filter (`84.9` raus, `85.0` rein)
+- Integration:
+	- Route liefert role-correct Ergebnisse
+	- Auth + Ownership korrekt
+- E2E:
+	- Talent Login -> Handpicked zeigt Companies
+	- Company Login -> Handpicked zeigt Talente
+
+## Phase 2 (AI / Vektor-Vergleich)
+- Embeddings fuer Bio/Skills/Job-Beschreibung einfuehren.
+- Vektor-Similarity als zusaetzlichen Score-Kanal nutzen.
+- Finale Score-Formel z. B.:
+	- `0.45 * semantic_fit`
+	- `0.25 * skills_fit`
+	- `0.15 * location_fit`
+	- `0.15 * readiness_fit`
+- Weiterhin harte Business-Regel: nur `score >= 85` in Handpicked.
+
+## Reihenfolge der Umsetzung (empfohlen)
+1. DB-Migration + Recommendation-Tabelle
+2. Scoring-Service (regelbasiert, ohne AI)
+3. Neue Feed-Route live fuer beide Rollen
+4. Frontend Company/Talent auf neuen Feed umstellen
+5. Tests + Telemetrie + Monitoring
+6. Danach AI/Vektor als Iteration
+
+## Nächster konkreter Schritt
+- Ich starte mit Schritt 1 und 2: Migration + `handpickedScoring` Service, danach route ich beide Homepages auf `GET /analytics/handpicked-feed`.
+
+## Premium Gating (vor Payment-Integration)
+- [ ] Membership-Status zentral im Backend/User-Model einfuehren (`is_premium`, `membership_tier`).
+- [ ] Activity-Identity nur fuer Premium freischalten:
+	- Premium: Klick auf Activity oeffnet Zielprofil.
+	- Free: Klick fuehrt auf Upgrade-Seite.
+- [ ] Premium Guard Utility bauen (re-usable fuer weitere locked Features).
+- [ ] Payment & Membership Bereich in Account an echtes Membership-Flag anbinden (ohne Zahlungsabwicklung vorerst).
+- [ ] Feature-Flag-Liste pflegen: welche Seiten/Insights Premium-only sind.

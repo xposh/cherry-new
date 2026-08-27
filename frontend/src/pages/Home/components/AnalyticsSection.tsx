@@ -13,6 +13,12 @@ export function AnalyticsSection({
   profileViewsTrend,
   matchReadinessBreakdown,
 }: AnalyticsSectionProps) {
+  const iceBluePrimary = "#39D5FF";
+  const iceBlueSecondary = "#76EAFF";
+  const iceBlueTertiary = "#2F9BFF";
+  const iceBlueTrack = "rgba(70, 190, 235, 0.2)";
+  const profileViewsEggshell = "#F4ECDF";
+
   return (
     <section className="py-32 px-8 bg-black border-t border-white/5">
       <div className="max-w-7xl mx-auto">
@@ -33,7 +39,7 @@ export function AnalyticsSection({
                   cy="96"
                   r="80"
                   fill="none"
-                  stroke="rgba(78, 52, 46, 0.18)"
+                  stroke={iceBlueTrack}
                   strokeWidth="2"
                 />
                 <circle
@@ -41,7 +47,7 @@ export function AnalyticsSection({
                   cy="96"
                   r="80"
                   fill="none"
-                  stroke="#FF6F00"
+                  stroke={iceBluePrimary}
                   strokeWidth="2"
                   strokeDasharray={2 * Math.PI * 80}
                   strokeDashoffset={
@@ -49,7 +55,7 @@ export function AnalyticsSection({
                   }
                   strokeLinecap="round"
                   style={{
-                    filter: "drop-shadow(0 0 8px rgba(255, 111, 0, 0.4))",
+                    filter: "drop-shadow(0 0 8px rgba(57, 213, 255, 0.45))",
                   }}
                 />
               </svg>
@@ -57,8 +63,8 @@ export function AnalyticsSection({
                 <p
                   className="text-5xl font-extralight"
                   style={{
-                    color: "#FF6F00",
-                    textShadow: "0 0 15px rgba(255, 111, 0, 0.4)",
+                    color: iceBluePrimary,
+                    textShadow: "0 0 15px rgba(57, 213, 255, 0.45)",
                   }}
                 >
                   {responseReliability}
@@ -105,9 +111,8 @@ export function AnalyticsSection({
                         className="w-full rounded-sm transition-all duration-500 ease-out hover:brightness-125"
                         style={{
                           height: `${barHeight}%`,
-                          background:
-                            "linear-gradient(180deg, #FF6F00 0%, #B86B19 100%)",
-                          boxShadow: "0 0 15px rgba(255, 111, 0, 0.4)",
+                          backgroundColor: profileViewsEggshell,
+                          boxShadow: "0 0 12px rgba(244, 236, 223, 0.28)",
                         }}
                       />
                       <p
@@ -142,19 +147,19 @@ export function AnalyticsSection({
                   label: "Profil",
                   value: matchReadinessBreakdown.profileScore,
                   max: 60,
-                  color: "#FF6F00",
+                  color: iceBluePrimary,
                 },
                 {
                   label: "Engagement",
                   value: matchReadinessBreakdown.engagementScore,
                   max: 30,
-                  color: "#B86B19",
+                  color: iceBlueSecondary,
                 },
                 {
                   label: "Freshness",
                   value: matchReadinessBreakdown.freshnessScore,
                   max: 10,
-                  color: "#BC4E4E",
+                  color: iceBlueTertiary,
                 },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-4">
@@ -169,7 +174,7 @@ export function AnalyticsSection({
                         cy="32"
                         r="28"
                         fill="none"
-                        stroke="rgba(78, 52, 46, 0.18)"
+                        stroke={iceBlueTrack}
                         strokeWidth="4"
                       />
                       <circle
@@ -205,7 +210,10 @@ export function AnalyticsSection({
                     >
                       {item.label}
                     </p>
-                    <div className="w-full h-1 bg-[#4E342E]/20 rounded-full overflow-hidden">
+                    <div
+                      className="w-full h-1 rounded-full overflow-hidden"
+                      style={{ backgroundColor: iceBlueTrack }}
+                    >
                       <div
                         className="h-full rounded-full transition-all"
                         style={{

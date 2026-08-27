@@ -45,7 +45,7 @@ export function CherryPicksPage() {
         <div className="mb-8 md:mb-10">
           <h3 className="text-[12px] tracking-[2px] font-light text-[#f7fdf4] leading-tight">
             {
-              "I want the MatchCards on the Cherry Picks Page to be displayed in one line and like a carousel. So the Main picture currently viewed is full size and then you can swipe to the next card which will transition into a full size when its on main display. <so the other cards that is not on. main display is on the left or right side of the main cards and not shown fully till person swipes to main view. Can you do that ut make sure my credits are enough to finish the task because my ai credits are empty."
+              "Hier könnt ihr nach einem Match miteinander kommunizieren.Du kannst auch dein Portfolio teilen und Termine für eine Telefon oder Video Call  vereinbaren. Achte darauf dass du innerhalb von 24 Stunden reagierst, denn das hat einen positiven einfluss auf deinen Engagement und Response Reliability Ring. Deinem Match gegenüber kommunizierts du so echtes Interesse und Zuverlässigkeit."
             }
           </h3>
         </div>
@@ -101,11 +101,7 @@ export function CherryPicksPage() {
                       e.preventDefault();
                       navigate(`/messages/start/${match.partnerId}`);
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-3 text-sm uppercase tracking-[0.2em] transition-all"
-                    style={{
-                      backgroundColor: "rgba(255,111,0,0.9)",
-                      color: "#000",
-                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 text-sm uppercase tracking-[0.2em] transition-all bg-transparent border border-[#E6DBC9]/75 text-[#E6DBC9] hover:bg-[#E6DBC9]/12 hover:border-[#E6DBC9]"
                   >
                     <MessageCircle className="w-4 h-4" strokeWidth={2} />
                     Message
@@ -114,7 +110,7 @@ export function CherryPicksPage() {
 
                 {/* Match-Datum */}
                 <div className="absolute top-3 left-3">
-                  <span className="text-[10px] uppercase tracking-widest text-white/40 bg-black/50 px-2 py-1">
+                  <span className="text-[10px] uppercase tracking-widest text-[#E6DBC9] bg-black/55 border border-[#E6DBC9]/45 px-2 py-1">
                     {new Date(match.matchedAt).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -128,8 +124,8 @@ export function CherryPicksPage() {
           <div className="flex flex-col items-center justify-center py-24">
             <Cherry
               className="w-16 h-16 mb-6"
-              style={{ color: "rgba(255,111,0,0.3)" }}
-              strokeWidth={0.9}
+              style={{ color: "#ff477e" }}
+              strokeWidth={1.0}
             />
             <p className="text-white text-2xl font-light text-center mb-2">
               No matches yet
