@@ -12,20 +12,26 @@ import { Logo } from "../../components/Logo";
 // Jedes Objekt {} in der Liste repräsentiert eine Seite.
 const SLIDES = [
   {
-    image: "/architect/architect-painting.png", // Pfad zum Bild im public-Ordner.
+    image: "/barkeeper-sommelier/premium_photo-1767883340209-3a36bc6bf4cc.avif", // Pfad zum Bild im public-Ordner.
     heading: ["Pick", "your", "Cherry"], // Array für die Überschrift, um Wörter einzeln zu stylen.
     subheading: '"Finde den perfekten Jobpartner"',
     overlay: "bg-black/45", // Tailwind-Klasse für die Verdunklung (45% Schwarz).
   },
   {
-    image: "/architect/architect-drawing.png",
+    image: "/beauty/IMG_8382.jpg",
     heading: ["Finde", "deinen", "Traumjob"],
     subheading: '"Pick your cherry"',
     overlay: "bg-black/70",
   },
   {
-    image: "/architect/man-in-black.png",
-    heading: ["Finde", "deinen", "Traumjob"],
+    image: "/bakers/IMG_8426.jpg",
+    heading: ["We solve", "premium Problems..."],
+    subheading: '"... Find your cherry"',
+    overlay: "bg-black/40",
+  },
+  {
+    image: "/beauty/IMG_8376.jpg",
+    heading: ["... not", "everyone's", "Problem"],
     subheading: '"Pick your cherry"',
     overlay: "bg-black/40",
   },
@@ -95,7 +101,7 @@ export function WelcomeSlides() {
         {/* ÜBERSCHRIFT: Nutzt 'block', damit jedes Wort eine neue Zeile beginnt (Figma Style) */}
         <h1
           className="text-5xl md:text-6xl lg:text-7xl mb-6 tracking-tight leading-[1.1] font-bold"
-          style={{ color: "#2A6087" }}
+          style={{ color: "#5f5f5f" }}
         >
           {slide.heading[0]}
           {/* Nur wenn ein zweites/drittes Wort existiert, wird das Element gerendert. */}
@@ -121,7 +127,7 @@ export function WelcomeSlides() {
         font-bold: Die dicke Schriftstärke für maximale Aufmerksamkeit.
         rounded-none: Damit der Button eckig bleibt, wie in deinem letzten Code-Schnipsel.
           */}
-            <button className="w-full bg-black/50 hover:bg-[#708090]/50 text-[#f5f5f5] text-base py-5 transition-all duration-300 border border-white/10 font-medium rounded-none">
+            <button className="w-full bg-black/50 hover:bg-[#708090]/50  hover:text-white text-[#5f5f5f] text-base py-5 transition-all duration-300 border border-white/10 font-medium rounded-none">
               Registrieren
             </button>
           </Link>
@@ -131,7 +137,7 @@ export function WelcomeSlides() {
               border-2 border-white: Weißer Rahmen.
               hover:bg-white hover:text-black: Invertiert die Farben beim Hovern (Weißer Hintergrund, schwarzer Text).
           */}
-            <button className="w-full border-1 border-white bg-transparent hover:bg-[#708090]/50 hover:text-white text-[#777676] text-base py-5 transition-all duration-300 font-medium">
+            <button className="w-full border-1 border-white bg-transparent hover:bg-[#708090]/50 hover:text-white text-[#5f5f5f] text-base py-5 transition-all duration-300 font-medium">
               Login
             </button>
           </Link>

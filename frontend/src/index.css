@@ -1,18 +1,89 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #2A6087;
+  --color-primary: #2a6087;
   --color-secondary: #030213;
-  
+
   /* Wir definieren die Font-Variable im Theme */
   --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 @layer base {
-  html, body {
+  html,
+  body {
     /* Hier erzwingen wir die Schrift für das gesamte Projekt */
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+.discover-search-header {
+  top: 5.5rem;
+}
+
+.discover-search-mobile {
+  display: flex !important;
+  align-items: center;
+}
+
+.discover-search-desktop {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .discover-search-header {
+    top: 5rem;
+  }
+
+  .discover-search-mobile {
+    display: none !important;
+  }
+
+  .discover-search-desktop {
+    display: block !important;
+    width: 100%;
+    max-width: 48rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.slide-hint-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.slide-hint-dot {
+  width: 0.24rem;
+  height: 0.24rem;
+  border-radius: 9999px;
+  background: rgba(254, 246, 234, 0.8);
+  animation: slide-dot-pulse 1.45s ease-in-out infinite;
+}
+
+.slide-hint-dot-1 {
+  animation-delay: 0s;
+}
+
+.slide-hint-dot-2 {
+  animation-delay: 0.15s;
+}
+
+.slide-hint-dot-3 {
+  animation-delay: 0.3s;
+}
+
+@keyframes slide-dot-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
   }
 }

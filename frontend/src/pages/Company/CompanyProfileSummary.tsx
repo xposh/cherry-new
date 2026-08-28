@@ -1,9 +1,6 @@
 import {
   MapPin,
-  Edit,
-  Building2,
   Users,
-  Briefcase,
   DollarSign,
   Mail,
   Phone,
@@ -11,15 +8,34 @@ import {
   Calendar,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
+import {
+  FeaturedOpportunityCard,
+  type FeaturedOpportunityItem,
+} from "../../components/FeaturedOpportunityCard";
+import { OpportunityCreator } from "../../components/OpportunityCreator/OpportunityCreator";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
+import { useAuth } from "../../context/useAuth";
+import { getSetupDraft } from "../../util/draftStorage";
+import { mapCompanyProfileForSummary } from "../../util/profileMapping";
 
 export function CompanyProfileSummary() {
   const navigate = useNavigate();
-  const { companyProfile } = useCompanyProfile();
+  const { companyProfile, updateCompanyProfile } = useCompanyProfile();
+  const { authFetch, user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [featuredOpportunity, setFeaturedOpportunity] =
+    useState<FeaturedOpportunityItem | null>(null);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [featuredError, setFeaturedError] = useState<string | null>(null);
+  const [isEditingFeatured, setIsEditingFeatured] = useState(false);
+  const [isDeletingFeatured, setIsDeletingFeatured] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const hydratedUserRef = useRef<string | null>(null);
+
+  const toSafeText = (value: unknown) =>
+    typeof value === "string" ? value : "";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,6 +54,113 @@ export function CompanyProfileSummary() {
       return () => scrollElement.removeEventListener("scroll", handleScroll);
     }
   }, [companyProfile.companyImages?.length]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (hydratedUserRef.current === user.id) return;
+    hydratedUserRef.current = user.id;
+
+    const loadCompanyProfile = async () => {
+      const savedStep1 = getSetupDraft("companySetup1", user?.id);
+      const savedStep2 = getSetupDraft("companySetup2", user?.id);
+      const savedStep3 = getSetupDraft("companySetup3", user?.id);
+
+      if (savedStep1 || savedStep2 || savedStep3) {
+        updateCompanyProfile({
+          companyLogo: savedStep1?.companyLogoUrl || undefined,
+          companyImages: savedStep1?.uploadedImages || [],
+          ...savedStep2?.companyInfo,
+          cultureValues: savedStep2?.selectedValues || [],
+          benefits: savedStep2?.benefits || {
+            arbeitsmodell: [],
+            finanziell: [],
+            lifestyle: [],
+            mobilitat: [],
+            entwicklung: [],
+          },
+          ...savedStep3?.jobInfo,
+          jobTitle: savedStep3?.jobInfo?.jobTitle,
+          jobLocation: savedStep3?.jobInfo?.jobLocation,
+          jobDescription: savedStep3?.jobInfo?.jobDescription,
+          salary: savedStep3?.jobInfo?.salary,
+          startDate: savedStep3?.jobInfo?.startDate,
+          contactPersonPhoto: toSafeText(
+            savedStep3?.contactPersonPhoto?.preview,
+          ),
+          contactPerson: toSafeText(savedStep3?.contactInfo?.contactPerson),
+          contactRole: toSafeText(savedStep3?.contactInfo?.contactRole),
+          contactMessage: toSafeText(savedStep3?.contactInfo?.contactMessage),
+          contactEmail: toSafeText(savedStep3?.contactInfo?.contactEmail),
+          contactPhone: toSafeText(savedStep3?.contactInfo?.contactPhone),
+          contactWebsite: toSafeText(savedStep3?.contactInfo?.contactWebsite),
+          requirements: savedStep3?.requirements || [],
+          socialLinks: savedStep3?.socialLinks || [],
+        });
+      }
+      try {
+        const response = await authFetch("http://localhost:3000/profile");
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data?.profile) {
+          updateCompanyProfile(mapCompanyProfileForSummary(data.profile));
+        }
+      } catch (err) {
+        console.error("Failed to load company profile for summary:", err);
+      }
+    };
+
+    void loadCompanyProfile();
+  }, [authFetch, user?.id, updateCompanyProfile]);
+
+  async function loadFeatured() {
+    try {
+      setFeaturedLoading(true);
+      setFeaturedError(null);
+
+      const res = await authFetch("/api/featured-opportunities/me");
+      if (!res.ok) {
+        throw new Error("Unable to load featured item");
+      }
+      const data = await res.json();
+      setFeaturedOpportunity(data.opportunities?.[0] ?? null);
+    } catch (err: unknown) {
+      setFeaturedError(
+        err instanceof Error ? err.message : "Could not load featured item",
+      );
+      setFeaturedOpportunity(null);
+    } finally {
+      setFeaturedLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadFeatured();
+  }, [authFetch]);
+
+  async function handleDeleteFeatured() {
+    if (!featuredOpportunity) return;
+    try {
+      setIsDeletingFeatured(true);
+      setFeaturedError(null);
+      const res = await authFetch(
+        `/api/featured-opportunities/${featuredOpportunity.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+      if (!res.ok) {
+        throw new Error("Could not delete featured item");
+      }
+      setIsEditingFeatured(false);
+      await loadFeatured();
+    } catch (err: unknown) {
+      setFeaturedError(
+        err instanceof Error ? err.message : "Could not delete featured item",
+      );
+    } finally {
+      setIsDeletingFeatured(false);
+    }
+  }
 
   const handleEditProfile = () => {
     navigate("/company-profile-setup-1");
@@ -98,11 +221,25 @@ export function CompanyProfileSummary() {
       ? companyProfile.customIndustry || "Industry"
       : companyProfile.industry || "Industry";
 
+  const contactPersonText = toSafeText(companyProfile.contactPerson);
+  const contactRoleText = toSafeText(companyProfile.contactRole);
+  const contactMessageText = toSafeText(companyProfile.contactMessage);
+  const contactEmailText = toSafeText(companyProfile.contactEmail);
+  const contactPhoneText = toSafeText(companyProfile.contactPhone);
+  const contactWebsiteText = toSafeText(companyProfile.contactWebsite);
+  const contactPhotoText = toSafeText(companyProfile.contactPersonPhoto);
+
+  const formattedStartDate = (() => {
+    if (!companyProfile.startDate) return "";
+    const parsed = new Date(companyProfile.startDate);
+    return Number.isNaN(parsed.getTime())
+      ? companyProfile.startDate
+      : parsed.toLocaleDateString();
+  })();
+
   return (
     <div className="relative min-h-screen w-full bg-black overflow-hidden">
-      <Link to="/">
-        <Logo className="fixed" />
-      </Link>
+      <Logo className="fixed" to="/" />
 
       {/* Scroll Indicator */}
       <div className="fixed top-8 right-8 z-50 flex gap-1">
@@ -133,7 +270,7 @@ export function CompanyProfileSummary() {
               alt={item.category}
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
 
             <div className="relative z-10 p-8 pb-32">
               <p className="text-white/60 text-xs font-light italic mb-1">
@@ -154,7 +291,7 @@ export function CompanyProfileSummary() {
               alt="Company Logo"
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent" />
 
             <div className="relative z-10 p-8 pb-32">
               <h1 className="text-5xl font-light text-white mb-2">
@@ -392,10 +529,7 @@ export function CompanyProfileSummary() {
                       <div className="flex items-center gap-2 text-gray-400">
                         <Calendar className="w-4 h-4" />
                         <span className="text-sm">
-                          Start:{" "}
-                          {new Date(
-                            companyProfile.startDate,
-                          ).toLocaleDateString()}
+                          Start: {formattedStartDate}
                         </span>
                       </div>
                     )}
@@ -441,33 +575,33 @@ export function CompanyProfileSummary() {
             )}
 
             {/* Contact Person */}
-            {(companyProfile.contactPerson || companyProfile.contactEmail) && (
+            {(contactPersonText || contactEmailText) && (
               <section>
                 <h2 className="text-2xl font-light text-white mb-4 uppercase tracking-[0.2em]">
                   Ansprechpartnerin
                 </h2>
                 <div className="border border-white/30 rounded-xl overflow-hidden">
-                  {companyProfile.contactPersonPhoto && (
+                  {contactPhotoText && (
                     <img
-                      src={companyProfile.contactPersonPhoto}
-                      alt={companyProfile.contactPerson}
+                      src={contactPhotoText}
+                      alt={contactPersonText}
                       className="w-full h-64 object-cover"
                     />
                   )}
                   <div className="p-6">
-                    {companyProfile.contactPerson && (
+                    {contactPersonText && (
                       <h3 className="text-xl text-white font-light mb-1">
-                        {companyProfile.contactPerson}
+                        {contactPersonText}
                       </h3>
                     )}
-                    {companyProfile.contactRole && (
+                    {contactRoleText && (
                       <p className="text-gray-400 text-sm mb-4">
-                        {companyProfile.contactRole}
+                        {contactRoleText}
                       </p>
                     )}
-                    {companyProfile.contactMessage && (
+                    {contactMessageText && (
                       <p className="text-gray-300 italic mb-6 border-l-2 border-white/30 pl-4">
-                        "{companyProfile.contactMessage}"
+                        "{contactMessageText}"
                       </p>
                     )}
 
@@ -475,38 +609,38 @@ export function CompanyProfileSummary() {
                       <h4 className="text-white font-light text-sm uppercase tracking-wider mb-4">
                         Kontakt
                       </h4>
-                      {companyProfile.contactEmail && (
+                      {contactEmailText && (
                         <div className="flex items-center gap-3">
                           <Mail className="w-5 h-5 text-white/60" />
                           <a
-                            href={`mailto:${companyProfile.contactEmail}`}
+                            href={`mailto:${contactEmailText}`}
                             className="text-white hover:text-gray-300 transition-colors"
                           >
-                            {companyProfile.contactEmail}
+                            {contactEmailText}
                           </a>
                         </div>
                       )}
-                      {companyProfile.contactPhone && (
+                      {contactPhoneText && (
                         <div className="flex items-center gap-3">
                           <Phone className="w-5 h-5 text-white/60" />
                           <a
-                            href={`tel:${companyProfile.contactPhone}`}
+                            href={`tel:${contactPhoneText}`}
                             className="text-white hover:text-gray-300 transition-colors"
                           >
-                            {companyProfile.contactPhone}
+                            {contactPhoneText}
                           </a>
                         </div>
                       )}
-                      {companyProfile.contactWebsite && (
+                      {contactWebsiteText && (
                         <div className="flex items-center gap-3">
                           <Globe className="w-5 h-5 text-white/60" />
                           <a
-                            href={companyProfile.contactWebsite}
+                            href={contactWebsiteText}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-white hover:text-gray-300 transition-colors break-all"
                           >
-                            {companyProfile.contactWebsite}
+                            {contactWebsiteText}
                           </a>
                         </div>
                       )}
@@ -550,6 +684,86 @@ export function CompanyProfileSummary() {
                   </div>
                 </section>
               )}
+            {featuredLoading ? (
+              <section className="pt-12">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-white/70">
+                  Loading featured opportunity...
+                </div>
+              </section>
+            ) : featuredError ? (
+              <section className="pt-12">
+                <div className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-10 text-center text-rose-100">
+                  {featuredError}
+                </div>
+              </section>
+            ) : featuredOpportunity ? (
+              <section className="pt-12">
+                <FeaturedOpportunityCard
+                  opportunity={featuredOpportunity}
+                  ctaLabel="Featured now"
+                />
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingFeatured((prev) => !prev)}
+                    className="px-5 py-2 border border-white/30 text-white rounded-xl hover:border-white transition-all"
+                  >
+                    {isEditingFeatured ? "Close Edit" : "Edit Featured"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteFeatured}
+                    disabled={isDeletingFeatured}
+                    className="px-5 py-2 border border-red-500/40 text-red-200 rounded-xl hover:border-red-400 transition-all disabled:opacity-60"
+                  >
+                    {isDeletingFeatured ? "Deleting..." : "Delete Featured"}
+                  </button>
+                </div>
+                {isEditingFeatured ? (
+                  <div className="mt-6">
+                    <OpportunityCreator
+                      role="company"
+                      ctaText="Update your public featured opportunity."
+                      authFetch={authFetch}
+                      editMode
+                      opportunityId={featuredOpportunity.id}
+                      initialValues={{
+                        title: featuredOpportunity.title,
+                        description: featuredOpportunity.description ?? "",
+                        deadline: featuredOpportunity.deadline
+                          ? new Date(featuredOpportunity.deadline)
+                              .toISOString()
+                              .slice(0, 16)
+                          : "",
+                        image_url: featuredOpportunity.image_url,
+                        video_url: featuredOpportunity.video_url,
+                      }}
+                      onCancelEdit={() => setIsEditingFeatured(false)}
+                      onSuccess={() => {
+                        setIsEditingFeatured(false);
+                        loadFeatured();
+                      }}
+                    />
+                  </div>
+                ) : null}
+              </section>
+            ) : (
+              <section className="pt-12">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-white/70">
+                  No active featured opportunity yet.
+                </div>
+                <div className="mt-6">
+                  <OpportunityCreator
+                    role="company"
+                    ctaText="Create your first public featured opportunity."
+                    authFetch={authFetch}
+                    onSuccess={() => {
+                      loadFeatured();
+                    }}
+                  />
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </div>
@@ -558,10 +772,12 @@ export function CompanyProfileSummary() {
       <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50">
         <button
           onClick={handleEditProfile}
-          className="flex items-center gap-3 px-8 py-4 bg-white text-black hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-xl shadow-2xl"
+          className="group flex items-center gap-3 px-8 py-4 bg-gray-500/20 text-white/50 hover:text_black hover:bg-gray-200 transition-all uppercase tracking-[0.2em] text-sm font-light rounded-xl shadow-2xl"
         >
-          <Edit className="w-5 h-5" />
-          Edit Profile
+          <span className="text-white/50 group-hover:text-black transition-colors duration-300">
+            {/*<Edit className="w-5 h-5" /> */}
+            Edit Profile
+          </span>
         </button>
       </div>
 

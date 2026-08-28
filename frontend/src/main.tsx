@@ -8,19 +8,17 @@ import { RouterProvider } from "react-router";
 // Context Provider für die Datenhaltung
 import { ProfileProvider } from "./context/ProfileContext.tsx";
 import { CompanyProfileProvider } from "./context/CompanyProfileContext.tsx";
-import { AuthProvider } from "./context/AuthContext.tsx";
+import { AuthProvider } from "./context/AuthProvider";
 import { DiscoverProvider } from "./context/DiscoverContext.tsx";
-import { MatchProvider } from "./context/MatchContext.tsx";
-
+// ✅ MatchProvider wurde hieraus entfernt — er wird jetzt im Root-Layout der
+// Routes eingebunden, damit useNavigate() einen aktiven Router-Context vorfindet.
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ProfileProvider>
       <CompanyProfileProvider>
         <AuthProvider>
           <DiscoverProvider>
-            <MatchProvider>
-              <RouterProvider router={routes} />
-            </MatchProvider>
+            <RouterProvider router={routes} />
           </DiscoverProvider>
         </AuthProvider>
       </CompanyProfileProvider>

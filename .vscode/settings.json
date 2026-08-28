@@ -1,0 +1,6 @@
+{
+  "files.exclude": {
+    "backend/dist": true,
+    "backend/node_modules": true
+  }
+}

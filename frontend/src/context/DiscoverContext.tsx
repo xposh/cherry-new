@@ -10,8 +10,7 @@ Funktionen:
 - setCategory(category)
 - applyFilters()
 */
-
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 interface DiscoverContextType {
   searchQuery: string;
@@ -26,6 +25,7 @@ interface DiscoverContextType {
 const DiscoverContext = createContext<DiscoverContextType | undefined>(
   undefined,
 );
+export { DiscoverContext };
 
 export function DiscoverProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,10 +66,10 @@ export function DiscoverProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useDiscover() {
   const context = useContext(DiscoverContext);
-  if (!context) {
+  if (!context)
     throw new Error("useDiscover must be used within DiscoverProvider");
-  }
   return context;
 }

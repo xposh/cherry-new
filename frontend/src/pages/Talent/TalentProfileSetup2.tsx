@@ -1,7 +1,10 @@
 import { Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
+import { useAuth } from "../../context/useAuth";
+import { getSetupDraft, setSetupDraft } from "../../util/draftStorage";
+import { mapTalentProfileToSetup2 } from "../../util/profileMapping";
 
 interface Language {
   language: string;
@@ -26,52 +29,103 @@ interface Recognition {
 
 export function TalentProfileSetup2() {
   const navigate = useNavigate();
+  const { user, authFetch } = useAuth();
 
-  // Basic Info
+  // Helper-Funktion zur sicheren Extraktion von verschachtelten localStorage-Daten
+  const getSavedData = () => {
+    try {
+      return getSetupDraft("talentSetup2", user?.id);
+    } catch (e) {
+      console.error("Fehler beim Parsen von talentSetup2:", e);
+      return null;
+    }
+  };
+
+  const savedData = getSavedData();
+
+  // 1. ZUSTANDS-INITIALISIERUNG AUS DEM LOCALSTORAGE (RE-HYDRATION)
   const [formData, setFormData] = useState({
-    name: "",
-    age: "",
-    location: "",
-    position: "",
-    specialty: "",
-    about: "",
+    firstName: savedData?.formData?.firstName || "",
+    lastName: savedData?.formData?.lastName || "",
+    age: savedData?.formData?.age || "",
+    location: savedData?.formData?.location || "",
+    position: savedData?.formData?.position || "",
+    specialty: savedData?.formData?.specialty || "",
+    about: savedData?.formData?.about || "",
   });
 
-  // Education
   const [education, setEducation] = useState({
-    degree: "",
-    customDegree: "",
-    institution: "",
+    degree: savedData?.education?.degree || "",
+    customDegree: savedData?.education?.customDegree || "",
+    institution: savedData?.education?.institution || "",
   });
 
-  const [experiences, setExperiences] = useState<Experience[]>([]);
-  const [otherExperiences, setOtherExperiences] = useState<Experience[]>([]);
+  const [experiences, setExperiences] = useState<Experience[]>(
+    savedData?.experiences || [],
+  );
 
-  // Skills
-  const [skills, setSkills] = useState<string[]>([]);
+  const [otherExperiences, setOtherExperiences] = useState<Experience[]>(
+    savedData?.otherExperiences || [],
+  );
+
+  const [skills, setSkills] = useState<string[]>(savedData?.skills || []);
   const [newSkill, setNewSkill] = useState("");
 
-  // Languages
-  const [languages, setLanguages] = useState<Language[]>([]);
+  const [languages, setLanguages] = useState<Language[]>(
+    savedData?.languages || [],
+  );
   const [newLanguage, setNewLanguage] = useState({
     language: "",
     level: "Basic",
   });
 
-  // Recognition
-  const [recognitions, setRecognitions] = useState<Recognition[]>([]);
+  const [recognitions, setRecognitions] = useState<Recognition[]>(
+    savedData?.recognitions || [],
+  );
 
-  // Job Preferences
   const [jobPreferences, setJobPreferences] = useState({
-    otherPositions: [] as string[],
-    workModel: [] as string[],
-    availableFrom: "",
-    employmentType: [] as string[],
-    employmentDuration: "",
-    preferredLocation: "",
+    otherPositions:
+      savedData?.jobPreferences?.otherPositions || ([] as string[]),
+    workModel: savedData?.jobPreferences?.workModel || ([] as string[]),
+    availableFrom: savedData?.jobPreferences?.availableFrom || "",
+    employmentType:
+      savedData?.jobPreferences?.employmentType || ([] as string[]),
+    employmentDuration: savedData?.jobPreferences?.employmentDuration || "",
+    preferredLocation: savedData?.jobPreferences?.preferredLocation || "",
   });
 
   const [newPosition, setNewPosition] = useState("");
+
+  useEffect(() => {
+    async function hydrateFromBackend() {
+      if (!user?.id) return;
+      if (getSetupDraft("talentSetup2", user.id)) return;
+
+      try {
+        const res = await authFetch("http://localhost:3000/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data?.profile) return;
+
+        const mapped = mapTalentProfileToSetup2(data.profile);
+        setFormData(mapped.formData);
+        setEducation(mapped.education as typeof education);
+        setExperiences(mapped.experiences as unknown as Experience[]);
+        setOtherExperiences(mapped.otherExperiences as unknown as Experience[]);
+        setSkills(mapped.skills as string[]);
+        setLanguages(mapped.languages as unknown as Language[]);
+        setRecognitions(mapped.recognitions as unknown as Recognition[]);
+        setJobPreferences(mapped.jobPreferences as typeof jobPreferences);
+      } catch (err) {
+        console.error(
+          "Failed to hydrate talent setup step 2 from backend:",
+          err,
+        );
+      }
+    }
+
+    hydrateFromBackend();
+  }, [authFetch, user?.id]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -93,7 +147,6 @@ export function TalentProfileSetup2() {
     });
   };
 
-  // Skills
   const addSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
       setSkills([...skills, newSkill.trim()]);
@@ -105,7 +158,6 @@ export function TalentProfileSetup2() {
     setSkills(skills.filter((skill) => skill !== skillToRemove));
   };
 
-  // Languages
   const addLanguage = () => {
     if (newLanguage.language.trim()) {
       setLanguages([...languages, { ...newLanguage }]);
@@ -117,7 +169,6 @@ export function TalentProfileSetup2() {
     setLanguages(languages.filter((_, i) => i !== index));
   };
 
-  // Experience
   const addExperience = () => {
     setExperiences([
       ...experiences,
@@ -145,7 +196,6 @@ export function TalentProfileSetup2() {
     );
   };
 
-  // Other Experience
   const addOtherExperience = () => {
     setOtherExperiences([
       ...otherExperiences,
@@ -173,7 +223,6 @@ export function TalentProfileSetup2() {
     );
   };
 
-  // Recognition
   const addRecognition = () => {
     setRecognitions([
       ...recognitions,
@@ -197,7 +246,6 @@ export function TalentProfileSetup2() {
     );
   };
 
-  // Other Positions
   const addPosition = () => {
     if (
       newPosition.trim() &&
@@ -215,17 +263,16 @@ export function TalentProfileSetup2() {
     setJobPreferences({
       ...jobPreferences,
       otherPositions: jobPreferences.otherPositions.filter(
-        (p) => p !== position,
+        (p: string) => p !== position,
       ),
     });
   };
 
-  // Work Model
   const toggleWorkModel = (model: string) => {
     if (jobPreferences.workModel.includes(model)) {
       setJobPreferences({
         ...jobPreferences,
-        workModel: jobPreferences.workModel.filter((m) => m !== model),
+        workModel: jobPreferences.workModel.filter((m: string) => m !== model),
       });
     } else {
       setJobPreferences({
@@ -235,12 +282,13 @@ export function TalentProfileSetup2() {
     }
   };
 
-  // Employment Type
   const toggleEmploymentType = (type: string) => {
     if (jobPreferences.employmentType.includes(type)) {
       setJobPreferences({
         ...jobPreferences,
-        employmentType: jobPreferences.employmentType.filter((t) => t !== type),
+        employmentType: jobPreferences.employmentType.filter(
+          (t: string) => t !== type,
+        ),
       });
     } else {
       setJobPreferences({
@@ -250,6 +298,7 @@ export function TalentProfileSetup2() {
     }
   };
 
+  // 2. SPEICHER-STRUKTUR FÜR DIE SUMMARY REPARIERT
   const handleNext = () => {
     const setupData = {
       formData,
@@ -262,25 +311,29 @@ export function TalentProfileSetup2() {
       jobPreferences,
     };
 
-    localStorage.setItem("talentSetup2", JSON.stringify(setupData));
+    // Schreibt das komplette Paket in den Speicher, die Summary zieht sich genau dieses Objekt.
+    setSetupDraft("talentSetup2", user?.id, setupData);
+
+    console.log({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      bio: formData.about,
+      age: formData.age,
+    });
+
     navigate("/talent-profile-setup-3");
   };
 
   return (
     <div className="relative min-h-screen w-full bg-black overflow-auto pb-20">
-      {/* Logo */}
-      <Link to="/">
-        <Logo />
-      </Link>
+      <Logo to="/" />
 
-      {/* Progress Indicator */}
       <div className="fixed top-8 right-8 z-50 flex gap-2">
         <div className="w-12 h-1 bg-white rounded-full"></div>
         <div className="w-12 h-1 bg-white rounded-full"></div>
         <div className="w-12 h-1 bg-white/30 rounded-full"></div>
       </div>
 
-      {/* Content */}
       <div className="max-w-4xl mx-auto px-8 pt-32 pb-32">
         <div className="mb-12">
           <h1 className="text-4xl font-light text-white mb-4">
@@ -292,7 +345,6 @@ export function TalentProfileSetup2() {
         </div>
 
         <div className="space-y-12">
-          {/* Basic Info */}
           <section>
             <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
               Basic Information
@@ -300,9 +352,17 @@ export function TalentProfileSetup2() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <input
                 type="text"
-                name="name"
-                placeholder="Full Name"
-                value={formData.name}
+                name="firstName"
+                placeholder="First Name"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
+              />
+              <input
+                type="text"
+                name="lastName"
+                placeholder="Last Name"
+                value={formData.lastName}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
               />
@@ -341,14 +401,13 @@ export function TalentProfileSetup2() {
             </div>
           </section>
 
-          {/* About */}
           <section>
             <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
               About You
             </h2>
             <textarea
               name="about"
-              placeholder="Award-winning Bar Manager with over 15 years of experience in luxury hospitality. Specialized in crafting signature cocktails and curating premium spirits collections..."
+              placeholder="Award-winning Bar Manager with over 15 years of experience in luxury hospitality..."
               value={formData.about}
               onChange={handleInputChange}
               rows={5}
@@ -356,7 +415,6 @@ export function TalentProfileSetup2() {
             />
           </section>
 
-          {/* Work Experience */}
           <section>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-white font-light uppercase tracking-[0.2em] text-sm">
@@ -384,7 +442,7 @@ export function TalentProfileSetup2() {
                   <div className="space-y-4">
                     <input
                       type="text"
-                      placeholder="Job Title (e.g., Head Bar Manager)"
+                      placeholder="Job Title"
                       value={exp.title}
                       onChange={(e) =>
                         updateExperience(exp.id, "title", e.target.value)
@@ -393,7 +451,7 @@ export function TalentProfileSetup2() {
                     />
                     <input
                       type="text"
-                      placeholder="Company Name (e.g., Skybar Singapore)"
+                      placeholder="Company Name"
                       value={exp.company}
                       onChange={(e) =>
                         updateExperience(exp.id, "company", e.target.value)
@@ -409,12 +467,10 @@ export function TalentProfileSetup2() {
                       }
                       className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
                     />
-
-                    {/* Years + Level */}
                     <div className="grid grid-cols-2 gap-4">
                       <input
                         type="text"
-                        placeholder="Years (e.g., 13 years)"
+                        placeholder="Years"
                         value={exp.years}
                         onChange={(e) =>
                           updateExperience(exp.id, "years", e.target.value)
@@ -445,9 +501,8 @@ export function TalentProfileSetup2() {
                         </option>
                       </select>
                     </div>
-
                     <textarea
-                      placeholder="Description (e.g., Leading a team of 12 bartenders at Asia's premier rooftop bar...)"
+                      placeholder="Description..."
                       value={exp.description}
                       onChange={(e) =>
                         updateExperience(exp.id, "description", e.target.value)
@@ -461,7 +516,6 @@ export function TalentProfileSetup2() {
             </div>
           </section>
 
-          {/* Skills */}
           <section>
             <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
               Expertise
@@ -472,7 +526,7 @@ export function TalentProfileSetup2() {
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && addSkill()}
-                placeholder="e.g., Signature Cocktails, Spirit Pairing, Menu Development, Team Leadership..."
+                placeholder="e.g., Signature Cocktails, Spirit Pairing..."
                 className="flex-1 px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
               />
               <button
@@ -497,7 +551,6 @@ export function TalentProfileSetup2() {
             </div>
           </section>
 
-          {/* Other Work Experience */}
           <section>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-white font-light uppercase tracking-[0.2em] text-sm">
@@ -543,19 +596,17 @@ export function TalentProfileSetup2() {
                     />
                     <input
                       type="text"
-                      placeholder="Period (e.g., 2016 - 2020)"
+                      placeholder="Period"
                       value={exp.period}
                       onChange={(e) =>
                         updateOtherExperience(exp.id, "period", e.target.value)
                       }
                       className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
                     />
-
-                    {/* Years + Level */}
                     <div className="grid grid-cols-2 gap-4">
                       <input
                         type="text"
-                        placeholder="Years (e.g., 4 years)"
+                        placeholder="Years"
                         value={exp.years}
                         onChange={(e) =>
                           updateOtherExperience(exp.id, "years", e.target.value)
@@ -586,7 +637,6 @@ export function TalentProfileSetup2() {
                         </option>
                       </select>
                     </div>
-
                     <textarea
                       placeholder="Description..."
                       value={exp.description}
@@ -606,7 +656,6 @@ export function TalentProfileSetup2() {
             </div>
           </section>
 
-          {/* Recognition */}
           <section>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-white font-light uppercase tracking-[0.2em] text-sm">
@@ -624,7 +673,7 @@ export function TalentProfileSetup2() {
                 <div key={rec.id} className="flex gap-4 items-start">
                   <input
                     type="text"
-                    placeholder="Award / Recognition (e.g., Best Cocktail Bar Asia 2023)"
+                    placeholder="Award / Recognition"
                     value={rec.award}
                     onChange={(e) =>
                       updateRecognition(rec.id, "award", e.target.value)
@@ -651,7 +700,6 @@ export function TalentProfileSetup2() {
             </div>
           </section>
 
-          {/* Education */}
           <section>
             <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
               Education
@@ -711,7 +759,6 @@ export function TalentProfileSetup2() {
             </div>
           </section>
 
-          {/* Languages */}
           <section>
             <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
               Languages
@@ -774,7 +821,6 @@ export function TalentProfileSetup2() {
             </div>
           </section>
 
-          {/* Job Preferences */}
           <section>
             <h2 className="text-white font-light mb-8 uppercase tracking-[0.2em] text-sm">
               Job Preferences
@@ -801,7 +847,7 @@ export function TalentProfileSetup2() {
                 </button>
               </div>
               <div className="flex flex-wrap gap-3">
-                {jobPreferences.otherPositions.map((position) => (
+                {jobPreferences.otherPositions.map((position: string) => (
                   <div
                     key={position}
                     className="flex items-center gap-2 px-4 py-2 border border-white text-white group hover:border-red-500 hover:text-red-500 transition-colors rounded-lg"
@@ -928,7 +974,6 @@ export function TalentProfileSetup2() {
           </section>
         </div>
 
-        {/* Navigation */}
         <div className="flex justify-between items-center pt-8 border-t border-white/20 mt-12">
           <Link
             to="/talent-profile-setup-1"

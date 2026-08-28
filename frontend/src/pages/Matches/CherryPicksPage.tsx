@@ -1,107 +1,141 @@
-import { Cherry, MapPin } from "lucide-react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Cherry, MapPin, MessageCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { Logo } from "../../components/Logo";
 import { BottomNavigation } from "../../components/navigation/BottomNavigation";
-import { useMatch } from "../../context/MatchContext";
-import { useAuth } from "../../context/AuthContext";
-import { mockTalents } from "../../data/mockTalents";
-import { mockCompanies } from "../../data/mockCompanies";
+import { useAuth } from "../../context/useAuth";
+import {
+  discoverService,
+  type MatchListItem,
+} from "../../services/discoverService";
 
 export function CherryPicksPage() {
-  const { getMatches } = useMatch();
-  const { userRole } = useAuth();
-  const matches = getMatches();
+  const { authFetch } = useAuth();
+  const navigate = useNavigate();
+  const [matches, setMatches] = useState<MatchListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const isViewingTalents = userRole === "employer";
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadMatches() {
+      try {
+        const result = await discoverService.getMatches(authFetch);
+        if (isMounted) setMatches(result);
+      } catch (err) {
+        console.error("Cherry Picks konnten nicht geladen werden:", err);
+        if (isMounted) setError("Matches konnten nicht geladen werden.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadMatches();
+    return () => {
+      isMounted = false;
+    };
+  }, [authFetch]);
 
   return (
     <div className="relative min-h-screen w-full bg-black pb-24">
-      {/* Logo */}
-      <div className="fixed top-8 left-8 z-50">
-        <h2
-          className="text-2xl tracking-[0.3em] uppercase flex items-center gap-1"
-          style={{ color: "#2A6087" }}
-        >
-          CHE
-          <Cherry className="w-6 h-6" style={{ color: "#2A6087" }} />Y
-        </h2>
-      </div>
+      <Logo />
 
-      {/* Content */}
-      <div className="max-w-6xl mx-auto px-8 pt-24 pb-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Cherry className="w-8 h-8 text-white" />
-          <h1 className="text-4xl font-light text-white uppercase tracking-wider">
-            Cherry Picks
-          </h1>
+      <div className="max-w-2xl mx-auto px-8 pt-32 md:px-6 md:pt-44 pb-8">
+        <div className="mb-8 md:mb-10">
+          <h3 className="text-[12px] tracking-[2px] font-light text-[#f7fdf4] leading-tight">
+            {
+              "Hier könnt ihr nach einem Match miteinander kommunizieren.Du kannst auch dein Portfolio teilen und Termine für eine Telefon oder Video Call  vereinbaren. Achte darauf dass du innerhalb von 24 Stunden reagierst, denn das hat einen positiven einfluss auf deinen Engagement und Response Reliability Ring. Deinem Match gegenüber kommunizierts du so echtes Interesse und Zuverlässigkeit."
+            }
+          </h3>
         </div>
 
-        {matches.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {matches.map((match) => {
-              const profile = isViewingTalents
-                ? mockTalents.find((t) => t.id === match.profileId)
-                : mockCompanies.find((c) => c.id === match.profileId);
-
-              if (!profile) return null;
-
-              const isTalent = "name" in profile;
-              const linkTo = isTalent
-                ? `/match/talent/${profile.id}`
-                : `/match/company/${profile.id}`;
-
-              return (
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="aspect-[3/4] bg-white/5 animate-pulse" />
+            ))}
+          </div>
+        ) : error ? (
+          <p className="text-red-400 text-center py-20">{error}</p>
+        ) : matches.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {matches.map((match) => (
+              <div key={match.matchId} className="relative group">
                 <Link
-                  key={match.id}
-                  to={linkTo}
-                  className="border border-white/30 overflow-hidden hover:border-white transition-all group"
+                  to={`/match-details/${match.partnerType}/${match.partnerId}`}
+                  className="block relative overflow-hidden aspect-[3/4] bg-white/5"
                 >
-                  <div className="relative h-80 overflow-hidden">
+                  {match.image ? (
                     <img
-                      src={
-                        isTalent
-                          ? (profile as any).profileImage
-                          : (profile as any).companyLogo
-                      }
-                      alt={
-                        isTalent
-                          ? (profile as any).name
-                          : (profile as any).companyName
-                      }
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      src={match.image}
+                      alt={match.name}
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <h3 className="text-xl font-light text-white mb-2">
-                        {isTalent
-                          ? (profile as any).name
-                          : (profile as any).companyName}
-                      </h3>
-                      <div className="flex items-center gap-2 text-white/80 text-sm">
-                        <MapPin className="w-4 h-4" />
-                        <span>{profile.location}</span>
-                      </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Cherry className="w-12 h-12 text-white/10" />
                     </div>
-                  </div>
-                  <div className="p-4 border-t border-white/30">
-                    <p className="text-gray-400 text-xs">
-                      Matched on{" "}
-                      {new Date(match.matchedAt).toLocaleDateString("en-US")}
-                    </p>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                  {/* Name + Location */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6 pb-16">
+                    <h3 className="text-2xl font-light text-white mb-1 leading-tight">
+                      {match.name}
+                    </h3>
+                    {match.location && (
+                      <div className="flex items-center gap-1.5 text-white/60">
+                        <MapPin className="w-3.5 h-3.5" strokeWidth={1.5} />
+                        <span className="text-sm">{match.location}</span>
+                      </div>
+                    )}
                   </div>
                 </Link>
-              );
-            })}
+
+                {/* Ich setze den Chat-Button unten über die Karte, damit man
+                    direkt aus der Liste heraus eine Konversation starten kann */}
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/messages/start/${match.partnerId}`);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 text-sm uppercase tracking-[0.2em] transition-all bg-transparent border border-[#E6DBC9]/75 text-[#E6DBC9] hover:bg-[#E6DBC9]/12 hover:border-[#E6DBC9]"
+                  >
+                    <MessageCircle className="w-4 h-4" strokeWidth={2} />
+                    Message
+                  </button>
+                </div>
+
+                {/* Match-Datum */}
+                <div className="absolute top-3 left-3">
+                  <span className="text-[10px] uppercase tracking-widest text-[#E6DBC9] bg-black/55 border border-[#E6DBC9]/45 px-2 py-1">
+                    {new Date(match.matchedAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Cherry className="w-24 h-24 text-white/20 mb-6" />
-            <p className="text-gray-400 text-lg text-center">No matches yet</p>
-            <p className="text-gray-500 text-sm text-center mt-2 mb-6">
+          <div className="flex flex-col items-center justify-center py-24">
+            <Cherry
+              className="w-16 h-16 mb-6"
+              style={{ color: "#ff477e" }}
+              strokeWidth={1.0}
+            />
+            <p className="text-white text-2xl font-light text-center mb-2">
+              No matches yet
+            </p>
+            <p className="text-white/30 text-sm text-center mb-10">
               Start discovering to find your perfect match
             </p>
             <Link
               to="/discover"
-              className="px-6 py-3 bg-white text-black hover:bg-white/90 transition-all uppercase tracking-wider"
+              className="px-8 py-3 border border-white/20 text-white/70 hover:border-white/40 hover:text-white transition-colors uppercase tracking-[0.2em] text-sm"
             >
               Discover Profiles
             </Link>

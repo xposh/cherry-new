@@ -1,35 +1,54 @@
-import { Plus, X } from "lucide-react";
-import { useState } from "react";
+import { Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
+import { useAuth } from "../../context/useAuth";
+import { getSetupDraft, setSetupDraft } from "../../util/draftStorage";
+import { mapCompanyProfileToSetup2 } from "../../util/profileMapping";
 
 export function CompanyProfileSetup2() {
   const navigate = useNavigate();
   const { updateCompanyProfile } = useCompanyProfile();
+  const { user, authFetch } = useAuth();
+
+  const getSavedData = () => {
+    try {
+      return getSetupDraft("companySetup2", user?.id);
+    } catch (e) {
+      console.error("Fehler beim Parsen von companySetup2:", e);
+      return null;
+    }
+  };
+
+  const savedData = getSavedData();
 
   const [companyInfo, setCompanyInfo] = useState({
-    companyName: "",
-    industry: "",
-    customIndustry: "",
-    location: "",
-    foundedYear: "",
-    companySize: "",
-    website: "",
-    claim: "",
-    description: "",
+    companyName: savedData?.companyInfo?.companyName || "",
+    industry: savedData?.companyInfo?.industry || "",
+    customIndustry: savedData?.companyInfo?.customIndustry || "",
+    location: savedData?.companyInfo?.location || "",
+    foundedYear: savedData?.companyInfo?.foundedYear || "",
+    companySize: savedData?.companyInfo?.companySize || "",
+    website: savedData?.companyInfo?.website || "",
+    claim: savedData?.companyInfo?.claim || "",
+    description: savedData?.companyInfo?.description || "",
   });
 
-  const [selectedValues, setSelectedValues] = useState<string[]>([]);
-  const [customValue, setCustomValue] = useState("");
+  const [selectedValues, setSelectedValues] = useState<string[]>(
+    savedData?.selectedValues || [],
+  );
+  const [customValue, setCustomValue] = useState(savedData?.customValue || "");
 
-  const [benefits, setBenefits] = useState({
-    arbeitsmodell: [] as string[],
-    finanziell: [] as string[],
-    lifestyle: [] as string[],
-    mobilitat: [] as string[],
-    entwicklung: [] as string[],
-  });
+  const [benefits, setBenefits] = useState(
+    savedData?.benefits || {
+      arbeitsmodell: [] as string[],
+      finanziell: [] as string[],
+      lifestyle: [] as string[],
+      mobilitat: [] as string[],
+      entwicklung: [] as string[],
+    },
+  );
 
   const predefinedValues = [
     "Präzision",
@@ -100,6 +119,32 @@ export function CompanyProfileSetup2() {
     ],
   };
 
+  useEffect(() => {
+    async function hydrateFromBackend() {
+      if (!user?.id) return;
+      if (getSetupDraft("companySetup2", user.id)) return;
+
+      try {
+        const res = await authFetch("http://localhost:3000/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data?.profile) return;
+
+        const mapped = mapCompanyProfileToSetup2(data.profile);
+        setCompanyInfo(mapped.companyInfo as typeof companyInfo);
+        setSelectedValues(mapped.selectedValues as string[]);
+        setBenefits(mapped.benefits as typeof benefits);
+      } catch (err) {
+        console.error(
+          "Failed to hydrate company setup step 2 from backend:",
+          err,
+        );
+      }
+    }
+
+    hydrateFromBackend();
+  }, [authFetch, user?.id]);
+
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -135,7 +180,7 @@ export function CompanyProfileSetup2() {
     if (current.includes(benefit)) {
       setBenefits({
         ...benefits,
-        [category]: current.filter((b) => b !== benefit),
+        [category]: current.filter((b: string) => b !== benefit),
       });
     } else {
       setBenefits({
@@ -146,19 +191,25 @@ export function CompanyProfileSetup2() {
   };
 
   const handleNext = () => {
+    const setup2Data = {
+      companyInfo,
+      selectedValues,
+      benefits,
+      customValue,
+    };
+    setSetupDraft("companySetup2", user?.id, setup2Data);
+
     updateCompanyProfile({
       ...companyInfo,
       cultureValues: selectedValues,
-      benefits: benefits,
+      benefits,
     });
     navigate("/company-profile-setup-3");
   };
 
   return (
     <div className="relative min-h-screen w-full bg-black overflow-auto pb-20">
-      <Link to="/">
-        <Logo />
-      </Link>
+      <Logo to="/" />
 
       <div className="fixed top-8 right-8 z-50 flex gap-2">
         <div className="w-12 h-1 bg-white rounded-full"></div>

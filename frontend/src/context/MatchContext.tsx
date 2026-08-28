@@ -1,20 +1,15 @@
-/*Speichert:
-- likedProfiles (Profile die ich geliked habe)
-- matches (gegenseitige Matches)
-- pendingLikes (wartet auf Gegenmatch)
-
-Funktionen:
-- likeProfile(profileId)
-- skipProfile(profileId)
-- checkForMatch(profileId) */
-
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useContext,
   useState,
-  ReactNode,
   useEffect,
+  type ReactNode,
 } from "react";
+import { useNavigate } from "react-router";
+import { useAuth } from "./useAuth";
+import { discoverService } from "../services/discoverService";
+import { MatchScreen } from "../components/match/MatchScreen";
 
 interface Match {
   id: string;
@@ -28,84 +23,112 @@ interface MatchContextType {
   matches: Match[];
   likedProfiles: string[];
   skippedProfiles: string[];
-  likeProfile: (profileId: string, profileType: "talent" | "company") => void;
-  skipProfile: (profileId: string, profileType: "talent" | "company") => void;
+  likeProfile: (
+    profileId: string,
+    profileType: "talent" | "company",
+  ) => Promise<boolean>;
+  skipProfile: (
+    profileId: string,
+    profileType?: "talent" | "company",
+  ) => Promise<void>;
   checkIfMatch: (profileId: string) => boolean;
   getMatches: () => Match[];
 }
 
 const MatchContext = createContext<MatchContextType | undefined>(undefined);
+export { MatchContext };
+
+function load<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export function MatchProvider({ children }: { children: ReactNode }) {
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [likedProfiles, setLikedProfiles] = useState<string[]>([]);
-  const [skippedProfiles, setSkippedProfiles] = useState<string[]>([]);
-  const [showMatchPopup, setShowMatchPopup] = useState(false);
-  const [latestMatch, setLatestMatch] = useState<Match | null>(null);
+  const { authFetch } = useAuth();
+  const navigate = useNavigate();
 
-  // Load from localStorage
-  useEffect(() => {
-    const savedMatches = localStorage.getItem("matches");
-    const savedLiked = localStorage.getItem("likedProfiles");
-    const savedSkipped = localStorage.getItem("skippedProfiles");
+  const [matches, setMatches] = useState<Match[]>(() => load("matches", []));
+  const [likedProfiles, setLikedProfiles] = useState<string[]>(() =>
+    load("likedProfiles", []),
+  );
+  const [skippedProfiles, setSkippedProfiles] = useState<string[]>(() =>
+    load("skippedProfiles", []),
+  );
 
-    if (savedMatches) setMatches(JSON.parse(savedMatches));
-    if (savedLiked) setLikedProfiles(JSON.parse(savedLiked));
-    if (savedSkipped) setSkippedProfiles(JSON.parse(savedSkipped));
-  }, []);
+  // ✅ NEU: ersetzt das alte, separate Inline-Modal (MatchPopup). Statt
+  // eines simplen Popups wird jetzt die volle Match-Celebration
+  // (MatchScreen) als globales Overlay gerendert — unabhängig davon, von
+  // welcher Seite aus der Match ausgelöst wurde.
+  const [pendingCelebration, setPendingCelebration] = useState<Match | null>(
+    null,
+  );
 
-  // Save to localStorage
   useEffect(() => {
     localStorage.setItem("matches", JSON.stringify(matches));
   }, [matches]);
-
   useEffect(() => {
     localStorage.setItem("likedProfiles", JSON.stringify(likedProfiles));
   }, [likedProfiles]);
-
   useEffect(() => {
     localStorage.setItem("skippedProfiles", JSON.stringify(skippedProfiles));
   }, [skippedProfiles]);
 
-  const likeProfile = (
+  const likeProfile = async (
     profileId: string,
     profileType: "talent" | "company",
   ) => {
     setLikedProfiles((prev) => [...prev, profileId]);
-
-    // 50% chance of auto-match
-    const isMatch = Math.random() > 0.5;
-
-    if (isMatch) {
-      const newMatch: Match = {
-        id: `match-${Date.now()}`,
+    try {
+      const result = await discoverService.interact(
         profileId,
-        profileType,
-        matchedAt: new Date().toISOString(),
-        isMatch: true,
-      };
-      setMatches((prev) => [newMatch, ...prev]);
-      setLatestMatch(newMatch);
-      setShowMatchPopup(true);
-
-      // Auto-hide popup after 3 seconds
-      setTimeout(() => setShowMatchPopup(false), 3000);
+        "like",
+        authFetch,
+      );
+      if (result.status === "match") {
+        const newMatch: Match = {
+          id: result.matchId ?? `match-${Date.now()}`,
+          profileId,
+          profileType,
+          matchedAt: new Date().toISOString(),
+          isMatch: true,
+        };
+        setMatches((prev) => [newMatch, ...prev]);
+        setPendingCelebration(newMatch);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Like fehlgeschlagen:", err);
+      return false;
     }
   };
 
-  const skipProfile = (
-    profileId: string,
-    profileType: "talent" | "company",
-  ) => {
+  const skipProfile = async (profileId: string) => {
     setSkippedProfiles((prev) => [...prev, profileId]);
+    try {
+      await discoverService.interact(profileId, "skip", authFetch);
+    } catch (err) {
+      console.error("Skip fehlgeschlagen:", err);
+    }
   };
 
-  const checkIfMatch = (profileId: string) => {
-    return matches.some((m) => m.profileId === profileId && m.isMatch);
-  };
+  const checkIfMatch = (profileId: string) =>
+    matches.some((m) => m.profileId === profileId && m.isMatch);
 
-  const getMatches = () => {
-    return matches.filter((m) => m.isMatch);
+  const getMatches = () => matches.filter((m) => m.isMatch);
+
+  // ✅ NEU: Wird aufgerufen, sobald die Celebration-Animation durchgelaufen
+  // ist. Navigiert zur Match-Details-Seite — dem gleichen Pfad, den auch
+  // CherryPicksPage für bestehende Matches verwendet.
+  const handleCelebrationComplete = () => {
+    if (!pendingCelebration) return;
+    const { profileId, profileType } = pendingCelebration;
+    setPendingCelebration(null);
+    navigate(`/match-details/${profileType}/${profileId}`);
   };
 
   return (
@@ -121,11 +144,8 @@ export function MatchProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-      {showMatchPopup && latestMatch && (
-        <MatchPopup
-          match={latestMatch}
-          onClose={() => setShowMatchPopup(false)}
-        />
+      {pendingCelebration && (
+        <MatchScreen onComplete={handleCelebrationComplete} />
       )}
     </MatchContext.Provider>
   );
@@ -133,29 +153,6 @@ export function MatchProvider({ children }: { children: ReactNode }) {
 
 export function useMatch() {
   const context = useContext(MatchContext);
-  if (!context) {
-    throw new Error("useMatch must be used within MatchProvider");
-  }
+  if (!context) throw new Error("useMatch must be used within MatchProvider");
   return context;
-}
-
-// Match Popup Component
-function MatchPopup({ match, onClose }: { match: Match; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="bg-white/10 border border-white/20 rounded-2xl p-8 max-w-md mx-4 text-center">
-        <div className="text-6xl mb-4">🎉</div>
-        <h2 className="text-3xl font-light text-white mb-2">It's a Match!</h2>
-        <p className="text-white/80 mb-6">
-          Beide Seiten haben Interesse. Jetzt könnt ihr Kontakt aufnehmen!
-        </p>
-        <button
-          onClick={onClose}
-          className="px-8 py-3 bg-white text-black rounded-full hover:bg-white/90 transition-all font-light uppercase tracking-wider"
-        >
-          Weiter
-        </button>
-      </div>
-    </div>
-  );
 }

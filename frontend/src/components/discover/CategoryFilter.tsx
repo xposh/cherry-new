@@ -1,9 +1,9 @@
 import { useDiscover } from "../../context/DiscoverContext";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 
 export function CategoryFilter() {
   const { selectedCategories, toggleCategory, clearFilters } = useDiscover();
-  const { userRole } = useAuth();
+  const { user } = useAuth();
 
   // Categories based on user role
   const talentCategories = [
@@ -27,8 +27,13 @@ export function CategoryFilter() {
     "Logistik",
   ];
 
+  if (!user) {
+    console.log("user not logged in");
+    return null;
+  }
+
   const categories =
-    userRole === "employer" ? talentCategories : companyCategories;
+    user.role === "talent" ? talentCategories : companyCategories;
 
   return (
     <div className="space-y-3">

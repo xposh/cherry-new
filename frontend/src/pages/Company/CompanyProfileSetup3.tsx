@@ -1,8 +1,13 @@
 import { Plus, X, Upload } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Logo } from "../../components/Logo";
+import { OpportunityCreator } from "../../components/OpportunityCreator/OpportunityCreator";
 import { useCompanyProfile } from "../../context/CompanyProfileContext";
+import { useAuth } from "../../context/useAuth"; //  NEU HINZUGEFÜGT
+import { getSetupDraft, setSetupDraft } from "../../util/draftStorage";
+import { mapCompanyProfileToSetup3 } from "../../util/profileMapping";
+import { supabase } from "../../util/supabase";
 
 interface SocialLink {
   id: string;
@@ -12,37 +17,118 @@ interface SocialLink {
 
 export function CompanyProfileSetup3() {
   const navigate = useNavigate();
-  const { updateCompanyProfile } = useCompanyProfile();
+  const { updateCompanyProfile, companyProfile } = useCompanyProfile();
+  const { authFetch, finishProfile, user } = useAuth(); // NEU HINZUGEFÜGT
+
+  const getSavedData = () => {
+    try {
+      return getSetupDraft("companySetup3", user?.id);
+    } catch (e) {
+      console.error("Fehler beim Parsen von companySetup3:", e);
+      return null;
+    }
+  };
+
+  const savedData = getSavedData();
+  const toSafeText = (value: unknown) =>
+    typeof value === "string" ? value : "";
+  const isBlobUrl = (value: string) => value.startsWith("blob:");
+
+  const savedContactPhotoPreview = toSafeText(savedData?.contactPersonPhoto?.preview);
+  const needsSavedContactPhotoReupload = isBlobUrl(savedContactPhotoPreview);
 
   const [jobInfo, setJobInfo] = useState({
-    jobTitle: "",
-    jobLocation: "",
-    jobDescription: "",
-    salary: "",
-    startDate: "",
+    jobTitle: toSafeText(savedData?.jobInfo?.jobTitle),
+    jobLocation: toSafeText(savedData?.jobInfo?.jobLocation),
+    jobDescription: toSafeText(savedData?.jobInfo?.jobDescription),
+    salary: toSafeText(savedData?.jobInfo?.salary),
+    startDate: toSafeText(savedData?.jobInfo?.startDate),
   });
 
-  const [workModel, setWorkModel] = useState<string[]>([]);
-  const [requirements, setRequirements] = useState<string[]>([]);
-  const [newRequirement, setNewRequirement] = useState("");
+  const [workModel, setWorkModel] = useState<string[]>(
+    savedData?.workModel || [],
+  );
+  const [requirements, setRequirements] = useState<string[]>(
+    savedData?.requirements || [],
+  );
+  const [newRequirement, setNewRequirement] = useState(
+    savedData?.newRequirement || "",
+  );
 
   const [contactPersonPhoto, setContactPersonPhoto] = useState({
     file: null as File | null,
-    preview: "",
+    preview: needsSavedContactPhotoReupload ? "" : savedContactPhotoPreview,
   });
+  const [needsContactPhotoReupload, setNeedsContactPhotoReupload] = useState(
+    needsSavedContactPhotoReupload,
+  );
 
   const [contactInfo, setContactInfo] = useState({
-    contactPerson: "",
-    contactRole: "",
-    contactMessage: "",
-    contactEmail: "",
-    contactPhone: "",
-    contactWebsite: "",
+    contactPerson: toSafeText(savedData?.contactInfo?.contactPerson),
+    contactRole: toSafeText(savedData?.contactInfo?.contactRole),
+    contactMessage: toSafeText(savedData?.contactInfo?.contactMessage),
+    contactEmail: toSafeText(savedData?.contactInfo?.contactEmail),
+    contactPhone: toSafeText(savedData?.contactInfo?.contactPhone),
+    contactWebsite: toSafeText(savedData?.contactInfo?.contactWebsite),
   });
 
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
-  const [newSocialPlatform, setNewSocialPlatform] = useState("Instagram");
-  const [newSocialUrl, setNewSocialUrl] = useState("");
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(
+    savedData?.socialLinks || [],
+  );
+  const [newSocialPlatform, setNewSocialPlatform] = useState(
+    savedData?.newSocialPlatform || "Instagram",
+  );
+  const [newSocialUrl, setNewSocialUrl] = useState(
+    savedData?.newSocialUrl || "",
+  );
+
+  useEffect(() => {
+    if (!needsSavedContactPhotoReupload) return;
+
+    const sanitizedDraft = {
+      ...(savedData || {}),
+      contactPersonPhoto: { preview: "" },
+    };
+    setSetupDraft("companySetup3", user?.id, sanitizedDraft);
+  }, [needsSavedContactPhotoReupload, savedData, user?.id]);
+
+  useEffect(() => {
+    async function hydrateFromBackend() {
+      if (!user?.id) return;
+      if (getSetupDraft("companySetup3", user.id)) return;
+
+      try {
+        const res = await authFetch("http://localhost:3000/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data?.profile) return;
+
+        const mapped = mapCompanyProfileToSetup3(data.profile);
+        setJobInfo(mapped.jobInfo as typeof jobInfo);
+        setWorkModel(mapped.workModel as string[]);
+        setRequirements(mapped.requirements as string[]);
+        setContactPersonPhoto(
+          isBlobUrl(toSafeText(mapped.contactPersonPhoto?.preview))
+            ? { file: null, preview: "" }
+            : (mapped.contactPersonPhoto as typeof contactPersonPhoto),
+        );
+        setNeedsContactPhotoReupload(
+          isBlobUrl(toSafeText(mapped.contactPersonPhoto?.preview)),
+        );
+        setContactInfo(mapped.contactInfo as typeof contactInfo);
+        setSocialLinks(mapped.socialLinks as SocialLink[]);
+        setNewSocialPlatform(mapped.newSocialPlatform || "Instagram");
+        setNewSocialUrl(mapped.newSocialUrl || "");
+      } catch (err) {
+        console.error(
+          "Failed to hydrate company setup step 3 from backend:",
+          err,
+        );
+      }
+    }
+
+    hydrateFromBackend();
+  }, [authFetch, user?.id]);
 
   const socialPlatforms = [
     "Instagram",
@@ -73,6 +159,7 @@ export function CompanyProfileSetup3() {
         file,
         preview: URL.createObjectURL(file),
       });
+      setNeedsContactPhotoReupload(false);
     }
   };
 
@@ -166,24 +253,128 @@ export function CompanyProfileSetup3() {
     }
   };
 
-  const handleFinish = () => {
-    updateCompanyProfile({
+  const handleFinish = async () => {
+    let persistedContactPhoto = contactPersonPhoto.preview;
+
+    if (isBlobUrl(persistedContactPhoto) && !contactPersonPhoto.file) {
+      setNeedsContactPhotoReupload(true);
+      setContactPersonPhoto({ file: null, preview: "" });
+      alert("Please re-upload the contact person photo before saving.");
+      return;
+    }
+
+    // Convert local blob preview into a durable public URL before persisting.
+    if (contactPersonPhoto.file) {
+      try {
+        const extension = contactPersonPhoto.file.name.split(".").pop() || "jpg";
+        const uniqueFileName = `contact_${Date.now()}_${Math.random().toString(36).slice(2, 11)}.${extension}`;
+
+        const uploadResponse = await supabase.storage
+          .from("companies")
+          .upload(uniqueFileName, contactPersonPhoto.file, {
+            cacheControl: "3600",
+            contentType: contactPersonPhoto.file.type,
+            upsert: false,
+          });
+
+        if (uploadResponse.error) {
+          throw uploadResponse.error;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from("companies")
+          .getPublicUrl(uniqueFileName);
+
+        persistedContactPhoto = publicUrlData.publicUrl;
+      } catch (uploadErr) {
+        console.error("Contact person photo upload failed:", uploadErr);
+        alert("Contact person image upload failed. Please try again.");
+        return;
+      }
+    }
+
+    const sanitizedContactInfo = {
+      contactPerson: toSafeText(contactInfo.contactPerson),
+      contactRole: toSafeText(contactInfo.contactRole),
+      contactMessage: toSafeText(contactInfo.contactMessage),
+      contactEmail: toSafeText(contactInfo.contactEmail),
+      contactPhone: toSafeText(contactInfo.contactPhone),
+      contactWebsite: toSafeText(contactInfo.contactWebsite),
+    };
+
+    const localPage3Data = {
+      jobInfo,
+      workModel,
+      requirements,
+      newRequirement,
+      contactPersonPhoto: { preview: persistedContactPhoto },
+      contactInfo: sanitizedContactInfo,
+      socialLinks,
+      newSocialPlatform,
+      newSocialUrl,
+    };
+    setSetupDraft("companySetup3", user?.id, localPage3Data);
+    // 2. ✅ BACKEND-INTEGRATION: Sende alle Daten zum Backend
+    const savedStep1 = getSetupDraft("companySetup1", user?.id);
+    const savedStep2 = getSetupDraft("companySetup2", user?.id);
+    const contextProfile = companyProfile || {};
+    const fullPayload = {
+      companyLogo:
+        savedStep1?.companyLogoUrl || contextProfile.companyLogo || undefined,
+      companyImages:
+        savedStep1?.uploadedImages || contextProfile.companyImages || [],
+      ...savedStep2?.companyInfo,
+      cultureValues: savedStep2?.selectedValues || [],
+      benefits: savedStep2?.benefits || {
+        arbeitsmodell: [],
+        finanziell: [],
+        lifestyle: [],
+        mobilitat: [],
+        entwicklung: [],
+      },
       ...jobInfo,
       workModel,
       requirements,
-      contactPersonPhoto: contactPersonPhoto.preview,
-      ...contactInfo,
-      socialLinks: socialLinks.map(({ id, ...rest }) => rest),
-    });
+      salary: jobInfo.salary,
+      startDate: jobInfo.startDate,
+      contactPersonPhoto: persistedContactPhoto,
+      ...sanitizedContactInfo,
+      socialLinks: socialLinks.map(({ platform, url }) => ({ platform, url })),
+    };
+    const profileData = fullPayload;
 
-    navigate("/company-profile-summary");
+    // 1. Update Context (für Summary)
+    updateCompanyProfile(fullPayload);
+
+    try {
+      // ✅ authFetch sendet automatisch JWT Token mit!
+      // ✅ KEIN user_id im Body - kommt aus Token!
+      const response = await authFetch("http://localhost:3000/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Fehler beim Speichern");
+      }
+
+      const result = await response.json();
+      console.log("✅ Company-Profil erfolgreich gespeichert:", result.message);
+
+      // ✅ Profile als complete markieren
+      finishProfile();
+
+      navigate("/company-profile-summary");
+    } catch (error) {
+      console.error("❌ Fehler beim Speichern:", error);
+      alert("Profile could not be saved. Please try again.");
+    }
   };
 
   return (
     <div className="relative min-h-screen w-full bg-black overflow-auto pb-20">
-      <Link to="/">
-        <Logo />
-      </Link>
+      <Logo to="/" />
 
       <div className="fixed top-8 right-8 z-50 flex gap-2">
         <div className="w-12 h-1 bg-white rounded-full"></div>
@@ -314,7 +505,6 @@ export function CompanyProfileSetup3() {
               ))}
             </div>
           </section>
-
           {/* Ansprechpartner */}
           <section>
             <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
@@ -332,6 +522,12 @@ export function CompanyProfileSetup3() {
               <p className="text-gray-400 text-xs mb-4">
                 Ein Gesicht der Ansprechpartner:in macht das Ganze persönlicher
               </p>
+              {needsContactPhotoReupload && (
+                <p className="text-amber-300 text-xs mb-4">
+                  Your previously saved contact image could not be restored.
+                  Please upload it again.
+                </p>
+              )}
               {!contactPersonPhoto.preview ? (
                 <div className="border-2 border-dashed border-white/30 rounded-xl p-8 text-center hover:border-white/60 transition-colors cursor-pointer max-w-xs">
                   <input
@@ -436,6 +632,20 @@ export function CompanyProfileSetup3() {
                 className="w-full px-4 py-3 bg-transparent border border-white/30 text-white placeholder:text-white/40 focus:border-white focus:outline-none transition-colors font-light rounded-lg"
               />
             </div>
+          </section>
+
+          <section>
+            <h2 className="text-white font-light mb-6 uppercase tracking-[0.2em] text-sm">
+              Featured Opportunity
+            </h2>
+            <OpportunityCreator
+              role="company"
+              ctaText="Create a featured job, event, or showcase that attracts the right talent."
+              authFetch={authFetch}
+              onSuccess={() => {
+                // optional hook for success events
+              }}
+            />
           </section>
 
           {/* Social Media */}

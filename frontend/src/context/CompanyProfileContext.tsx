@@ -1,5 +1,6 @@
-import React, {
+import {
   createContext,
+  useCallback,
   useContext,
   useState,
   type ReactNode,
@@ -13,6 +14,7 @@ interface CompanyProfileData {
     id: string;
     preview: string;
     category: string;
+    caption?: string;
   }>;
 
   // Setup 2 - Company Information
@@ -62,6 +64,8 @@ const CompanyProfileContext = createContext<CompanyProfileContextType | null>(
   null,
 );
 
+export { CompanyProfileContext };
+
 export function CompanyProfileProvider({ children }: { children: ReactNode }) {
   const [companyProfile, setCompanyProfile] = useState<CompanyProfileData>({
     companyImages: [],
@@ -78,9 +82,12 @@ export function CompanyProfileProvider({ children }: { children: ReactNode }) {
     socialLinks: [],
   });
 
-  const updateCompanyProfile = (newData: Partial<CompanyProfileData>) => {
-    setCompanyProfile((prev) => ({ ...prev, ...newData }));
-  };
+  const updateCompanyProfile = useCallback(
+    (newData: Partial<CompanyProfileData>) => {
+      setCompanyProfile((prev) => ({ ...prev, ...newData }));
+    },
+    [],
+  );
 
   return (
     <CompanyProfileContext.Provider
