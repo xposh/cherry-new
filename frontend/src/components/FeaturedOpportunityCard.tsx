@@ -38,6 +38,7 @@ export function FeaturedOpportunityCard({
   className,
 }: FeaturedOpportunityCardProps) {
   const [videoFailed, setVideoFailed] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const safeImageUrl =
     opportunity.image_url && !opportunity.image_url.startsWith("blob:")
       ? opportunity.image_url
@@ -46,6 +47,11 @@ export function FeaturedOpportunityCard({
     opportunity.video_url && !opportunity.video_url.startsWith("blob:")
       ? opportunity.video_url
       : undefined;
+
+  const rawDescription = opportunity.description?.trim();
+  const descriptionText = rawDescription || "A public highlight from this profile.";
+  const shouldTruncate = descriptionText.length > 160;
+  const visibleDescription = isExpanded ? descriptionText : "";
 
   return (
     <div
@@ -64,7 +70,7 @@ export function FeaturedOpportunityCard({
           <img
             src={safeImageUrl}
             alt={opportunity.title}
-            className="absolute inset-0 w-full h-full object-cover filter grayscale"
+            className="absolute inset-0 w-full h-full object-cover"
           />
         ) : (
           <div className="absolute inset-0 bg-neutral-900" />
@@ -82,9 +88,9 @@ export function FeaturedOpportunityCard({
         ) : null}
       </div>
 
-      <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent" />
+      <div className="absolute inset-0 bg-black/25" />
       <div className="absolute inset-0 flex items-end">
-        <div className="p-16 max-w-3xl">
+        <div className="p-16 max-w-3xl relative z-10">
           <div className="mb-6">
             <span
               className="inline-block px-4 py-1 border text-xs uppercase tracking-[0.3em] mb-4"
@@ -97,12 +103,33 @@ export function FeaturedOpportunityCard({
               Featured Opportunity
             </span>
           </div>
-          <h3 className="text-5xl font-light mb-4 tracking-tight text-[#FEF6EA]">
+          <h3 className="text-sm md:text-base font-medium tracking-[0.02em] leading-relaxed mb-3 text-[#FEF6EA]">
             {opportunity.title}
           </h3>
-          <p className="text-xl font-light mb-2 text-[#FEF6EA]/90">
-            {opportunity.description ?? "A public highlight from this profile."}
-          </p>
+
+          <div className="mb-2 text-[#FEF6EA]/90">
+            {shouldTruncate && !isExpanded ? null : (
+              <p className="text-base md:text-lg leading-relaxed text-pretty">
+                {visibleDescription}
+              </p>
+            )}
+
+            {shouldTruncate ? (
+              <button
+                type="button"
+                className="mt-2 inline-flex items-center text-sm font-medium text-[#D2C4AA] underline decoration-[#D2C4AA]/70 underline-offset-4 hover:text-[#F3E7D0]"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsExpanded((current) => !current);
+                }}
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? "Hide full description" : "Read more about this opportunity"}
+              >
+                {isExpanded ? "Read less" : "Read more"}
+              </button>
+            ) : null}
+          </div>
+
           {opportunity.time_remaining_seconds !== undefined ? (
             <p className="text-sm mb-8 text-[#FEF6EA]/60">
               {formatTimeRemaining(opportunity.time_remaining_seconds)}
